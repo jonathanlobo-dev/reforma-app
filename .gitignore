@@ -1,0 +1,23 @@
+# Secretos — NUNCA subir
+.env
+*.env
+!.env.example
+
+# Datos generados por el backend
+backend/data/
+*.db
+
+# Python
+__pycache__/
+*.pyc
+
+# Node / frontend
+node_modules/
+frontend/dist/
+
+# Android build (el proyecto android/ SÍ se versiona; sus builds no)
+frontend/android/.gradle/
+frontend/android/app/build/
+frontend/android/build/
+frontend/android/local.properties
+frontend/android/.idea/

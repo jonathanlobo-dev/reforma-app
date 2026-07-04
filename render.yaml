@@ -1,0 +1,15 @@
+# Blueprint de Render: crea el servicio del backend con un clic.
+# Las API keys se piden en el dashboard (sync: false = no van en el repo).
+services:
+  - type: web
+    name: reforma-backend
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: REPLICATE_API_TOKEN
+        sync: false

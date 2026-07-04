@@ -133,3 +133,13 @@ def obtener(tid: str) -> dict | None:
         cur.execute(_q(f"SELECT * FROM trabajos WHERE id={PH}"), (tid,))
         fila = cur.fetchone()
         return dict(fila) if fila else None
+
+
+def listar(device_id: str, limit: int = 30) -> list[dict]:
+    with _con() as con:
+        cur = con.cursor()
+        cur.execute(_q(
+            f"SELECT * FROM trabajos WHERE device_id={PH} AND status='done' "
+            f"ORDER BY creado DESC LIMIT {PH}"),
+            (device_id, limit))
+        return [dict(f) for f in cur.fetchall()]

@@ -36,7 +36,8 @@ def health():
 @app.get("/categorias")
 def categorias():
     return {k: {"titulo": v["titulo"], "emoji": v["emoji"],
-                "tipo_default": v["tipo_default"], "campos": v["campos"]}
+                "tipo_default": v["tipo_default"], "campos": v["campos"],
+                "engine": v.get("engine", "editar")}
             for k, v in CATEGORIAS.items()}
 
 
@@ -80,6 +81,20 @@ async def crear_trabajo(
     return {"id": tid, "status": "pending", "tipo": tipo}
 
 
+@app.get("/trabajos")
+def historial(device_id: str, limit: int = 30):
+    trabajos = db.listar(device_id, min(limit, 50))
+    return [
+        {
+            "id": t["id"], "status": t["status"], "tipo": t["tipo"],
+            "categoria": t["categoria"], "detalle": (t.get("detalle") or "")[:120],
+            "creado": t.get("creado"), "error": t["error"],
+            "resultados": _urls(t),
+        }
+        for t in trabajos
+    ]
+
+
 @app.get("/trabajos/{tid}")
 def estado_trabajo(tid: str):
     trabajo = db.obtener(tid)
@@ -87,5 +102,6 @@ def estado_trabajo(tid: str):
         raise HTTPException(404, "Trabajo no encontrado")
     return {
         "id": trabajo["id"], "status": trabajo["status"], "tipo": trabajo["tipo"],
+        "categoria": trabajo.get("categoria"), "creado": trabajo.get("creado"),
         "error": trabajo["error"], "resultados": _urls(trabajo),
     }

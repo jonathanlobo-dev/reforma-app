@@ -46,7 +46,14 @@ def procesar(tid: str) -> None:
             video = carpeta / "final.mp4"
             pipeline.animar(url_antes, url_despues, plan.get("motion_prompt", ""), video)
 
-        # 5) Subir resultados a storage persistente (Supabase o /media local).
+        # 5) Watermark "Reforma AI" en los archivos que el usuario comparte/descarga.
+        #    No al 'antes' — es la referencia original.
+        pipeline._watermark(despues)
+        pipeline._watermark(comp)
+        if video:
+            pipeline._watermark(video)
+
+        # 6) Subir resultados a storage persistente (Supabase o /media local).
         #    Guardamos URLs completas — sobreviven al reinicio del contenedor.
         campos = {
             "antes": storage.subir(antes, tid, antes.name),

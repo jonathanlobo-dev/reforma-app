@@ -21,3 +21,6 @@ frontend/android/app/build/
 frontend/android/build/
 frontend/android/local.properties
 frontend/android/.idea/
+
+# Capturas de referencia de competidores (locales, no versionar)
+photo_*.jpg

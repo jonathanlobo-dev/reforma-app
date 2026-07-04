@@ -21,7 +21,10 @@ if config.USA_POSTGRES:
     PH = "%s"
 
     def _con():
-        return psycopg.connect(config.DATABASE_URL, row_factory=dict_row)
+        # prepare_threshold=None → sin prepared statements: compatible con el
+        # pooler en modo "transaction" de Supabase (puerto 6543).
+        return psycopg.connect(config.DATABASE_URL, row_factory=dict_row,
+                               prepare_threshold=None)
 else:
     import sqlite3
     PH = "?"

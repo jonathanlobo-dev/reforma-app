@@ -8,6 +8,7 @@ import traceback
 import config
 import db
 import pipeline
+import storage
 from categorias import CATEGORIAS
 
 
@@ -34,16 +35,25 @@ def procesar(tid: str) -> None:
         # 3) Comparación antes/después (siempre, es el compartible base)
         comp = carpeta / "comparacion.png"
         pipeline.comparacion(antes, despues, comp)
-        campos = {"despues": "despues.png", "comparacion": "comparacion.png"}
 
         # 4) Video según tipo
+        video = None
         if trabajo["tipo"] == "video":
             video = carpeta / "final.mp4"
             pipeline.animar(url_antes, url_despues, plan.get("motion_prompt", ""), video)
-            campos["video"] = "final.mp4"
+
+        # 5) Subir resultados a storage persistente (Supabase o /media local).
+        #    Guardamos URLs completas — sobreviven al reinicio del contenedor.
+        campos = {
+            "antes": storage.subir(antes, tid, antes.name),
+            "despues": storage.subir(despues, tid, "despues.png"),
+            "comparacion": storage.subir(comp, tid, "comparacion.png"),
+        }
+        if video:
+            campos["video"] = storage.subir(video, tid, "final.mp4")
 
         db.registrar_uso(trabajo["device_id"], trabajo["tipo"])
-        db.actualizar(tid, status="done", antes=antes.name, **campos)
+        db.actualizar(tid, status="done", **campos)
     except Exception as e:
         traceback.print_exc()
         db.actualizar(tid, status="error", error=str(e)[:300])

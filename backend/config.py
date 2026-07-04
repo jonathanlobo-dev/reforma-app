@@ -11,6 +11,18 @@ load_dotenv(ROOT / ".env")
 GROQ_API_KEY        = os.getenv("GROQ_API_KEY", "")
 REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN", "")
 
+# ─── Persistencia externa (Supabase) ─────────────────────────────────────────
+# Sin esto, el backend cae a SQLite local + disco local (solo dev; en Render
+# free se BORRA). Con esto, trabajos → Postgres y media → Supabase Storage,
+# ambos sobreviven a los reinicios del contenedor.
+DATABASE_URL          = os.getenv("DATABASE_URL", "")          # postgres de Supabase
+SUPABASE_URL          = os.getenv("SUPABASE_URL", "")          # https://xxxx.supabase.co
+SUPABASE_SERVICE_KEY  = os.getenv("SUPABASE_SERVICE_KEY", "")  # service_role key
+SUPABASE_BUCKET       = os.getenv("SUPABASE_BUCKET", "reforma")  # bucket público
+
+USA_POSTGRES = bool(DATABASE_URL)
+USA_SUPABASE = bool(SUPABASE_URL and SUPABASE_SERVICE_KEY)
+
 # ─── Modelos (validados en shorts-pipeline) ──────────────────────────────────
 GROQ_MODEL  = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
 EDIT_MODEL  = os.getenv("EDIT_MODEL", "black-forest-labs/flux-kontext-pro")  # edita preservando

@@ -41,13 +41,11 @@ def categorias():
 
 
 def _urls(trabajo: dict) -> dict:
-    """Convierte nombres de archivo en URLs servibles."""
-    base = f"/media/{trabajo['id']}"
-    out = {}
-    for k in ("antes", "despues", "comparacion", "video"):
-        if trabajo.get(k):
-            out[k] = f"{base}/{trabajo[k]}"
-    return out
+    """Devuelve las URLs de resultados. Ya están completas en la DB:
+    Supabase → https absoluta; local → /media/<id>/<archivo> (el frontend le
+    antepone API_BASE)."""
+    return {k: trabajo[k] for k in ("antes", "despues", "comparacion", "video")
+            if trabajo.get(k)}
 
 
 @app.post("/trabajos")

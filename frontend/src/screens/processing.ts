@@ -1,6 +1,7 @@
 import { el, render } from "../ui";
 import { crearTrabajo, getTrabajo } from "../api";
 import { getDeviceId } from "../device";
+import { reemplazar } from "../nav";
 import { pantallaResult } from "./result";
 import { pantallaForm } from "./form";
 import { state } from "../state";
@@ -26,7 +27,7 @@ export async function pantallaProcessing(args: Args) {
     render(
       el("div", { class: "screen centro" }, [
         el("p", { class: "error-msg" }, [texto]),
-        el("button", { class: "btn-primario", onClick: () => pantallaForm(state.categoriaSel!) }, ["Reintentar"]),
+        el("button", { class: "btn-primario", onClick: () => reemplazar(() => pantallaForm(state.categoriaSel!)) }, ["Reintentar"]),
       ])
     );
   };
@@ -46,7 +47,7 @@ export async function pantallaProcessing(args: Args) {
         const t = await getTrabajo(id);
         if (t.status === "done") {
           clearInterval(timer);
-          pantallaResult(t);
+          reemplazar(() => pantallaResult(t));
         } else if (t.status === "error") {
           clearInterval(timer);
           mostrarError(t.error || "Algo salió mal generando tu transformación.");

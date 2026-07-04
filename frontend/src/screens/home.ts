@@ -1,10 +1,11 @@
 import { el, render } from "../ui";
 import { state } from "../state";
+import { irA } from "../nav";
 import { pantallaForm } from "./form";
 
 export function pantallaHome() {
   const cards = Object.entries(state.categorias).map(([clave, cat]) =>
-    el("button", { class: "card", onClick: () => pantallaForm(clave) }, [
+    el("button", { class: "card", onClick: () => irA(() => pantallaForm(clave)) }, [
       el("div", { class: "card-emoji" }, [cat.emoji]),
       el("div", { class: "card-titulo" }, [cat.titulo]),
     ])

@@ -25,8 +25,12 @@ def procesar(tid: str) -> None:
         # La foto ya fue guardada por el endpoint como <carpeta>/antes.<ext>
         antes = next(carpeta.glob("antes.*"))
 
-        # 1) Plan (Groq)
-        plan = pipeline.generar_plan(cat["titulo"], cat["guia_llm"], trabajo["detalle"] or "")
+        # 1) Plan (Groq) + FILTRO de contenido/intención (antes de gastar Replicate)
+        try:
+            plan = pipeline.generar_plan(cat["titulo"], cat["guia_llm"], trabajo["detalle"] or "")
+        except pipeline.PeticionRechazada as e:
+            db.actualizar(tid, status="error", error=str(e)[:300])
+            return
 
         # 2) Editar preservando el espacio (flux-kontext)
         despues = carpeta / "despues.png"

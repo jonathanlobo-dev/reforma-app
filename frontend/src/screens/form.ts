@@ -1,7 +1,7 @@
 import { el, render, toast } from "../ui";
 import { state } from "../state";
 import { elegirFoto } from "../foto";
-import { pantallaHome } from "./home";
+import { irA, atras } from "../nav";
 import { pantallaProcessing } from "./processing";
 
 export function pantallaForm(claveCat: string) {
@@ -45,13 +45,13 @@ export function pantallaForm(claveCat: string) {
       .filter((p) => p.val);
     if (!partes.length) { toast("Escribe al menos qué quieres cambiar."); return; }
     const detalle = partes.map((p) => `${p.label}: ${p.val}.`).join(" ");
-    pantallaProcessing({ categoria: claveCat, detalle, tipo, foto: state.foto.blob });
+    irA(() => pantallaProcessing({ categoria: claveCat, detalle, tipo, foto: state.foto!.blob }));
   };
 
   render(
     el("div", { class: "screen" }, [
       el("div", { class: "topbar" }, [
-        el("button", { class: "back", onClick: pantallaHome }, ["‹ Atrás"]),
+        el("button", { class: "back", onClick: atras }, ["‹ Atrás"]),
         el("span", { class: "topbar-tit" }, [`${cat.emoji} ${cat.titulo}`]),
       ]),
       miniatura,

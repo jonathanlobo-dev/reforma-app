@@ -3,7 +3,8 @@ import { API_BASE, MOCK } from "./config";
 
 export interface Campo { clave: string; label: string; ejemplo: string; }
 export interface Categoria {
-  titulo: string; emoji: string; tipo_default: "imagen" | "video"; campos: Campo[];
+  titulo: string; emoji: string; tipo_default: "imagen" | "video";
+  campos: Campo[]; engine: string;
 }
 export type Categorias = Record<string, Categoria>;
 
@@ -12,32 +13,77 @@ export interface Resultados {
 }
 export interface Trabajo {
   id: string; status: "pending" | "processing" | "done" | "error";
-  tipo: "imagen" | "video"; error: string | null; resultados: Resultados;
+  tipo: "imagen" | "video"; categoria: string; detalle?: string;
+  error: string | null; resultados: Resultados; creado?: string;
 }
 
-// Prefija URLs relativas del backend con API_BASE.
 export function mediaUrl(rel?: string): string | undefined {
   if (!rel) return undefined;
   return rel.startsWith("http") ? rel : API_BASE + rel;
 }
 
-// ─── MOCK ────────────────────────────────────────────────────────────────────
+// ─── MOCK ─────────────────────────────────────────────────────────────────────
 const MOCK_CATEGORIAS: Categorias = {
-  pintar: { titulo: "Pintar / cambiar color", emoji: "🎨", tipo_default: "imagen",
+  pintar: {
+    titulo: "Pintar / color", emoji: "🎨", tipo_default: "imagen", engine: "editar",
     campos: [
-      { clave: "superficie", label: "¿Qué superficie?", ejemplo: "la pared del fondo" },
-      { clave: "color", label: "Color y acabado", ejemplo: "verde esmeralda mate" }] },
-  muebles: { titulo: "Cambiar / mover muebles", emoji: "🛋️", tipo_default: "imagen",
-    campos: [{ clave: "accion", label: "¿Qué quieres?", ejemplo: "cambiar los sofás por unos modernos" }] },
-  restaurar: { titulo: "Restaurar (mueble / auto / fachada)", emoji: "✨", tipo_default: "video",
+      { clave: "superficie", label: "Superficie", ejemplo: "pared del fondo" },
+      { clave: "color", label: "Color", ejemplo: "verde esmeralda mate" },
+    ],
+  },
+  interior: {
+    titulo: "Diseño interior", emoji: "🛋️", tipo_default: "imagen", engine: "editar",
+    campos: [{ clave: "estilo", label: "Estilo", ejemplo: "moderno minimalista" }],
+  },
+  exterior: {
+    titulo: "Diseño exterior", emoji: "🏡", tipo_default: "imagen", engine: "editar",
+    campos: [{ clave: "estilo", label: "Estilo", ejemplo: "contemporáneo con jardín" }],
+  },
+  muebles: {
+    titulo: "Cambiar muebles", emoji: "🪑", tipo_default: "imagen", engine: "editar",
+    campos: [{ clave: "accion", label: "¿Qué quieres?", ejemplo: "sofás modernos grises" }],
+  },
+  suelo: {
+    titulo: "Suelo nuevo", emoji: "🪵", tipo_default: "imagen", engine: "editar",
+    campos: [{ clave: "material", label: "Material", ejemplo: "porcelanato blanco" }],
+  },
+  paredes: {
+    titulo: "Paredes nuevas", emoji: "🧱", tipo_default: "imagen", engine: "editar",
+    campos: [{ clave: "acabado", label: "Acabado", ejemplo: "ladrillo visto industrial" }],
+  },
+  eliminar: {
+    titulo: "Eliminar objetos", emoji: "🗑️", tipo_default: "imagen", engine: "editar",
+    campos: [{ clave: "objeto", label: "¿Qué quitar?", ejemplo: "los muebles viejos" }],
+  },
+  restaurar: {
+    titulo: "Restaurar", emoji: "✨", tipo_default: "video", engine: "editar",
     campos: [
       { clave: "objeto", label: "¿Qué restaurar?", ejemplo: "los sofás de cuero" },
-      { clave: "estilo", label: "Estilo del resultado", ejemplo: "como nuevos, cuero liso" }] },
-  remodelar: { titulo: "Remodelar el espacio completo", emoji: "🏠", tipo_default: "video",
-    campos: [{ clave: "estilo", label: "Estilo deseado", ejemplo: "cocina moderna minimalista blanca" }] },
+      { clave: "estilo", label: "Resultado esperado", ejemplo: "como nuevos, cuero liso" },
+    ],
+  },
+  remodelar: {
+    titulo: "Remodelar", emoji: "🏠", tipo_default: "video", engine: "editar",
+    campos: [{ clave: "estilo", label: "Estilo", ejemplo: "cocina moderna minimalista blanca" }],
+  },
 };
 
-const mockJobs = new Map<string, { creado: number; tipo: "imagen" | "video" }>();
+const mockJobs = new Map<string, { creado: number; tipo: "imagen" | "video"; categoria: string; detalle: string }>();
+
+const MOCK_HISTORIAL: Trabajo[] = [
+  {
+    id: "hist-1", tipo: "imagen", categoria: "pintar", status: "done", error: null,
+    detalle: "Pared terracota, intensidad media",
+    creado: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    resultados: { antes: "/mock/antes.jpg", despues: "/mock/despues.png", comparacion: "/mock/comparacion.png" },
+  },
+  {
+    id: "hist-2", tipo: "video", categoria: "remodelar", status: "done", error: null,
+    detalle: "Cocina moderna minimalista blanca",
+    creado: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    resultados: { antes: "/mock/antes.jpg", despues: "/mock/despues.png", video: "/mock/final.mp4" },
+  },
+];
 
 export async function getCategorias(): Promise<Categorias> {
   if (MOCK) return MOCK_CATEGORIAS;
@@ -52,7 +98,7 @@ export async function crearTrabajo(data: {
 }): Promise<{ id: string; status: string; tipo: string }> {
   if (MOCK) {
     const id = "mock-" + crypto.randomUUID().slice(0, 8);
-    mockJobs.set(id, { creado: Date.now(), tipo: data.tipo });
+    mockJobs.set(id, { creado: Date.now(), tipo: data.tipo, categoria: data.categoria, detalle: data.detalle });
     return { id, status: "pending", tipo: data.tipo };
   }
   const fd = new FormData();
@@ -75,8 +121,9 @@ export async function getTrabajo(id: string): Promise<Trabajo> {
     const job = mockJobs.get(id);
     const listo = job && Date.now() - job.creado > 4000;
     const tipo = job?.tipo ?? "imagen";
+    const categoria = job?.categoria ?? "pintar";
     return {
-      id, tipo, error: null,
+      id, tipo, categoria, error: null,
       status: listo ? "done" : "processing",
       resultados: listo
         ? {
@@ -93,9 +140,15 @@ export async function getTrabajo(id: string): Promise<Trabajo> {
   return r.json();
 }
 
-// En MOCK las URLs son locales (public/); en real, se prefijan con API_BASE.
+export async function getHistorial(deviceId: string, limit = 30): Promise<Trabajo[]> {
+  if (MOCK) return MOCK_HISTORIAL;
+  const r = await fetch(`${API_BASE}/trabajos?device_id=${deviceId}&limit=${limit}`);
+  if (!r.ok) return [];
+  return r.json();
+}
+
 export function resolverMedia(rel?: string): string | undefined {
   if (!rel) return undefined;
-  if (MOCK) return rel; // servido desde /public
+  if (MOCK) return rel;
   return mediaUrl(rel);
 }

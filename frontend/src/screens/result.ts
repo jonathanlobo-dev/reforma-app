@@ -1,25 +1,37 @@
 import { el, render, toast } from "../ui";
 import { resolverMedia, type Trabajo } from "../api";
 import { mostrarIntersticial } from "../ads";
-import { raiz } from "../nav";
+import { raiz, setNavVisible } from "../nav";
 import { pantallaHome } from "./home";
+import { baSlider } from "../ui/controls";
 
 export async function pantallaResult(t: Trabajo) {
+  setNavVisible(false);
+
   const antes = resolverMedia(t.resultados.antes);
   const despues = resolverMedia(t.resultados.despues);
   const comp = resolverMedia(t.resultados.comparacion);
   const video = resolverMedia(t.resultados.video);
 
-  // Lo que se comparte/guarda: el video si lo hay, si no la comparación (o el después).
   const principal = video || comp || despues;
 
   const media: Node[] = [];
   if (video) {
-    media.push(el("video", { class: "resultado-media", src: video, controls: true, autoplay: true, loop: true, muted: true, playsinline: true }));
-  } else if (antes && despues) {
     media.push(
-      el("div", { class: "ba-item" }, [el("span", { class: "ba-tag" }, ["Antes"]), el("img", { class: "resultado-media", src: antes })]),
-      el("div", { class: "ba-item" }, [el("span", { class: "ba-tag despues" }, ["Después"]), el("img", { class: "resultado-media", src: despues })]),
+      el("video", {
+        class: "resultado-media", src: video,
+        controls: true, autoplay: true, loop: true, muted: true, playsinline: true,
+      })
+    );
+  } else if (antes && despues) {
+    // Slider interactivo antes/después
+    const slider = baSlider(antes, despues);
+    media.push(
+      slider,
+      el("div", { class: "ba-tags" }, [
+        el("span", { class: "ba-tag" }, ["Antes"]),
+        el("span", { class: "ba-tag dep" }, ["Después"]),
+      ])
     );
   } else if (comp) {
     media.push(el("img", { class: "resultado-media", src: comp }));
@@ -29,7 +41,11 @@ export async function pantallaResult(t: Trabajo) {
     if (!principal) return;
     try {
       const { Share } = await import("@capacitor/share");
-      await Share.share({ title: "Reforma AI", text: "Mira cómo transformé mi espacio 👀", url: principal });
+      await Share.share({
+        title: "Reforma AI",
+        text: "Mira cómo transformé mi espacio con Reforma AI 👀",
+        url: principal,
+      });
     } catch {
       if (navigator.share) {
         try { await navigator.share({ title: "Reforma AI", url: principal }); return; } catch {}
@@ -38,8 +54,6 @@ export async function pantallaResult(t: Trabajo) {
     }
   };
 
-  // Guardar en el dispositivo. En móvil escribe a la carpeta de Documentos y avisa
-  // dónde quedó; en web dispara una descarga normal del navegador.
   const guardar = async () => {
     if (!principal) return;
     const nombre = video ? `reforma_${t.id}.mp4` : `reforma_${t.id}.png`;
@@ -49,9 +63,8 @@ export async function pantallaResult(t: Trabajo) {
       const buf = await resp.arrayBuffer();
       const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
       await Filesystem.writeFile({ path: nombre, data: b64, directory: Directory.Documents });
-      toast(`Guardado en Documentos/${nombre}`);
+      toast(`✓ Guardado en Documentos`);
     } catch {
-      // Fallback web: descarga por enlace
       try {
         const a = document.createElement("a");
         a.href = principal; a.download = nombre; a.target = "_blank";
@@ -65,7 +78,9 @@ export async function pantallaResult(t: Trabajo) {
 
   render(
     el("div", { class: "screen" }, [
-      el("div", { class: "topbar" }, [el("span", { class: "topbar-tit" }, ["Tu transformación ✨"])]),
+      el("div", { class: "topbar" }, [
+        el("span", { class: "topbar-tit" }, ["Tu transformación ✨"]),
+      ]),
       el("div", { class: "resultado-wrap" }, media),
       el("div", { class: "acciones" }, [
         el("button", { class: "btn-primario", onClick: guardar }, ["Guardar en el teléfono"]),
@@ -75,6 +90,5 @@ export async function pantallaResult(t: Trabajo) {
     ])
   );
 
-  // Tier gratis (imagen): mostrar ad al llegar al resultado.
   if (t.tipo === "imagen") mostrarIntersticial();
 }

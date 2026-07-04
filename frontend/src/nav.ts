@@ -1,6 +1,3 @@
-// Router mínimo con historial + botón atrás de Android.
-// Arregla el gesto/botón "atrás" que antes cerraba la app: ahora navega hacia
-// la pantalla anterior, y en la pantalla principal pide confirmación para salir.
 import { toast } from "./ui";
 
 type Pantalla = () => void;
@@ -50,6 +47,23 @@ async function salir() {
   } catch {
     /* en web no se puede cerrar; se ignora */
   }
+}
+
+/** Muestra u oculta la barra de navegación inferior. */
+export function setNavVisible(visible: boolean) {
+  const nav = document.getElementById("bottom-nav");
+  if (!nav) return;
+  if (visible) nav.classList.remove("hidden");
+  else nav.classList.add("hidden");
+}
+
+/** Marca el tab activo en la barra inferior. */
+export function setNavTab(tab: string) {
+  const nav = document.getElementById("bottom-nav");
+  if (!nav) return;
+  nav.querySelectorAll(".nav-tab").forEach((t) => {
+    (t as HTMLElement).classList.toggle("activo", (t as HTMLElement).dataset.tab === tab);
+  });
 }
 
 /** Conecta el botón/gesto atrás de Android a nuestra navegación. */

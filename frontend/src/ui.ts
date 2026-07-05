@@ -8,6 +8,7 @@ export function el(tag: string, props: Record<string, any> = {}, children: (Node
     else if (k === "style") node.setAttribute("style", v);
     else if (k.startsWith("on") && typeof v === "function") node.addEventListener(k.slice(2).toLowerCase(), v);
     else if (k === "html") node.innerHTML = v;
+    else if (k.includes("-")) node.setAttribute(k, v); // data-*, aria-*, etc.
     else (node as any)[k] = v;
   }
   for (const c of children) node.append(c);

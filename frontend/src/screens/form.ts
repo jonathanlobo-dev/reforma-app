@@ -176,6 +176,23 @@ export function pantallaForm(claveCat: string) {
   refrescarRef();
 }
 
+// Campo opcional de texto libre para las categorías guiadas: permite pedidos
+// extra ("cambiar la ventana por una panorámica") sin perder los selectores.
+// Pasa por el mismo filtro de contenido del backend que todo lo demás.
+function campoExtra() {
+  const ta = el("textarea", {
+    class: "field", rows: 2,
+    placeholder: "Algo más que quieras cambiar… (opcional)",
+  }) as HTMLTextAreaElement;
+  return {
+    node: ta,
+    getValue: () => {
+      const v = ta.value.trim();
+      return v ? ` Además, el usuario pide: ${v}.` : "";
+    },
+  };
+}
+
 // ── Controles específicos por categoría ─────────────────────────────────────
 function buildControles(clave: string, engine: string): { node: HTMLElement; getDetalle: () => string } {
   switch (clave) {
@@ -183,9 +200,10 @@ function buildControles(clave: string, engine: string): { node: HTMLElement; get
       const surf = superficieSelector("Pared");
       const color = colorSelector("Blanco");
       const intens = dropdown("Intensidad", INTENSIDADES, "Media");
+      const extra = campoExtra();
       return {
-        node: el("div", { class: "ctrl-stack" }, [surf.node, color.node, intens.node]),
-        getDetalle: () => `Superficie: ${surf.getValue()}. Color: ${color.getValue()}. Intensidad: ${intens.getValue()}.`,
+        node: el("div", { class: "ctrl-stack" }, [surf.node, color.node, intens.node, extra.node]),
+        getDetalle: () => `Superficie: ${surf.getValue()}. Color: ${color.getValue()}. Intensidad: ${intens.getValue()}.${extra.getValue()}`,
       };
     }
     case "interior":
@@ -193,26 +211,36 @@ function buildControles(clave: string, engine: string): { node: HTMLElement; get
       const estilo = estiloCarrusel("Moderno");
       const hab = dropdown("Habitación", HABITACIONES, "Sala de estar");
       const intens = dropdown("Intensidad", INTENSIDADES, "Media");
+      const extra = campoExtra();
       return {
-        node: el("div", { class: "ctrl-stack" }, [estilo.node, hab.node, intens.node]),
-        getDetalle: () => `Estilo: ${estilo.getValue()}. Habitación: ${hab.getValue()}. Intensidad: ${intens.getValue()}.`,
+        node: el("div", { class: "ctrl-stack" }, [estilo.node, hab.node, intens.node, extra.node]),
+        getDetalle: () => `Estilo: ${estilo.getValue()}. Habitación: ${hab.getValue()}. Intensidad: ${intens.getValue()}.${extra.getValue()}`,
       };
     }
     case "exterior": {
       const estilo = estiloCarrusel("Contemporáneo");
       const intens = dropdown("Intensidad", INTENSIDADES, "Media");
+      const extra = campoExtra();
       return {
-        node: el("div", { class: "ctrl-stack" }, [estilo.node, intens.node]),
-        getDetalle: () => `Estilo: ${estilo.getValue()}. Intensidad: ${intens.getValue()}.`,
+        node: el("div", { class: "ctrl-stack" }, [estilo.node, intens.node, extra.node]),
+        getDetalle: () => `Estilo: ${estilo.getValue()}. Intensidad: ${intens.getValue()}.${extra.getValue()}`,
       };
     }
     case "suelo": {
       const mat = dropdown("Material", MATERIALES_SUELO, "Porcelanato blanco");
-      return { node: mat.node, getDetalle: () => `Material de suelo: ${mat.getValue()}.` };
+      const extra = campoExtra();
+      return {
+        node: el("div", { class: "ctrl-stack" }, [mat.node, extra.node]),
+        getDetalle: () => `Material de suelo: ${mat.getValue()}.${extra.getValue()}`,
+      };
     }
     case "paredes": {
       const acab = dropdown("Acabado", ACABADOS_PARED, "Pintura lisa");
-      return { node: acab.node, getDetalle: () => `Acabado de pared: ${acab.getValue()}.` };
+      const extra = campoExtra();
+      return {
+        node: el("div", { class: "ctrl-stack" }, [acab.node, extra.node]),
+        getDetalle: () => `Acabado de pared: ${acab.getValue()}.${extra.getValue()}`,
+      };
     }
     default: {
       const campos = (state.categorias[clave]?.campos ?? []) as Array<{ label: string; ejemplo: string }>;

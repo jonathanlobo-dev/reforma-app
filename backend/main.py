@@ -57,13 +57,22 @@ async def crear_trabajo(
     detalle: str = Form(""),
     tipo: str = Form(""),
     foto: UploadFile = File(...),
+    mask: UploadFile | None = File(None),        # engine=inpaint (PNG b/n del pincel)
+    referencia: UploadFile | None = File(None),  # engine=estilo (foto de inspiración)
 ):
     cat = resolver(categoria)
+    engine = cat.get("engine", "editar")
     tipo = tipo or cat["tipo_default"]
     if tipo not in ("imagen", "video"):
         raise HTTPException(400, "tipo debe ser 'imagen' o 'video'")
     if foto.content_type not in EXT_OK:
         raise HTTPException(400, "La foto debe ser JPG, PNG o WEBP")
+    if engine == "inpaint" and not mask:
+        raise HTTPException(400, "Este modo necesita la máscara del pincel")
+    if engine == "estilo" and not referencia:
+        raise HTTPException(400, "Este modo necesita la foto de referencia")
+    if referencia and referencia.content_type not in EXT_OK:
+        raise HTTPException(400, "La referencia debe ser JPG, PNG o WEBP")
 
     # Control de costos ANTES de aceptar el trabajo
     ok, motivo = db.puede_generar(device_id, tipo)
@@ -76,6 +85,12 @@ async def crear_trabajo(
     destino = carpeta / f"antes{EXT_OK[foto.content_type]}"
     with open(destino, "wb") as f:
         shutil.copyfileobj(foto.file, f)
+    if mask:
+        with open(carpeta / "mask.png", "wb") as f:
+            shutil.copyfileobj(mask.file, f)
+    if referencia:
+        with open(carpeta / f"referencia{EXT_OK[referencia.content_type]}", "wb") as f:
+            shutil.copyfileobj(referencia.file, f)
 
     background.add_task(procesar, tid)
     return {"id": tid, "status": "pending", "tipo": tipo}

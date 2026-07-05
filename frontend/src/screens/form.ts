@@ -3,128 +3,188 @@ import { state } from "../state";
 import { elegirFoto } from "../foto";
 import { irA, atras, setNavVisible } from "../nav";
 import { pantallaProcessing } from "./processing";
+import { pantallaMask } from "./mask";
 import { estiloCarrusel, colorSelector, superficieSelector, dropdown } from "../ui/controls";
 
-// Opciones de habitación e intensidad
 const HABITACIONES = ["Sala de estar", "Cocina", "Dormitorio", "Baño", "Comedor", "Exterior"];
 const INTENSIDADES = ["Sutil", "Media", "Fuerte"];
 const MATERIALES_SUELO = ["Porcelanato blanco", "Madera clara", "Madera oscura", "Mármol", "Cemento", "Cerámica"];
 const ACABADOS_PARED = ["Pintura lisa", "Ladrillo visto", "Piedra natural", "Madera", "Estuco", "Panel decorativo"];
 
-// Muestras de ejemplo (usa las imágenes mock bundleadas)
-const MUESTRAS = ["/mock/antes.jpg", "/mock/despues.png", "/mock/antes.jpg", "/mock/despues.png"];
+const MUESTRAS = ["/mock/antes.jpg", "/mock/despues.png"];
+
+const HINTS: Record<string, string> = {
+  pincel: "Elige tu foto y luego pinta con el dedo la zona exacta a cambiar.",
+  estilo: "Sube tu espacio y una foto de inspiración: copiamos su estilo a tu foto.",
+  plano: "Sube la foto de un plano 2D y lo convertimos en un render 3D amueblado.",
+};
 
 export function pantallaForm(claveCat: string) {
   setNavVisible(false);
+  // La máscara solo se conserva al volver del pincel (misma categoría);
+  // al entrar a otra categoría es de otro flujo y se descarta.
+  if (state.categoriaSel !== claveCat) state.mask = undefined;
   state.categoriaSel = claveCat;
   const cat = state.categorias[claveCat];
+  const engine = cat.engine ?? "editar";
   let tipo: "imagen" | "video" = cat.tipo_default;
 
-  // ── Foto ────────────────────────────────────────────────────────────────
+  // ── Foto principal ────────────────────────────────────────────────────────
   const fotoZone = el("div", { class: "foto-zone", onClick: elegirYActualizar });
   const refrescarFoto = () => {
     fotoZone.innerHTML = "";
     if (state.foto) {
       fotoZone.append(el("img", { src: state.foto.url }));
-      fotoZone.append(el("div", { class: "foto-overlay", onClick: elegirYActualizar }, ["Cambiar foto"]));
+      fotoZone.append(el("div", { class: "foto-overlay" }, ["Cambiar foto"]));
+      if (engine === "inpaint" && state.mask) {
+        fotoZone.append(el("div", { class: "mask-badge" }, ["✓ Zona pintada"]));
+      }
     } else {
       fotoZone.append(
         el("div", { class: "foto-placeholder" }, [
-          el("span", {}, ["📷"]),
-          el("span", {}, ["Toca para elegir una foto"]),
+          el("span", {}, [engine === "plano" ? "📐" : "📷"]),
+          el("span", {}, [engine === "plano" ? "Toca para subir tu plano" : "Toca para elegir una foto"]),
         ])
       );
     }
   };
-  refrescarFoto();
 
   async function elegirYActualizar(e?: Event) {
     e?.stopPropagation();
     const f = await elegirFoto();
-    if (f) { state.foto = f; selMuestra = -1; refrescarFoto(); refrescarMuestras(); }
+    if (f) {
+      state.foto = f; state.mask = undefined; selMuestra = -1;
+      refrescarFoto(); refrescarMuestras();
+      if (engine === "inpaint") abrirPincel();
+    }
   }
 
-  // ── Muestras ─────────────────────────────────────────────────────────────
+  function abrirPincel() {
+    if (!state.foto) { toast("Primero elige una foto."); return; }
+    irA(() => pantallaMask(state.foto!.url, (mask) => {
+      state.mask = mask;
+      atras(); // volver al form con la máscara lista
+      refrescarFoto();
+    }));
+  }
+
+  // ── Muestras ──────────────────────────────────────────────────────────────
   let selMuestra = -1;
   const muestraThumbs = MUESTRAS.map((src, i) => {
     const img = el("img", { class: "muestra-thumb", src }) as HTMLImageElement;
     img.addEventListener("click", async () => {
-      selMuestra = i;
-      refrescarMuestras();
-      // Cargar la muestra como Blob para enviarlo al backend
+      selMuestra = i; refrescarMuestras();
       try {
         const r = await fetch(src);
         const blob = await r.blob();
-        const url = URL.createObjectURL(blob);
-        state.foto = { blob, url };
+        state.foto = { blob, url: URL.createObjectURL(blob) };
+        state.mask = undefined;
         refrescarFoto();
+        if (engine === "inpaint") abrirPincel();
       } catch { toast("No se pudo cargar la muestra."); }
     });
     return img;
   });
-
-  const refrescarMuestras = () => {
+  const refrescarMuestras = () =>
     muestraThumbs.forEach((t, i) => t.classList.toggle("selec", i === selMuestra));
-  };
 
-  const muestrasWrap = el("div", { class: "muestras-wrap" }, [
-    el("div", { class: "muestras-label" }, ["O prueba con una muestra"]),
-    el("div", { class: "muestras-row" }, muestraThumbs),
-  ]);
+  const muestrasWrap = engine === "plano"
+    ? el("span", {})
+    : el("div", { class: "muestras-wrap" }, [
+        el("div", { class: "muestras-label" }, ["O prueba con una muestra"]),
+        el("div", { class: "muestras-row" }, muestraThumbs),
+      ]);
+
+  // ── Referencia (engine estilo) ────────────────────────────────────────────
+  const refZone = el("div", { class: "foto-zone ref", onClick: elegirRef });
+  const refrescarRef = () => {
+    refZone.innerHTML = "";
+    if (state.referencia) {
+      refZone.append(el("img", { src: state.referencia.url }));
+      refZone.append(el("div", { class: "foto-overlay" }, ["Cambiar referencia"]));
+    } else {
+      refZone.append(
+        el("div", { class: "foto-placeholder" }, [
+          el("span", {}, ["🖼️"]),
+          el("span", {}, ["Foto de inspiración (el estilo que quieres)"]),
+        ])
+      );
+    }
+  };
+  async function elegirRef(e?: Event) {
+    e?.stopPropagation();
+    const f = await elegirFoto();
+    if (f) { state.referencia = f; refrescarRef(); }
+  }
 
   // ── Controles por categoría ───────────────────────────────────────────────
-  const controles = buildControles(claveCat);
+  const controles = buildControles(claveCat, engine);
 
-  // ── Toggle imagen/video ───────────────────────────────────────────────────
-  const toggleNode = el("div", { class: "toggle" }, [
-    el("button", {
-      class: "toggle-op" + (tipo === "imagen" ? " activo" : ""),
-      onClick(e: Event) { tipo = "imagen"; actualizarToggle(e); },
-    }, ["Imagen · gratis"]),
-    el("button", {
-      class: "toggle-op" + (tipo === "video" ? " activo" : ""),
-      onClick(e: Event) { tipo = "video"; actualizarToggle(e); },
-    }, ["Video · premium 🔒"]),
-  ]);
-  function actualizarToggle(e: Event) {
+  // ── Toggle imagen/video (solo engines que animan) ─────────────────────────
+  const permiteVideo = engine === "editar" || engine === "inpaint";
+  const toggleNode = permiteVideo
+    ? el("div", { class: "toggle" }, [
+        el("button", {
+          class: "toggle-op" + (tipo === "imagen" ? " activo" : ""),
+          onClick(e: Event) { tipo = "imagen"; marcar(e); },
+        }, ["Imagen · gratis"]),
+        el("button", {
+          class: "toggle-op" + (tipo === "video" ? " activo" : ""),
+          onClick(e: Event) { tipo = "video"; marcar(e); },
+        }, ["Video · premium 🔒"]),
+      ])
+    : el("span", {});
+  function marcar(e: Event) {
     toggleNode.querySelectorAll(".toggle-op").forEach((n) => n.classList.remove("activo"));
     (e.currentTarget as HTMLElement).classList.add("activo");
   }
 
   // ── Enviar ────────────────────────────────────────────────────────────────
   const enviar = () => {
-    if (!state.foto) { toast("Elige una foto o usa una muestra."); return; }
+    if (!state.foto) { toast(engine === "plano" ? "Sube la foto de tu plano." : "Elige una foto primero."); return; }
+    if (engine === "inpaint" && !state.mask) { toast("Pinta la zona a cambiar."); abrirPincel(); return; }
+    if (engine === "estilo" && !state.referencia) { toast("Falta la foto de inspiración."); return; }
     const detalle = controles.getDetalle();
-    if (!detalle.trim()) { toast("Completa al menos un campo."); return; }
-    irA(() => pantallaProcessing({ categoria: claveCat, detalle, tipo, foto: state.foto!.blob }));
+    if (engine !== "estilo" && engine !== "plano" && !detalle.trim()) {
+      toast("Completa al menos un campo."); return;
+    }
+    irA(() => pantallaProcessing({
+      categoria: claveCat, detalle, tipo, foto: state.foto!.blob,
+      mask: state.mask, referencia: state.referencia?.blob,
+    }));
   };
 
-  render(
-    el("div", { class: "screen" }, [
-      el("div", { class: "topbar" }, [
-        el("button", { class: "back", onClick: atras }, ["‹"]),
-        el("span", { class: "topbar-tit" }, [`${cat.emoji} ${cat.titulo}`]),
-      ]),
-      fotoZone,
-      muestrasWrap,
-      controles.node,
-      toggleNode,
-      el("button", { class: "btn-primario", onClick: enviar }, ["Transformar ✨"]),
-    ])
-  );
+  const hijos: (Node | string)[] = [
+    el("div", { class: "topbar" }, [
+      el("button", { class: "back", onClick: atras }, ["‹"]),
+      el("span", { class: "topbar-tit" }, [`${cat.emoji} ${cat.titulo}`]),
+    ]),
+  ];
+  if (HINTS[claveCat]) hijos.push(el("p", { class: "form-hint" }, [HINTS[claveCat]]));
+  hijos.push(fotoZone);
+  if (engine === "inpaint") {
+    hijos.push(el("button", { class: "btn-secundario", onClick: abrirPincel }, [
+      state.mask ? "Editar zona pintada" : "🖌️ Pintar la zona a cambiar",
+    ]));
+  }
+  if (engine === "estilo") hijos.push(refZone);
+  hijos.push(muestrasWrap, controles.node, toggleNode,
+    el("button", { class: "btn-primario", onClick: enviar }, ["Transformar ✨"]));
+
+  render(el("div", { class: "screen" }, hijos));
+  refrescarFoto();
+  refrescarRef();
 }
 
 // ── Controles específicos por categoría ─────────────────────────────────────
-function buildControles(clave: string): { node: HTMLElement; getDetalle: () => string } {
+function buildControles(clave: string, engine: string): { node: HTMLElement; getDetalle: () => string } {
   switch (clave) {
     case "pintar": {
       const surf = superficieSelector("Pared");
       const color = colorSelector("Blanco");
       const intens = dropdown("Intensidad", INTENSIDADES, "Media");
       return {
-        node: el("div", { style: "display:flex;flex-direction:column;gap:14px" }, [
-          surf.node, color.node, intens.node,
-        ]),
+        node: el("div", { class: "ctrl-stack" }, [surf.node, color.node, intens.node]),
         getDetalle: () => `Superficie: ${surf.getValue()}. Color: ${color.getValue()}. Intensidad: ${intens.getValue()}.`,
       };
     }
@@ -134,9 +194,7 @@ function buildControles(clave: string): { node: HTMLElement; getDetalle: () => s
       const hab = dropdown("Habitación", HABITACIONES, "Sala de estar");
       const intens = dropdown("Intensidad", INTENSIDADES, "Media");
       return {
-        node: el("div", { style: "display:flex;flex-direction:column;gap:14px" }, [
-          estilo.node, hab.node, intens.node,
-        ]),
+        node: el("div", { class: "ctrl-stack" }, [estilo.node, hab.node, intens.node]),
         getDetalle: () => `Estilo: ${estilo.getValue()}. Habitación: ${hab.getValue()}. Intensidad: ${intens.getValue()}.`,
       };
     }
@@ -144,47 +202,36 @@ function buildControles(clave: string): { node: HTMLElement; getDetalle: () => s
       const estilo = estiloCarrusel("Contemporáneo");
       const intens = dropdown("Intensidad", INTENSIDADES, "Media");
       return {
-        node: el("div", { style: "display:flex;flex-direction:column;gap:14px" }, [
-          estilo.node, intens.node,
-        ]),
+        node: el("div", { class: "ctrl-stack" }, [estilo.node, intens.node]),
         getDetalle: () => `Estilo: ${estilo.getValue()}. Intensidad: ${intens.getValue()}.`,
       };
     }
     case "suelo": {
       const mat = dropdown("Material", MATERIALES_SUELO, "Porcelanato blanco");
-      return {
-        node: mat.node,
-        getDetalle: () => `Material de suelo: ${mat.getValue()}.`,
-      };
+      return { node: mat.node, getDetalle: () => `Material de suelo: ${mat.getValue()}.` };
     }
     case "paredes": {
       const acab = dropdown("Acabado", ACABADOS_PARED, "Pintura lisa");
-      return {
-        node: acab.node,
-        getDetalle: () => `Acabado de pared: ${acab.getValue()}.`,
-      };
+      return { node: acab.node, getDetalle: () => `Acabado de pared: ${acab.getValue()}.` };
     }
     default: {
-      // Categorías genéricas (muebles, eliminar, restaurar, etc.): texto libre
-      const campos = (state.categorias[clave]?.campos ?? []) as Array<{ label: string; ejemplo: string; clave: string }>;
+      const campos = (state.categorias[clave]?.campos ?? []) as Array<{ label: string; ejemplo: string }>;
       if (!campos.length) {
-        const textarea = el("textarea", { class: "field", placeholder: "¿Qué quieres cambiar?", rows: 3 }) as HTMLTextAreaElement;
-        return {
-          node: textarea,
-          getDetalle: () => textarea.value.trim(),
-        };
+        // estilo / plano: sin texto
+        if (engine === "estilo" || engine === "plano") {
+          return { node: el("span", {}), getDetalle: () => "" };
+        }
+        const ta = el("textarea", { class: "field", placeholder: "¿Qué quieres cambiar?", rows: 3 }) as HTMLTextAreaElement;
+        return { node: ta, getDetalle: () => ta.value.trim() };
       }
       const inputs = campos.map((c) =>
         el("input", { class: "field", placeholder: c.ejemplo, type: "text" }) as HTMLInputElement
       );
       return {
-        node: el("div", { style: "display:flex;flex-direction:column;gap:10px" }, inputs),
+        node: el("div", { class: "ctrl-stack" }, inputs),
         getDetalle: () =>
-          campos
-            .map((c, i) => ({ label: c.label, val: inputs[i].value.trim() }))
-            .filter((p) => p.val)
-            .map((p) => `${p.label}: ${p.val}.`)
-            .join(" "),
+          campos.map((c, i) => ({ label: c.label, val: inputs[i].value.trim() }))
+            .filter((p) => p.val).map((p) => `${p.label}: ${p.val}.`).join(" "),
       };
     }
   }

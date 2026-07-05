@@ -1,39 +1,40 @@
 // Controles reutilizables de UI. Cada uno devuelve { node, getValue }.
 import { el } from "../ui";
 
-// ─── Carrusel de estilos ───────────────────────────────────────────────────
+// ─── Carrusel de estilos (con foto de preview de cada estilo) ──────────────
 const ESTILOS = [
-  { ico: "🏛️", nombre: "Clásico" },
-  { ico: "⬜", nombre: "Minimalista" },
-  { ico: "🏗️", nombre: "Industrial" },
-  { ico: "🌿", nombre: "Escandinavo" },
-  { ico: "🎭", nombre: "Contemporáneo" },
-  { ico: "🪵", nombre: "Rústico" },
-  { ico: "✨", nombre: "Moderno" },
-  { ico: "🌸", nombre: "Tradicional" },
+  { slug: "moderno", nombre: "Moderno" },
+  { slug: "minimalista", nombre: "Minimalista" },
+  { slug: "escandinavo", nombre: "Escandinavo" },
+  { slug: "industrial", nombre: "Industrial" },
+  { slug: "contemporaneo", nombre: "Contemporáneo" },
+  { slug: "rustico", nombre: "Rústico" },
+  { slug: "clasico", nombre: "Clásico" },
+  { slug: "tradicional", nombre: "Tradicional" },
 ];
 
 export function estiloCarrusel(inicial = "Moderno") {
   let sel = inicial;
-  let chips: HTMLElement[] = [];
+  let cards: HTMLElement[] = [];
 
   const row = el("div", { class: "estilo-row" });
 
   function actualizar() {
-    chips.forEach((c) => c.classList.toggle("sel", c.dataset.val === sel));
+    cards.forEach((c) => c.classList.toggle("sel", c.dataset.val === sel));
   }
 
-  chips = ESTILOS.map((e) => {
-    const chip = el("button", {
-      class: "estilo-chip",
+  cards = ESTILOS.map((e) => {
+    const card = el("button", {
+      class: "estilo-card",
       "data-val": e.nombre,
       onClick: () => { sel = e.nombre; actualizar(); },
     }, [
-      el("span", { class: "estilo-chip-ico" }, [e.ico]),
-      el("span", {}, [e.nombre]),
+      el("img", { class: "estilo-card-img", src: `/estilos/${e.slug}.webp`, loading: "lazy", alt: e.nombre }),
+      el("span", { class: "estilo-card-nombre" }, [e.nombre]),
+      el("span", { class: "estilo-card-check" }, ["✓"]),
     ]);
-    row.append(chip);
-    return chip;
+    row.append(card);
+    return card;
   });
 
   actualizar();

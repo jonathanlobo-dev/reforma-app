@@ -13,24 +13,53 @@ const SUBTITULOS: Record<string, string> = {
   eliminar: "Elimina fácilmente elementos no deseados",
   restaurar: "Devuelve la vida a muebles y superficies",
   remodelar: "Remodelación completa del espacio",
+  pincel: "Pinta sobre cualquier objeto que quieras cambiar",
+  estilo: "Usa una imagen de referencia",
+  plano: "Convierte tu plano en un render 3D",
+};
+
+// Orden de las cards en la home (las estrella primero)
+const ORDEN = ["interior", "pincel", "estilo", "remodelar", "pintar", "suelo",
+               "paredes", "muebles", "eliminar", "restaurar", "exterior", "plano"];
+
+// Portada única por categoría (fotos generadas en /estilos). "remodelar" no está
+// aquí: usa el split antes|después real de la cocina del usuario.
+const COVERS: Record<string, string> = {
+  interior: "/estilos/moderno.webp",
+  pincel: "/estilos/contemporaneo.webp",
+  estilo: "/estilos/industrial.webp",
+  pintar: "/estilos/tradicional.webp",
+  suelo: "/estilos/escandinavo.webp",
+  paredes: "/estilos/clasico.webp",
+  muebles: "/estilos/minimalista.webp",
+  eliminar: "/estilos/minimalista.webp",
+  restaurar: "/estilos/rustico.webp",
+  exterior: "/estilos/rustico.webp",
+  plano: "/estilos/clasico.webp",
 };
 
 export function pantallaHome() {
   setNavVisible(true);
   setNavTab("inicio");
 
-  const cards = Object.entries(state.categorias).map(([clave, cat]) =>
-    el("div", {
+  const claves = ORDEN.filter((c) => state.categorias[c])
+    .concat(Object.keys(state.categorias).filter((c) => !ORDEN.includes(c)));
+
+  const cards = claves.map((clave) => [clave, state.categorias[clave]] as const).map(([clave, cat]) => {
+    // Fondo: portada única, o split antes|después (remodelar = demo real)
+    const fondo = COVERS[clave]
+      ? el("div", { class: "mode-card-cover", style: `background-image:url('${COVERS[clave]}')` })
+      : el("div", { class: "mode-card-split" }, [
+          el("div", { class: "mode-card-half antes" }),
+          el("div", { class: "mode-card-half despues" }),
+          el("div", { class: "mode-card-divline" }),
+        ]);
+    return el("div", {
       class: "mode-card",
       "data-cat": clave,
       onClick: () => irA(() => pantallaForm(clave)),
     }, [
-      // Fondo dividido: mitad antes | mitad después (estilo referencia)
-      el("div", { class: "mode-card-split" }, [
-        el("div", { class: "mode-card-half antes" }),
-        el("div", { class: "mode-card-half despues" }),
-        el("div", { class: "mode-card-divline" }),
-      ]),
+      fondo,
       el("div", { class: "mode-card-grad" }),
       el("div", { class: "mode-card-body" }, [
         el("div", { class: "mode-card-txt" }, [
@@ -39,8 +68,8 @@ export function pantallaHome() {
         ]),
         el("button", { class: "mode-card-probar" }, ["Probar ›"]),
       ]),
-    ])
-  );
+    ]);
+  });
 
   render(
     el("div", { class: "screen" }, [

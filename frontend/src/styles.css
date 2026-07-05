@@ -128,9 +128,11 @@ img, video { display: block; }
 }
 .topbar-tit { font-weight: 700; font-size: 17px; flex: 1; }
 .back {
-  background: none; border: none; color: var(--acento);
-  font-size: 22px; cursor: pointer; padding: 4px 8px 4px 0;
-  line-height: 1;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--surface2); border: 1px solid var(--borde);
+  color: var(--texto); font-size: 20px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  line-height: 1; padding-bottom: 3px; flex-shrink: 0;
 }
 
 /* ─── Foto (miniatura + zona drop) ──────────────────────── */
@@ -171,20 +173,36 @@ img, video { display: block; }
 .ctrl-label { font-size: 13px; color: var(--sub); font-weight: 600; margin-bottom: 6px; }
 .ctrl-wrap { display: flex; flex-direction: column; gap: 4px; }
 
-/* Carrusel de estilos */
+/* Carrusel de estilos — cards con foto de preview */
 .estilo-row {
-  display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;
+  display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 6px;
   scrollbar-width: none;
 }
 .estilo-row::-webkit-scrollbar { display: none; }
-.estilo-chip {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  background: var(--surface2); border: 2px solid transparent;
-  border-radius: 14px; padding: 10px 12px; cursor: pointer; flex-shrink: 0;
-  font-size: 12px; font-weight: 600; color: var(--sub); transition: border-color .1s, color .1s;
+.estilo-card {
+  position: relative; width: 104px; height: 104px; flex-shrink: 0;
+  border-radius: 16px; overflow: hidden; cursor: pointer;
+  border: 2.5px solid transparent; padding: 0; background: var(--surface2);
+  transition: border-color .12s, transform .12s;
 }
-.estilo-chip.sel { border-color: var(--acento); color: var(--texto); }
-.estilo-chip-ico { font-size: 22px; }
+.estilo-card:active { transform: scale(0.95); }
+.estilo-card.sel { border-color: var(--acento); }
+.estilo-card-img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+}
+.estilo-card-nombre {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 14px 6px 6px; font-size: 11px; font-weight: 700; color: #fff;
+  background: linear-gradient(to top, rgba(0,0,0,.8), transparent);
+  text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.estilo-card-check {
+  position: absolute; top: 6px; right: 6px; width: 20px; height: 20px;
+  border-radius: 50%; background: var(--acento); color: #fff;
+  display: none; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800;
+}
+.estilo-card.sel .estilo-card-check { display: flex; }
 
 /* Paleta de colores */
 .color-btn {
@@ -284,11 +302,13 @@ textarea.field { resize: vertical; min-height: 80px; }
 
 /* ─── Botones ────────────────────────────────────────────── */
 .btn-primario {
-  background: var(--acento); color: #fff; border: none; border-radius: 16px;
+  background: linear-gradient(135deg, #7c6bff 0%, #5a4be0 100%);
+  color: #fff; border: none; border-radius: 16px;
   padding: 16px; font-size: 16px; font-weight: 700; cursor: pointer;
-  transition: background .1s, transform .08s;
+  box-shadow: 0 4px 18px rgba(109, 94, 252, .35);
+  transition: filter .1s, transform .08s;
 }
-.btn-primario:active { background: var(--acento-press); transform: scale(0.98); }
+.btn-primario:active { filter: brightness(.88); transform: scale(0.98); }
 .btn-secundario {
   background: var(--surface2); color: var(--texto); border: 1px solid var(--borde);
   border-radius: 16px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer;
@@ -381,6 +401,47 @@ textarea.field { resize: vertical; min-height: 80px; }
 @keyframes giro { to { transform: rotate(360deg); } }
 .loader-msg { color: var(--sub); margin-top: 20px; font-size: 15px; }
 .error-msg { color: var(--error); font-size: 15px; margin-bottom: 12px; }
+
+/* ─── Pantalla de pincel / máscara ──────────────────────── */
+.mask-canvas {
+  width: 100%; border-radius: var(--radio); background: var(--surface);
+  display: block; cursor: crosshair;
+}
+.mask-hint, .form-hint {
+  color: var(--sub); font-size: 13.5px; line-height: 1.45; margin-top: -6px;
+}
+.mask-tools { display: flex; gap: 8px; }
+.tool-btn {
+  flex: 1; padding: 12px 8px; border-radius: 14px;
+  border: 1px solid var(--borde); background: var(--surface2);
+  color: var(--sub); font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: border-color .1s, color .1s;
+}
+.tool-btn.activo { border-color: var(--acento); color: var(--texto); background: rgba(109,94,252,.12); }
+.tool-btn:disabled { opacity: .4; cursor: default; }
+.mask-slider {
+  width: 100%; accent-color: var(--acento); height: 32px;
+}
+.mask-badge {
+  position: absolute; top: 10px; left: 10px;
+  background: var(--exito); color: #06210f; font-size: 12px; font-weight: 800;
+  padding: 6px 12px; border-radius: 20px;
+}
+.foto-zone.ref { min-height: 140px; }
+.ctrl-stack { display: flex; flex-direction: column; gap: 14px; }
+
+/* ─── Cover full-bleed en cards de la home ───────────────── */
+.mode-card-cover {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+}
+
+/* ─── Animación de entrada de pantallas ─────────────────── */
+@keyframes screen-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.screen { animation: screen-in .22s ease-out; }
 
 /* ─── Toast ──────────────────────────────────────────────── */
 .toast {

@@ -24,9 +24,11 @@ USA_POSTGRES = bool(DATABASE_URL)
 USA_SUPABASE = bool(SUPABASE_URL and SUPABASE_SERVICE_KEY)
 
 # ─── Modelos (validados en shorts-pipeline) ──────────────────────────────────
-GROQ_MODEL  = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
-EDIT_MODEL  = os.getenv("EDIT_MODEL", "black-forest-labs/flux-kontext-pro")  # edita preservando
-VIDEO_MODEL = os.getenv("VIDEO_MODEL", "bytedance/seedance-1.5-pro")         # anima (last_frame)
+GROQ_MODEL   = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+EDIT_MODEL   = os.getenv("EDIT_MODEL", "black-forest-labs/flux-kontext-pro")  # edita preservando
+VIDEO_MODEL  = os.getenv("VIDEO_MODEL", "bytedance/seedance-1.5-pro")         # anima (last_frame)
+INPAINT_MODEL = os.getenv("INPAINT_MODEL", "black-forest-labs/flux-fill-pro")  # pincel/máscara
+STYLE_MODEL   = os.getenv("STYLE_MODEL", "black-forest-labs/flux-2-pro")       # transferencia estilo
 
 CLIP_SECONDS = int(os.getenv("CLIP_SECONDS", "5"))
 RESOLUTION   = os.getenv("RESOLUTION", "720p")

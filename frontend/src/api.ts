@@ -66,6 +66,18 @@ const MOCK_CATEGORIAS: Categorias = {
     titulo: "Remodelar", emoji: "🏠", tipo_default: "video", engine: "editar",
     campos: [{ clave: "estilo", label: "Estilo", ejemplo: "cocina moderna minimalista blanca" }],
   },
+  pincel: {
+    titulo: "Pincel mágico", emoji: "🖌️", tipo_default: "imagen", engine: "inpaint",
+    campos: [{ clave: "cambio", label: "¿Qué hacer en la zona pintada?", ejemplo: "pintar de azul marino" }],
+  },
+  estilo: {
+    titulo: "Estilo de referencia", emoji: "🖼️", tipo_default: "imagen", engine: "estilo",
+    campos: [],
+  },
+  plano: {
+    titulo: "Plano 2D → 3D", emoji: "📐", tipo_default: "imagen", engine: "plano",
+    campos: [],
+  },
 };
 
 const mockJobs = new Map<string, { creado: number; tipo: "imagen" | "video"; categoria: string; detalle: string }>();
@@ -95,6 +107,7 @@ export async function getCategorias(): Promise<Categorias> {
 export async function crearTrabajo(data: {
   deviceId: string; categoria: string; detalle: string;
   tipo: "imagen" | "video"; foto: Blob;
+  mask?: Blob; referencia?: Blob;
 }): Promise<{ id: string; status: string; tipo: string }> {
   if (MOCK) {
     const id = "mock-" + crypto.randomUUID().slice(0, 8);
@@ -107,6 +120,8 @@ export async function crearTrabajo(data: {
   fd.append("detalle", data.detalle);
   fd.append("tipo", data.tipo);
   fd.append("foto", data.foto, "foto.jpg");
+  if (data.mask) fd.append("mask", data.mask, "mask.png");
+  if (data.referencia) fd.append("referencia", data.referencia, "referencia.jpg");
   const r = await fetch(`${API_BASE}/trabajos`, { method: "POST", body: fd });
   if (r.status === 429) {
     const j = await r.json().catch(() => ({ detail: "Límite alcanzado." }));

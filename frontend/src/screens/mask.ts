@@ -43,15 +43,19 @@ export function pantallaMask(fotoUrl: string, onListo: (mask: Blob) => void) {
     c.globalCompositeOperation = "source-over";
   }
 
-  // La pintura vive en un canvas apart para poder componer con alpha limpio.
-  // Simplificación: repintamos todo en cada frame (los trazos son pocos).
+  // La pintura vive en una capa aparte para componer con alpha limpio.
+  // La capa se REUTILIZA entre frames: crear un canvas por cada pointermove
+  // producía lag y presión de GC en teléfonos de gama baja.
+  const capa = document.createElement("canvas");
+  const cctx = capa.getContext("2d")!;
   function redibujarConCapa() {
     if (!img.complete || !img.naturalWidth) return;
+    if (capa.width !== canvas.width || capa.height !== canvas.height) {
+      capa.width = canvas.width; capa.height = canvas.height;
+    }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    const capa = document.createElement("canvas");
-    capa.width = canvas.width; capa.height = canvas.height;
-    const cctx = capa.getContext("2d")!;
+    cctx.clearRect(0, 0, capa.width, capa.height);
     pintarTrazos(cctx, 1, "#ff3b5c");
     ctx.globalAlpha = 0.55;
     ctx.drawImage(capa, 0, 0);

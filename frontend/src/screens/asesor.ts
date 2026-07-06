@@ -67,8 +67,11 @@ export function pantallaAsesor(contexto?: string) {
     hilo.scrollTop = hilo.scrollHeight;
     try {
       const deviceId = await getDeviceId();
-      const resp = await enviarAsesor(deviceId, historia, contextoActual);
+      // Solo los últimos 12 turnos viajan por red (el backend recorta igual);
+      // y el historial en memoria se acota para sesiones largas.
+      const resp = await enviarAsesor(deviceId, historia.slice(-12), contextoActual);
       historia.push({ role: "assistant", content: resp });
+      if (historia.length > 60) historia.splice(0, historia.length - 60);
     } catch (e) {
       historia.pop(); // no contar el mensaje fallido
       toast((e as Error).message);

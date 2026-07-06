@@ -101,7 +101,7 @@ async def crear_trabajo(
 
 @app.get("/trabajos")
 def historial(device_id: str, limit: int = 30):
-    trabajos = db.listar(device_id, min(limit, 50))
+    trabajos = db.listar(device_id, max(1, min(limit, 50)))
     return [
         {
             "id": t["id"], "status": t["status"], "tipo": t["tipo"],

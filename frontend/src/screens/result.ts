@@ -5,7 +5,7 @@ import { raiz, irA, setNavVisible } from "../nav";
 import { pantallaHome } from "./home";
 import { pantallaAsesor } from "./asesor";
 import { baSlider } from "../ui/controls";
-import { state } from "../state";
+import { state, setFoto } from "../state";
 
 export async function pantallaResult(t: Trabajo) {
   setNavVisible(false);
@@ -116,7 +116,7 @@ export async function pantallaResult(t: Trabajo) {
     try {
       const r = await fetch(src);
       const blob = await r.blob();
-      state.foto = { blob, url: URL.createObjectURL(blob) };
+      setFoto({ blob, url: URL.createObjectURL(blob) });
       state.mask = undefined;
       raiz(pantallaHome);
       toast("Tu resultado quedó cargado como foto — elige un modo ✏️");

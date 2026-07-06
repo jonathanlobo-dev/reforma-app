@@ -10,3 +10,19 @@ export interface AppState {
 }
 
 export const state: AppState = { categorias: {} };
+
+// Reemplazan la foto/referencia liberando el blob URL anterior (las fotos de
+// cámara pesan varios MB y sin revoke quedan retenidas toda la sesión).
+export function setFoto(f?: { blob: Blob; url: string }) {
+  if (state.foto?.url.startsWith("blob:") && state.foto.url !== f?.url) {
+    URL.revokeObjectURL(state.foto.url);
+  }
+  state.foto = f;
+}
+
+export function setReferencia(f?: { blob: Blob; url: string }) {
+  if (state.referencia?.url.startsWith("blob:") && state.referencia.url !== f?.url) {
+    URL.revokeObjectURL(state.referencia.url);
+  }
+  state.referencia = f;
+}

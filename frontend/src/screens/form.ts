@@ -1,5 +1,5 @@
 import { el, render, toast } from "../ui";
-import { state } from "../state";
+import { state, setFoto, setReferencia } from "../state";
 import { elegirFoto } from "../foto";
 import { irA, atras, setNavVisible } from "../nav";
 import { pantallaProcessing } from "./processing";
@@ -53,7 +53,7 @@ export function pantallaForm(claveCat: string) {
     e?.stopPropagation();
     const f = await elegirFoto();
     if (f) {
-      state.foto = f; state.mask = undefined; selMuestra = -1;
+      setFoto(f); state.mask = undefined; selMuestra = -1;
       refrescarFoto(); refrescarMuestras();
       if (engine === "inpaint") abrirPincel();
     }
@@ -77,7 +77,7 @@ export function pantallaForm(claveCat: string) {
       try {
         const r = await fetch(src);
         const blob = await r.blob();
-        state.foto = { blob, url: URL.createObjectURL(blob) };
+        setFoto({ blob, url: URL.createObjectURL(blob) });
         state.mask = undefined;
         refrescarFoto();
         if (engine === "inpaint") abrirPincel();
@@ -114,7 +114,7 @@ export function pantallaForm(claveCat: string) {
   async function elegirRef(e?: Event) {
     e?.stopPropagation();
     const f = await elegirFoto();
-    if (f) { state.referencia = f; refrescarRef(); }
+    if (f) { setReferencia(f); refrescarRef(); }
   }
 
   // ── Controles por categoría ───────────────────────────────────────────────

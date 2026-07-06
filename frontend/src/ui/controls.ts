@@ -211,13 +211,15 @@ export function baSlider(urlAntes: string, urlDespues: string): HTMLElement {
   wrap.append(imgDespues, clip, divider);
 
   // La imagen dentro del clip debe tener el ancho del wrapper, no del clip.
+  // ResizeObserver observa al propio wrap: muere con el nodo (sin fugas).
   function syncClipImgWidth() {
     imgAntes.style.width = wrap.offsetWidth + "px";
   }
   imgDespues.addEventListener("load", syncClipImgWidth);
-  window.addEventListener("resize", syncClipImgWidth);
-  setTimeout(syncClipImgWidth, 0);
+  new ResizeObserver(syncClipImgWidth).observe(wrap);
 
+  // Pointer Events con captura: el drag sigue fuera del elemento sin
+  // necesidad de listeners en window (que quedaban vivos para siempre).
   let dragging = false;
 
   function setPos(pct: number) {
@@ -226,18 +228,19 @@ export function baSlider(urlAntes: string, urlDespues: string): HTMLElement {
     divider.style.left = `${clamped}%`;
   }
 
-  function fromEvent(e: MouseEvent | TouchEvent): number {
+  function fromEvent(e: PointerEvent): number {
     const rect = wrap.getBoundingClientRect();
-    const clientX = e instanceof MouseEvent ? e.clientX : e.touches[0].clientX;
-    return ((clientX - rect.left) / rect.width) * 100;
+    return ((e.clientX - rect.left) / rect.width) * 100;
   }
 
-  wrap.addEventListener("mousedown", (e) => { dragging = true; setPos(fromEvent(e)); });
-  wrap.addEventListener("touchstart", (e) => { dragging = true; setPos(fromEvent(e)); }, { passive: true });
-  window.addEventListener("mousemove", (e) => { if (dragging) setPos(fromEvent(e)); });
-  window.addEventListener("touchmove", (e) => { if (dragging) setPos(fromEvent(e as TouchEvent)); }, { passive: true });
-  window.addEventListener("mouseup", () => { dragging = false; });
-  window.addEventListener("touchend", () => { dragging = false; });
+  wrap.addEventListener("pointerdown", (e) => {
+    dragging = true;
+    try { wrap.setPointerCapture(e.pointerId); } catch { /* pointer ya inactivo */ }
+    setPos(fromEvent(e));
+  });
+  wrap.addEventListener("pointermove", (e) => { if (dragging) setPos(fromEvent(e)); });
+  wrap.addEventListener("pointerup", () => { dragging = false; });
+  wrap.addEventListener("pointercancel", () => { dragging = false; });
 
   return wrap;
 }

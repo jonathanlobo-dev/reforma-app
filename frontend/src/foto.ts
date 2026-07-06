@@ -27,6 +27,8 @@ export async function elegirFoto(): Promise<{ blob: Blob; url: string } | null> 
       if (!file) return resolve(null);
       resolve({ blob: file, url: URL.createObjectURL(file) });
     };
+    // Sin esto, cancelar el diálogo dejaba la promesa colgada para siempre.
+    input.addEventListener("cancel", () => resolve(null));
     input.click();
   });
 }

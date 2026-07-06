@@ -4,6 +4,7 @@ import { getDeviceId } from "../device";
 import { irA, setNavVisible, setNavTab } from "../nav";
 import { pantallaResult } from "./result";
 import { icon } from "../ui/icons";
+import { generarReporte } from "../ui/reporte";
 
 function formatFecha(v?: string | number): string {
   if (v === undefined || v === null || v === "") return "";
@@ -104,6 +105,17 @@ export async function pantallaRecientes() {
           ]);
         }));
 
+    // Con un proyecto filtrado: botón de reporte PDF (feature para remodeladores)
+    const btnReporte = filtro && visibles.length
+      ? el("button", {
+          class: "btn-secundario btn-ico", style: "margin-top:4px",
+          onClick: async () => {
+            try { await generarReporte(filtro!, visibles); }
+            catch (e) { console.error(e); toast("No se pudo generar el reporte."); }
+          },
+        }, [icon("fileText", 16), `Reporte PDF de "${filtro}"`])
+      : el("span", {});
+
     render(
       el("div", { class: "screen" }, [
         el("div", { class: "hist-header" }, [
@@ -111,6 +123,7 @@ export async function pantallaRecientes() {
           el("p", { class: "sub" }, ["Tus transformaciones anteriores"]),
         ]),
         chips,
+        btnReporte,
         cuerpo,
       ])
     );

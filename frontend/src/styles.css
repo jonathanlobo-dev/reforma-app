@@ -59,8 +59,8 @@ img, video { display: block; }
 }
 .nav-tab.activo { color: var(--texto); }
 .nav-icon {
-  font-size: 20px; line-height: 1;
-  padding: 5px 18px; border-radius: 20px; transition: background .15s;
+  line-height: 1;
+  padding: 5px 14px; border-radius: 20px; transition: background .15s;
 }
 .nav-tab.activo .nav-icon { background: var(--acento); }
 .nav-label { font-size: 11px; font-weight: 600; letter-spacing: .3px; }
@@ -413,7 +413,11 @@ textarea.field { resize: vertical; min-height: 80px; }
   to { opacity: 1; transform: scale(1); }
 }
 @keyframes giro { to { transform: rotate(360deg); } }
-.loader-msg { color: var(--sub); margin-top: 20px; font-size: 15px; }
+.loader-msg {
+  color: var(--texto); margin-top: 20px; font-size: 15.5px; font-weight: 600;
+  transition: opacity .3s;
+}
+.loader-sub { color: var(--sub); margin-top: 6px; font-size: 13px; }
 .error-msg { color: var(--error); font-size: 15px; margin-bottom: 12px; }
 
 /* ─── Pantalla de pincel / máscara ──────────────────────── */
@@ -527,6 +531,41 @@ textarea.field { resize: vertical; min-height: 80px; }
 .aj-p { color: var(--texto); font-size: 14px; line-height: 1.55; margin-bottom: 10px; }
 .aj-ul { margin: 0 0 10px 18px; color: var(--texto); font-size: 13.5px; line-height: 1.6; }
 .aj-ul li { margin-bottom: 6px; }
+
+/* ─── Consejos de foto (wizard) ─────────────────────────── */
+.consejos-sheet { max-height: 85dvh; overflow-y: auto; }
+.consejos-link { align-self: flex-start; margin-top: -8px; }
+.consejo-txt { color: var(--sub); font-size: 13.5px; line-height: 1.5; margin-bottom: 12px; }
+.consejo-grupo {
+  font-size: 13px; font-weight: 800; margin: 10px 0 8px;
+  letter-spacing: .3px;
+}
+.consejo-grupo.mal { color: var(--error); }
+.consejo-grupo.bien { color: var(--exito); }
+.consejo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.consejo-item { position: relative; border-radius: 12px; overflow: hidden; }
+.consejo-item img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; }
+.consejo-tag {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 6px 8px; font-size: 11px; font-weight: 700; color: #fff;
+  text-align: center;
+}
+.consejo-tag.mal { background: rgba(200, 40, 60, .85); }
+.consejo-tag.bien { background: rgba(30, 150, 80, .85); }
+
+/* ─── Inspiración ───────────────────────────────────────── */
+.inspo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.inspo-card {
+  border-radius: 16px; overflow: hidden; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--borde);
+  transition: transform .1s;
+}
+.inspo-card:active { transform: scale(.97); }
+.inspo-img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+.inspo-info { padding: 8px 10px 10px; }
+.inspo-titulo { font-size: 13px; font-weight: 700; }
+.inspo-amb { font-size: 11px; color: var(--sub); margin-top: 1px; }
+.inspo-detalle-img { width: 100%; border-radius: 14px; display: block; }
 
 /* ─── Chat "El Maestro" ─────────────────────────────────── */
 .chat-screen {

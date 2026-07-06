@@ -43,6 +43,13 @@ VIDEOS_GLOBAL_DIA   = int(os.getenv("VIDEOS_GLOBAL_DIA", "50"))
 # Mensajes/día al asesor por dispositivo (Groq free tier aguanta de sobra)
 ASESOR_MENSAJES_DIA = int(os.getenv("ASESOR_MENSAJES_DIA", "30"))
 
+# Topes por IP: segunda línea de defensa (el device_id lo genera el cliente y
+# es falsificable con curl). Más holgados que los de device porque una IP de
+# CGNAT/universidad puede agrupar a muchos usuarios legítimos.
+IMAGENES_IP_DIA = int(os.getenv("IMAGENES_IP_DIA", "20"))
+VIDEOS_IP_DIA   = int(os.getenv("VIDEOS_IP_DIA", "4"))
+CHATS_IP_DIA    = int(os.getenv("CHATS_IP_DIA", "80"))
+
 # ─── Rutas ───────────────────────────────────────────────────────────────────
 DATA   = ROOT / "data"
 DB_PATH = DATA / "reforma.db"

@@ -10,7 +10,7 @@ Endpoints:
 import shutil
 from pathlib import Path
 
-from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -28,6 +28,14 @@ app.mount("/media", StaticFiles(directory=config.DATA), name="media")
 db.init()
 
 EXT_OK = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp"}
+
+
+def _ip_cliente(request: Request) -> str:
+    """IP real detrás del proxy de Render (primer valor de X-Forwarded-For)."""
+    xff = request.headers.get("x-forwarded-for", "")
+    if xff:
+        return xff.split(",")[0].strip()
+    return request.client.host if request.client else ""
 
 
 @app.get("/health")
@@ -53,6 +61,7 @@ def _urls(trabajo: dict) -> dict:
 
 @app.post("/trabajos")
 async def crear_trabajo(
+    request: Request,
     background: BackgroundTasks,
     device_id: str = Form(...),
     categoria: str = Form(...),
@@ -77,10 +86,14 @@ async def crear_trabajo(
     if referencia and referencia.content_type not in EXT_OK:
         raise HTTPException(400, "La referencia debe ser JPG, PNG o WEBP")
 
-    # Control de costos ANTES de aceptar el trabajo
+    # Control de costos ANTES de aceptar el trabajo (device + IP)
     ok, motivo = db.puede_generar(device_id, tipo)
     if not ok:
         raise HTTPException(429, motivo)
+    ip = _ip_cliente(request)
+    if not db.puede_ip(ip, "imagenes" if tipo == "imagen" else "videos"):
+        raise HTTPException(429, "Se alcanzó el límite diario desde esta red. Intenta mañana.")
+    db.registrar_ip(ip, "imagenes" if tipo == "imagen" else "videos")
 
     tid = db.crear_trabajo(device_id, categoria, detalle, tipo, proyecto.strip()[:60])
     carpeta = config.DATA / tid
@@ -159,12 +172,16 @@ class AsesorReq(BaseModel):
 
 
 @app.post("/asesor")
-def asesor(req: AsesorReq):
+def asesor(req: AsesorReq, request: Request):
     if not req.mensajes or req.mensajes[-1].role != "user":
         raise HTTPException(400, "Falta el mensaje del usuario")
     ok, motivo = db.puede_chatear(req.device_id)
     if not ok:
         raise HTTPException(429, motivo)
+    ip = _ip_cliente(request)
+    if not db.puede_ip(ip, "chats"):
+        raise HTTPException(429, "Se alcanzó el límite diario desde esta red. Intenta mañana.")
+    db.registrar_ip(ip, "chats")
 
     system = pipeline.ASESOR_SYSTEM
     if req.contexto:

@@ -49,6 +49,9 @@ _TABLAS = [
     """CREATE TABLE IF NOT EXISTS feedback (
         trabajo_id TEXT PRIMARY KEY, voto INTEGER NOT NULL,
         creado DOUBLE PRECISION)""",
+    """CREATE TABLE IF NOT EXISTS uso_ip (
+        ip TEXT, fecha TEXT, imagenes INTEGER DEFAULT 0, videos INTEGER DEFAULT 0,
+        chats INTEGER DEFAULT 0, PRIMARY KEY (ip, fecha))""",
 ]
 
 # Columnas añadidas después del despliegue inicial: (tabla, columna, tipo)
@@ -120,6 +123,39 @@ def puede_chatear(device_id: str) -> tuple[bool, str]:
         if chats >= config.ASESOR_MENSAJES_DIA:
             return False, f"El Maestro descansa: llegaste a los {config.ASESOR_MENSAJES_DIA} mensajes de hoy. Vuelve mañana."
     return True, ""
+
+
+# ─── Tope por IP (defensa contra device_id falsificados) ────────────────────
+
+_TOPES_IP = {"imagenes": ("IMAGENES_IP_DIA",), "videos": ("VIDEOS_IP_DIA",),
+             "chats": ("CHATS_IP_DIA",)}
+
+
+def puede_ip(ip: str, col: str) -> bool:
+    """col: 'imagenes' | 'videos' | 'chats'."""
+    if not ip:
+        return True
+    tope = getattr(config, _TOPES_IP[col][0])
+    hoy = date.today().isoformat()
+    with _con() as con:
+        cur = con.cursor()
+        cur.execute(_q(f"SELECT {col} FROM uso_ip WHERE ip={PH} AND fecha={PH}"), (ip, hoy))
+        fila = cur.fetchone()
+        usado = (fila[col] if fila and fila[col] is not None else 0)
+        return usado < tope
+
+
+def registrar_ip(ip: str, col: str) -> None:
+    if not ip:
+        return
+    hoy = date.today().isoformat()
+    with _con() as con:
+        cur = con.cursor()
+        cur.execute(_q(
+            f"INSERT INTO uso_ip (ip, fecha, {col}) VALUES ({PH},{PH},1) "
+            f"ON CONFLICT(ip, fecha) DO UPDATE SET {col}=COALESCE(uso_ip.{col},0)+1"),
+            (ip, hoy))
+        con.commit()
 
 
 def registrar_chat(device_id: str) -> None:

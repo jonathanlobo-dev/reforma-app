@@ -142,6 +142,7 @@ export async function getTrabajo(id: string): Promise<Trabajo> {
     const categoria = job?.categoria ?? "pintar";
     return {
       id, tipo, categoria, error: null,
+      detalle: job?.detalle ?? "",
       status: listo ? "done" : "processing",
       resultados: listo
         ? {

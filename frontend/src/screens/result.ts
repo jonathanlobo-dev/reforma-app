@@ -7,6 +7,7 @@ import { pantallaAsesor } from "./asesor";
 import { baSlider } from "../ui/controls";
 import { state, setFoto } from "../state";
 import { icon } from "../ui/icons";
+import { pantallaProcessing } from "./processing";
 
 function blobABase64(blob: Blob): Promise<string> {
   // FileReader aguanta archivos grandes (btoa con spread revienta el stack)
@@ -129,6 +130,24 @@ export async function pantallaResult(t: Trabajo) {
     toast(v === 1 ? "¡Gracias!" : "Gracias — nos ayuda a mejorar.");
   }
 
+  // Otra versión: misma foto y mismo pedido — los modelos son no-deterministas,
+  // a veces la segunda sale mejor. Solo engines sin archivos extra (mask/ref).
+  const engine = state.categorias[t.categoria]?.engine ?? "editar";
+  const puedeReintentar = antes && t.detalle !== undefined && (engine === "editar" || engine === "plano");
+  const otraVersion = async () => {
+    if (!antes) return;
+    if (!confirm("Generará una nueva versión del mismo pedido (consume 1 generación del día). ¿Continuar?")) return;
+    try {
+      const blob = await (await fetch(antes)).blob();
+      irA(() => pantallaProcessing({
+        categoria: t.categoria, detalle: t.detalle || "", tipo: t.tipo,
+        foto: blob, proyecto: t.proyecto || undefined,
+      }));
+    } catch {
+      toast("No se pudo relanzar la generación.");
+    }
+  };
+
   // Seguir editando: el resultado pasa a ser la foto de partida de otro modo
   const seguirEditando = async () => {
     const src = despues || comp;
@@ -156,6 +175,9 @@ export async function pantallaResult(t: Trabajo) {
         el("button", { class: "btn-primario btn-ico", onClick: guardar }, [icon("download", 18), "Guardar en el teléfono"]),
         ...(t.tipo === "imagen"
           ? [el("button", { class: "btn-secundario btn-ico", onClick: seguirEditando }, [icon("pencil", 16), "Seguir editando este resultado"])]
+          : []),
+        ...(puedeReintentar
+          ? [el("button", { class: "btn-secundario btn-ico", onClick: otraVersion }, [icon("refresh", 16), "Otra versión"])]
           : []),
         el("button", { class: "btn-secundario btn-ico", onClick: compartir }, [icon("share", 16), "Compartir"]),
         el("button", { class: "btn-secundario btn-ico", onClick: () => {

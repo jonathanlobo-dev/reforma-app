@@ -6,6 +6,7 @@ import { pantallaProcessing } from "./processing";
 import { pantallaMask } from "./mask";
 import { estiloCarrusel, colorSelector, superficieSelector, dropdown } from "../ui/controls";
 import { icon } from "../ui/icons";
+import { abrirConsejos, consejosVistos } from "../ui/consejos";
 
 const HABITACIONES = ["Sala de estar", "Cocina", "Dormitorio", "Baño", "Comedor", "Exterior"];
 const INTENSIDADES = ["Sutil", "Media", "Fuerte"];
@@ -185,6 +186,12 @@ export function pantallaForm(claveCat: string) {
   ];
   if (HINTS[claveCat]) hijos.push(el("p", { class: "form-hint" }, [HINTS[claveCat]]));
   hijos.push(fotoZone);
+  // Consejos de foto (no aplican al plano 2D)
+  if (engine !== "plano") {
+    hijos.push(el("button", { class: "btn-texto btn-ico consejos-link", onClick: () => abrirConsejos() },
+      [icon("info", 15), "Consejos para tu foto"]));
+    if (!consejosVistos()) setTimeout(() => abrirConsejos(), 350);
+  }
   if (engine === "inpaint") {
     hijos.push(el("button", { class: "btn-secundario btn-ico", onClick: abrirPincel }, [
       icon("brush", 17),

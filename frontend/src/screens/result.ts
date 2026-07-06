@@ -1,10 +1,11 @@
 import { el, render, toast } from "../ui";
-import { resolverMedia, type Trabajo } from "../api";
+import { resolverMedia, votarTrabajo, type Trabajo } from "../api";
 import { mostrarIntersticial } from "../ads";
 import { raiz, irA, setNavVisible } from "../nav";
 import { pantallaHome } from "./home";
 import { pantallaAsesor } from "./asesor";
 import { baSlider } from "../ui/controls";
+import { state } from "../state";
 
 export async function pantallaResult(t: Trabajo) {
   setNavVisible(false);
@@ -92,14 +93,50 @@ export async function pantallaResult(t: Trabajo) {
     }
   };
 
+  // 👍/👎 — feedback simple para saber qué categorías funcionan
+  let votado = false;
+  const votos = el("div", { class: "votos" }, [
+    el("span", { class: "votos-txt" }, ["¿Qué te pareció?"]),
+    el("button", { class: "voto-btn", onClick: (e: Event) => vota(1, e) }, ["👍"]),
+    el("button", { class: "voto-btn", onClick: (e: Event) => vota(-1, e) }, ["👎"]),
+  ]);
+  function vota(v: 1 | -1, e: Event) {
+    if (votado) return;
+    votado = true;
+    (e.currentTarget as HTMLElement).classList.add("sel");
+    votos.querySelectorAll(".voto-btn").forEach((b) => (b as HTMLButtonElement).disabled = true);
+    votarTrabajo(t.id, v);
+    toast(v === 1 ? "¡Gracias! 🙌" : "Gracias — nos ayuda a mejorar.");
+  }
+
+  // Seguir editando: el resultado pasa a ser la foto de partida de otro modo
+  const seguirEditando = async () => {
+    const src = despues || comp;
+    if (!src) return;
+    try {
+      const r = await fetch(src);
+      const blob = await r.blob();
+      state.foto = { blob, url: URL.createObjectURL(blob) };
+      state.mask = undefined;
+      raiz(pantallaHome);
+      toast("Tu resultado quedó cargado como foto — elige un modo ✏️");
+    } catch {
+      toast("No se pudo cargar el resultado para editar.");
+    }
+  };
+
   render(
     el("div", { class: "screen" }, [
       el("div", { class: "topbar" }, [
         el("span", { class: "topbar-tit" }, ["Tu transformación ✨"]),
       ]),
       el("div", { class: "resultado-wrap" }, media),
+      votos,
       el("div", { class: "acciones" }, [
         el("button", { class: "btn-primario", onClick: guardar }, ["Guardar en el teléfono"]),
+        ...(t.tipo === "imagen"
+          ? [el("button", { class: "btn-secundario", onClick: seguirEditando }, ["✏️ Seguir editando este resultado"])]
+          : []),
         el("button", { class: "btn-secundario", onClick: compartir }, ["Compartir"]),
         el("button", { class: "btn-secundario", onClick: () => {
           const ctx = [t.categoria, t.detalle].filter(Boolean).join(": ");

@@ -14,6 +14,7 @@ export interface Resultados {
 export interface Trabajo {
   id: string; status: "pending" | "processing" | "done" | "error";
   tipo: "imagen" | "video"; categoria: string; detalle?: string;
+  proyecto?: string | null;
   error: string | null; resultados: Resultados; creado?: string | number;
 }
 
@@ -85,6 +86,7 @@ const mockJobs = new Map<string, { creado: number; tipo: "imagen" | "video"; cat
 const MOCK_HISTORIAL: Trabajo[] = [
   {
     id: "hist-1", tipo: "imagen", categoria: "pintar", status: "done", error: null,
+    proyecto: "Casa de mamá",
     detalle: "Pared terracota, intensidad media",
     creado: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
     resultados: { antes: "/mock/antes.jpg", despues: "/mock/despues.png", comparacion: "/mock/comparacion.png" },
@@ -107,7 +109,7 @@ export async function getCategorias(): Promise<Categorias> {
 export async function crearTrabajo(data: {
   deviceId: string; categoria: string; detalle: string;
   tipo: "imagen" | "video"; foto: Blob;
-  mask?: Blob; referencia?: Blob;
+  mask?: Blob; referencia?: Blob; proyecto?: string;
 }): Promise<{ id: string; status: string; tipo: string }> {
   if (MOCK) {
     const id = "mock-" + crypto.randomUUID().slice(0, 8);
@@ -122,6 +124,7 @@ export async function crearTrabajo(data: {
   fd.append("foto", data.foto, "foto.jpg");
   if (data.mask) fd.append("mask", data.mask, "mask.png");
   if (data.referencia) fd.append("referencia", data.referencia, "referencia.jpg");
+  if (data.proyecto) fd.append("proyecto", data.proyecto);
   const r = await fetch(`${API_BASE}/trabajos`, { method: "POST", body: fd });
   if (r.status === 429) {
     const j = await r.json().catch(() => ({ detail: "Límite alcanzado." }));
@@ -160,6 +163,21 @@ export async function getHistorial(deviceId: string, limit = 30): Promise<Trabaj
   const r = await fetch(`${API_BASE}/trabajos?device_id=${deviceId}&limit=${limit}`);
   if (!r.ok) return [];
   return r.json();
+}
+
+export async function borrarTrabajo(id: string, deviceId: string): Promise<boolean> {
+  if (MOCK) return true;
+  const r = await fetch(`${API_BASE}/trabajos/${id}?device_id=${deviceId}`, { method: "DELETE" });
+  return r.ok;
+}
+
+export async function votarTrabajo(id: string, voto: 1 | -1): Promise<void> {
+  if (MOCK) return;
+  await fetch(`${API_BASE}/feedback`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ trabajo_id: id, voto }),
+  }).catch(() => {});
 }
 
 // ─── Asesor "El Maestro" ─────────────────────────────────────────────────────

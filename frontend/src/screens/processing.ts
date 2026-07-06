@@ -8,7 +8,7 @@ import { state } from "../state";
 
 interface Args {
   categoria: string; detalle: string; tipo: "imagen" | "video"; foto: Blob;
-  mask?: Blob; referencia?: Blob;
+  mask?: Blob; referencia?: Blob; proyecto?: string;
 }
 
 export async function pantallaProcessing(args: Args) {

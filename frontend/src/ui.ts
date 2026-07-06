@@ -9,7 +9,10 @@ export function el(tag: string, props: Record<string, any> = {}, children: (Node
     else if (k.startsWith("on") && typeof v === "function") node.addEventListener(k.slice(2).toLowerCase(), v);
     else if (k === "html") node.innerHTML = v;
     else if (k.includes("-")) node.setAttribute(k, v); // data-*, aria-*, etc.
-    else (node as any)[k] = v;
+    else {
+      // Propiedades de solo lectura (ej. input.list) van como atributo.
+      try { (node as any)[k] = v; } catch { node.setAttribute(k, String(v)); }
+    }
   }
   for (const c of children) node.append(c);
   return node;

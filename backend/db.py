@@ -46,6 +46,16 @@ _TABLAS = [
         PRIMARY KEY (device_id, fecha))""",
     """CREATE TABLE IF NOT EXISTS uso_global (
         fecha TEXT PRIMARY KEY, videos INTEGER DEFAULT 0)""",
+    """CREATE TABLE IF NOT EXISTS feedback (
+        trabajo_id TEXT PRIMARY KEY, voto INTEGER NOT NULL,
+        creado DOUBLE PRECISION)""",
+]
+
+# Columnas añadidas después del despliegue inicial: (tabla, columna, tipo)
+_MIGRACIONES = [
+    ("uso", "chats", "INTEGER DEFAULT 0"),
+    ("trabajos", "oculto", "INTEGER DEFAULT 0"),
+    ("trabajos", "proyecto", "TEXT"),
 ]
 
 
@@ -62,17 +72,18 @@ def init() -> None:
         for t in _TABLAS:
             cur.execute(_q(t))
         con.commit()
-    # Migración: columna de mensajes del asesor en la tabla uso ya existente.
-    try:
-        with _con() as con:
-            cur = con.cursor()
-            if config.USA_POSTGRES:
-                cur.execute("ALTER TABLE uso ADD COLUMN IF NOT EXISTS chats INTEGER DEFAULT 0")
-            else:
-                cur.execute("ALTER TABLE uso ADD COLUMN chats INTEGER DEFAULT 0")
-            con.commit()
-    except Exception:
-        pass  # SQLite sin IF NOT EXISTS: si ya existe, lanza y se ignora
+    # Migraciones de columnas sobre tablas ya desplegadas.
+    for tabla, col, tipo in _MIGRACIONES:
+        try:
+            with _con() as con:
+                cur = con.cursor()
+                if config.USA_POSTGRES:
+                    cur.execute(f"ALTER TABLE {tabla} ADD COLUMN IF NOT EXISTS {col} {tipo}")
+                else:
+                    cur.execute(f"ALTER TABLE {tabla} ADD COLUMN {col} {tipo}")
+                con.commit()
+        except Exception:
+            pass  # SQLite sin IF NOT EXISTS: si ya existe, lanza y se ignora
 
 
 # ─── Cuota ───────────────────────────────────────────────────────────────────
@@ -140,15 +151,16 @@ def registrar_uso(device_id: str, tipo: str) -> None:
 
 # ─── Trabajos ────────────────────────────────────────────────────────────────
 
-def crear_trabajo(device_id: str, categoria: str, detalle: str, tipo: str) -> str:
+def crear_trabajo(device_id: str, categoria: str, detalle: str, tipo: str,
+                  proyecto: str = "") -> str:
     tid = uuid.uuid4().hex
     ahora = time.time()
     with _con() as con:
         cur = con.cursor()
         cur.execute(_q(
-            "INSERT INTO trabajos (id, device_id, categoria, detalle, tipo, status, creado, actualizado)"
-            f" VALUES ({PH},{PH},{PH},{PH},{PH},'pending',{PH},{PH})"),
-            (tid, device_id, categoria, detalle, tipo, ahora, ahora))
+            "INSERT INTO trabajos (id, device_id, categoria, detalle, tipo, status, proyecto, creado, actualizado)"
+            f" VALUES ({PH},{PH},{PH},{PH},{PH},'pending',{PH},{PH},{PH})"),
+            (tid, device_id, categoria, detalle, tipo, proyecto or None, ahora, ahora))
         con.commit()
     return tid
 
@@ -175,6 +187,26 @@ def listar(device_id: str, limit: int = 30) -> list[dict]:
         cur = con.cursor()
         cur.execute(_q(
             f"SELECT * FROM trabajos WHERE device_id={PH} AND status='done' "
-            f"ORDER BY creado DESC LIMIT {PH}"),
+            f"AND COALESCE(oculto,0)=0 ORDER BY creado DESC LIMIT {PH}"),
             (device_id, limit))
         return [dict(f) for f in cur.fetchall()]
+
+
+def ocultar(tid: str, device_id: str) -> bool:
+    """Borrado lógico del historial (solo el dueño del trabajo)."""
+    with _con() as con:
+        cur = con.cursor()
+        cur.execute(_q(f"UPDATE trabajos SET oculto=1 WHERE id={PH} AND device_id={PH}"),
+                    (tid, device_id))
+        con.commit()
+        return cur.rowcount > 0
+
+
+def votar(tid: str, voto: int) -> None:
+    with _con() as con:
+        cur = con.cursor()
+        cur.execute(_q(
+            f"INSERT INTO feedback (trabajo_id, voto, creado) VALUES ({PH},{PH},{PH}) "
+            f"ON CONFLICT(trabajo_id) DO UPDATE SET voto={PH}"),
+            (tid, voto, time.time(), voto))
+        con.commit()

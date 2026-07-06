@@ -139,6 +139,25 @@ export function pantallaForm(claveCat: string) {
     (e.currentTarget as HTMLElement).classList.add("activo");
   }
 
+  // ── Proyecto (opcional, para agrupar en Recientes) ────────────────────────
+  const PROY_KEY = "reforma_proyectos";
+  const proyectosPrevios: string[] = JSON.parse(localStorage.getItem(PROY_KEY) || "[]");
+  const proyInput = el("input", {
+    class: "field", type: "text", list: "proyectos-list", maxLength: 60,
+    placeholder: "Proyecto (opcional) — ej. Casa de mamá",
+  }) as HTMLInputElement;
+  const proyDatalist = el("datalist", { id: "proyectos-list" },
+    proyectosPrevios.map((p) => el("option", { value: p })));
+  const proyNode = el("div", { class: "ctrl-wrap" }, [
+    el("div", { class: "ctrl-label" }, ["📁 Proyecto"]),
+    proyInput, proyDatalist,
+  ]);
+  function guardarProyecto(nombre: string) {
+    if (!nombre) return;
+    const lista = [nombre, ...proyectosPrevios.filter((p) => p !== nombre)].slice(0, 10);
+    localStorage.setItem(PROY_KEY, JSON.stringify(lista));
+  }
+
   // ── Enviar ────────────────────────────────────────────────────────────────
   const enviar = () => {
     if (!state.foto) { toast(engine === "plano" ? "Sube la foto de tu plano." : "Elige una foto primero."); return; }
@@ -148,9 +167,12 @@ export function pantallaForm(claveCat: string) {
     if (engine !== "estilo" && engine !== "plano" && !detalle.trim()) {
       toast("Completa al menos un campo."); return;
     }
+    const proyecto = proyInput.value.trim();
+    guardarProyecto(proyecto);
     irA(() => pantallaProcessing({
       categoria: claveCat, detalle, tipo, foto: state.foto!.blob,
       mask: state.mask, referencia: state.referencia?.blob,
+      proyecto: proyecto || undefined,
     }));
   };
 
@@ -168,7 +190,7 @@ export function pantallaForm(claveCat: string) {
     ]));
   }
   if (engine === "estilo") hijos.push(refZone);
-  hijos.push(muestrasWrap, controles.node, toggleNode,
+  hijos.push(muestrasWrap, controles.node, proyNode, toggleNode,
     el("button", { class: "btn-primario", onClick: enviar }, ["Transformar ✨"]));
 
   render(el("div", { class: "screen" }, hijos));

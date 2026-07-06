@@ -2,6 +2,7 @@ import { el, render } from "../ui";
 import { state } from "../state";
 import { irA, setNavVisible, setNavTab } from "../nav";
 import { pantallaForm } from "./form";
+import { pantallaAjustes } from "./ajustes";
 
 const SUBTITULOS: Record<string, string> = {
   pintar: "Recolorea cualquier superficie",
@@ -78,6 +79,10 @@ export function pantallaHome() {
     el("div", { class: "screen" }, [
       el("div", { class: "home-header" }, [
         el("h1", {}, ["Inicio"]),
+        el("button", {
+          class: "home-gear", "aria-label": "Ajustes",
+          onClick: () => irA(pantallaAjustes),
+        }, ["⚙️"]),
       ]),
       el("div", { class: "modes-list" }, cards),
     ])

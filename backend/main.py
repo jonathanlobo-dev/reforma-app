@@ -58,6 +58,7 @@ async def crear_trabajo(
     categoria: str = Form(...),
     detalle: str = Form(""),
     tipo: str = Form(""),
+    proyecto: str = Form(""),
     foto: UploadFile = File(...),
     mask: UploadFile | None = File(None),        # engine=inpaint (PNG b/n del pincel)
     referencia: UploadFile | None = File(None),  # engine=estilo (foto de inspiración)
@@ -81,7 +82,7 @@ async def crear_trabajo(
     if not ok:
         raise HTTPException(429, motivo)
 
-    tid = db.crear_trabajo(device_id, categoria, detalle, tipo)
+    tid = db.crear_trabajo(device_id, categoria, detalle, tipo, proyecto.strip()[:60])
     carpeta = config.DATA / tid
     carpeta.mkdir(parents=True, exist_ok=True)
     destino = carpeta / f"antes{EXT_OK[foto.content_type]}"
@@ -105,11 +106,31 @@ def historial(device_id: str, limit: int = 30):
         {
             "id": t["id"], "status": t["status"], "tipo": t["tipo"],
             "categoria": t["categoria"], "detalle": (t.get("detalle") or "")[:120],
-            "creado": t.get("creado"), "error": t["error"],
-            "resultados": _urls(t),
+            "proyecto": t.get("proyecto"), "creado": t.get("creado"),
+            "error": t["error"], "resultados": _urls(t),
         }
         for t in trabajos
     ]
+
+
+@app.delete("/trabajos/{tid}")
+def borrar_trabajo(tid: str, device_id: str):
+    if not db.ocultar(tid, device_id):
+        raise HTTPException(404, "Trabajo no encontrado")
+    return {"ok": True}
+
+
+class FeedbackReq(BaseModel):
+    trabajo_id: str
+    voto: int  # 1 = 👍, -1 = 👎
+
+
+@app.post("/feedback")
+def feedback(req: FeedbackReq):
+    if req.voto not in (1, -1):
+        raise HTTPException(400, "voto debe ser 1 o -1")
+    db.votar(req.trabajo_id, req.voto)
+    return {"ok": True}
 
 
 @app.get("/trabajos/{tid}")

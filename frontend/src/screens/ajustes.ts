@@ -29,10 +29,10 @@ export function pantallaAjustes() {
     el("div", { class: "screen" }, [
       el("div", { class: "topbar" }, [
         el("button", { class: "back", onClick: atras }, ["‹"]),
-        el("span", { class: "topbar-tit" }, ["⚙️ Ajustes"]),
+        el("span", { class: "topbar-tit" }, ["Ajustes"]),
       ]),
 
-      seccion("📖 Cómo usar la app", [
+      seccion("Cómo usar la app", [
         p("1. Elige un modo en Inicio (pintar, remodelar, pincel mágico…)."),
         p("2. Sube una foto clara y bien iluminada de tu espacio. Mientras mejor la foto, mejor el resultado."),
         p("3. Sé específico: di QUÉ cambiar y QUÉ conservar. La IA no adivina."),
@@ -41,10 +41,10 @@ export function pantallaAjustes() {
           "❌ \"una piscina\" (la IA inventará todo lo demás)",
         ]),
         p("4. Con el Pincel mágico, pinta con el dedo SOLO la zona que quieres cambiar."),
-        p("5. ¿Dudas de materiales o colores? Pregúntale a El Maestro 🧰 en la pestaña central."),
+        p("5. ¿Dudas de materiales o colores? Pregúntale a El Maestro en la pestaña central."),
       ]),
 
-      seccion("🎟️ Límites diarios (gratis)", [
+      seccion("Límites diarios (gratis)", [
         p("Cada generación usa modelos de IA que tienen costo real. El plan gratuito incluye por día:"),
         li([
           "5 transformaciones de imagen",
@@ -54,7 +54,7 @@ export function pantallaAjustes() {
         p("Los límites se reinician cada día. Pronto habrá un plan Pro con más generaciones, videos y sin marca de agua."),
       ]),
 
-      seccion("⚖️ Descargo de responsabilidad", [
+      seccion("Descargo de responsabilidad", [
         p("Las imágenes y videos de esta app son generados por inteligencia artificial y son VISUALIZACIONES CONCEPTUALES, no diseños técnicos ni planos de construcción."),
         li([
           "No sustituyen la asesoría de arquitectos, ingenieros o profesionales certificados.",
@@ -65,10 +65,10 @@ export function pantallaAjustes() {
         p("Al usar la app aceptas que las decisiones de construcción o remodelación son tu responsabilidad."),
       ]),
 
-      seccion("ℹ️ Acerca de", [
+      seccion("Acerca de", [
         p(`Reforma AI v${VERSION}`),
         p("Transforma fotos de tus espacios reales con inteligencia artificial: pintar, remodelar, restaurar, y míralo en video."),
-        p("Hecho con ❤️ en Venezuela."),
+        p("Hecho con cariño en Venezuela."),
       ]),
     ])
   );

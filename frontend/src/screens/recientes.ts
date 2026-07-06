@@ -3,6 +3,7 @@ import { getHistorial, borrarTrabajo, resolverMedia, type Trabajo } from "../api
 import { getDeviceId } from "../device";
 import { irA, setNavVisible, setNavTab } from "../nav";
 import { pantallaResult } from "./result";
+import { icon } from "../ui/icons";
 
 function formatFecha(v?: string | number): string {
   if (v === undefined || v === null || v === "") return "";
@@ -57,16 +58,16 @@ export async function pantallaRecientes() {
           }, ["Todos"]),
           ...proyectos.map((p) =>
             el("button", {
-              class: "proy-chip" + (filtro === p ? " sel" : ""),
+              class: "proy-chip btn-ico" + (filtro === p ? " sel" : ""),
               onClick: () => { filtro = p; pintar(); },
-            }, [`📁 ${p}`])
+            }, [icon("folder", 13), p])
           ),
         ])
       : el("span", {});
 
     const cuerpo = !visibles.length
       ? el("div", { class: "hist-empty" }, [
-          el("div", { class: "hist-empty-ico" }, ["🕐"]),
+          el("div", { class: "hist-empty-ico" }, [icon("clock", 46)]),
           el("p", {}, [filtro ? "Este proyecto no tiene transformaciones aún." : "Aún no has generado ninguna transformación."]),
         ])
       : el("div", { class: "hist-grid" }, visibles.map((t) => {
@@ -89,7 +90,7 @@ export async function pantallaRecientes() {
                 toast("No se pudo eliminar.");
               }
             },
-          }, ["🗑"]);
+          }, [icon("trash", 15)]);
 
           return el("div", {
             class: "hist-card",

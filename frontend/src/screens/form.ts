@@ -5,6 +5,7 @@ import { irA, atras, setNavVisible } from "../nav";
 import { pantallaProcessing } from "./processing";
 import { pantallaMask } from "./mask";
 import { estiloCarrusel, colorSelector, superficieSelector, dropdown } from "../ui/controls";
+import { icon } from "../ui/icons";
 
 const HABITACIONES = ["Sala de estar", "Cocina", "Dormitorio", "Baño", "Comedor", "Exterior"];
 const INTENSIDADES = ["Sutil", "Media", "Fuerte"];
@@ -42,7 +43,7 @@ export function pantallaForm(claveCat: string) {
     } else {
       fotoZone.append(
         el("div", { class: "foto-placeholder" }, [
-          el("span", {}, [engine === "plano" ? "📐" : "📷"]),
+          icon(engine === "plano" ? "layout" : "camera", 34),
           el("span", {}, [engine === "plano" ? "Toca para subir tu plano" : "Toca para elegir una foto"]),
         ])
       );
@@ -105,7 +106,7 @@ export function pantallaForm(claveCat: string) {
     } else {
       refZone.append(
         el("div", { class: "foto-placeholder" }, [
-          el("span", {}, ["🖼️"]),
+          icon("image", 30),
           el("span", {}, ["Foto de inspiración (el estilo que quieres)"]),
         ])
       );
@@ -129,9 +130,9 @@ export function pantallaForm(claveCat: string) {
           onClick(e: Event) { tipo = "imagen"; marcar(e); },
         }, ["Imagen · gratis"]),
         el("button", {
-          class: "toggle-op" + (tipo === "video" ? " activo" : ""),
+          class: "toggle-op btn-ico" + (tipo === "video" ? " activo" : ""),
           onClick(e: Event) { tipo = "video"; marcar(e); },
-        }, ["Video · premium 🔒"]),
+        }, ["Video · Premium", icon("lock", 13)]),
       ])
     : el("span", {});
   function marcar(e: Event) {
@@ -149,7 +150,7 @@ export function pantallaForm(claveCat: string) {
   const proyDatalist = el("datalist", { id: "proyectos-list" },
     proyectosPrevios.map((p) => el("option", { value: p })));
   const proyNode = el("div", { class: "ctrl-wrap" }, [
-    el("div", { class: "ctrl-label" }, ["📁 Proyecto"]),
+    el("div", { class: "ctrl-label lbl-ico" }, [icon("folder", 14), "Proyecto"]),
     proyInput, proyDatalist,
   ]);
   function guardarProyecto(nombre: string) {
@@ -179,19 +180,20 @@ export function pantallaForm(claveCat: string) {
   const hijos: (Node | string)[] = [
     el("div", { class: "topbar" }, [
       el("button", { class: "back", onClick: atras }, ["‹"]),
-      el("span", { class: "topbar-tit" }, [`${cat.emoji} ${cat.titulo}`]),
+      el("span", { class: "topbar-tit" }, [cat.titulo]),
     ]),
   ];
   if (HINTS[claveCat]) hijos.push(el("p", { class: "form-hint" }, [HINTS[claveCat]]));
   hijos.push(fotoZone);
   if (engine === "inpaint") {
-    hijos.push(el("button", { class: "btn-secundario", onClick: abrirPincel }, [
-      state.mask ? "Editar zona pintada" : "🖌️ Pintar la zona a cambiar",
+    hijos.push(el("button", { class: "btn-secundario btn-ico", onClick: abrirPincel }, [
+      icon("brush", 17),
+      state.mask ? "Editar zona pintada" : "Pintar la zona a cambiar",
     ]));
   }
   if (engine === "estilo") hijos.push(refZone);
   hijos.push(muestrasWrap, controles.node, proyNode, toggleNode,
-    el("button", { class: "btn-primario", onClick: enviar }, ["Transformar ✨"]));
+    el("button", { class: "btn-primario btn-ico", onClick: enviar }, [icon("sparkles", 18), "Transformar"]));
 
   render(el("div", { class: "screen" }, hijos));
   refrescarFoto();
@@ -206,6 +208,11 @@ function campoExtra() {
     class: "field", rows: 2,
     placeholder: "Algo más que quieras cambiar… (opcional)",
   }) as HTMLTextAreaElement;
+  // Idea precargada desde el chat del Maestro ("Ver esto en mi espacio")
+  if (state.prefillExtra) {
+    ta.value = state.prefillExtra;
+    state.prefillExtra = undefined;
+  }
   return {
     node: ta,
     getValue: () => {

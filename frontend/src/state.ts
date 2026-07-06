@@ -7,6 +7,7 @@ export interface AppState {
   foto?: { blob: Blob; url: string };
   mask?: Blob;                              // PNG b/n del pincel (engine inpaint)
   referencia?: { blob: Blob; url: string }; // foto de inspiración (engine estilo)
+  prefillExtra?: string;                    // idea que viene del chat del Maestro
 }
 
 export const state: AppState = { categorias: {} };

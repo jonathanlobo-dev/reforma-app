@@ -3,6 +3,16 @@ import { state } from "../state";
 import { irA, setNavVisible, setNavTab } from "../nav";
 import { pantallaForm } from "./form";
 import { pantallaAjustes } from "./ajustes";
+import { icon } from "../ui/icons";
+
+// Pestañas de sección (estilo referencia): filtran la grilla de modos.
+const SECCIONES: Record<string, string[] | null> = {
+  Todos: null,
+  Interior: ["interior", "pintar", "suelo", "paredes", "muebles", "eliminar", "restaurar", "remodelar"],
+  Exterior: ["exterior", "plano"],
+  Herramientas: ["pincel", "estilo", "plano"],
+};
+let seccionActiva = "Todos";
 
 const SUBTITULOS: Record<string, string> = {
   pintar: "Recolorea cualquier superficie",
@@ -46,8 +56,18 @@ export function pantallaHome() {
   setNavVisible(true);
   setNavTab("inicio");
 
+  const enSeccion = SECCIONES[seccionActiva];
   const claves = ORDEN.filter((c) => state.categorias[c])
-    .concat(Object.keys(state.categorias).filter((c) => !ORDEN.includes(c)));
+    .concat(Object.keys(state.categorias).filter((c) => !ORDEN.includes(c)))
+    .filter((c) => !enSeccion || enSeccion.includes(c));
+
+  const tabs = el("div", { class: "proy-chips" },
+    Object.keys(SECCIONES).map((s) =>
+      el("button", {
+        class: "proy-chip" + (s === seccionActiva ? " sel" : ""),
+        onClick: () => { seccionActiva = s; pantallaHome(); },
+      }, [s])
+    ));
 
   const cards = claves.map((clave) => [clave, state.categorias[clave]] as const).map(([clave, cat]) => {
     // Fondo: portada única, o split antes|después (remodelar = demo real)
@@ -82,8 +102,9 @@ export function pantallaHome() {
         el("button", {
           class: "home-gear", "aria-label": "Ajustes",
           onClick: () => irA(pantallaAjustes),
-        }, ["⚙️"]),
+        }, [icon("gear", 21)]),
       ]),
+      tabs,
       el("div", { class: "modes-list" }, cards),
     ])
   );

@@ -24,7 +24,14 @@ function wireNav() {
 }
 
 async function start() {
-  render(el("div", { class: "screen centro" }, [el("div", { class: "spinner" })]));
+  render(
+    el("div", { class: "screen centro splash" }, [
+      el("img", { class: "splash-logo", src: "/logo.png", alt: "Reforma AI" }),
+      el("h1", { class: "splash-nombre" }, ["Reforma AI"]),
+      el("p", { class: "splash-sub" }, ["Transforma tu espacio"]),
+      el("div", { class: "spinner chico" }),
+    ])
+  );
   setNavVisible(false);
   initAds();
   initBack();

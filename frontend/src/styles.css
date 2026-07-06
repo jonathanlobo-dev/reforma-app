@@ -398,6 +398,20 @@ textarea.field { resize: vertical; min-height: 80px; }
   border: 4px solid var(--borde); border-top-color: var(--acento);
   animation: giro 0.9s linear infinite;
 }
+.spinner.chico { width: 30px; height: 30px; border-width: 3px; margin-top: 22px; }
+
+/* ─── Splash in-app (mientras cargan las categorías) ─────── */
+.splash-logo {
+  width: 116px; height: 116px; border-radius: 28px;
+  box-shadow: 0 10px 44px rgba(109, 94, 252, .45);
+  animation: splash-pop .45s ease-out;
+}
+.splash-nombre { font-size: 26px; font-weight: 800; margin-top: 18px; letter-spacing: -0.4px; }
+.splash-sub { color: var(--sub); font-size: 14px; margin-top: 4px; }
+@keyframes splash-pop {
+  from { opacity: 0; transform: scale(.85); }
+  to { opacity: 1; transform: scale(1); }
+}
 @keyframes giro { to { transform: rotate(360deg); } }
 .loader-msg { color: var(--sub); margin-top: 20px; font-size: 15px; }
 .error-msg { color: var(--error); font-size: 15px; margin-bottom: 12px; }

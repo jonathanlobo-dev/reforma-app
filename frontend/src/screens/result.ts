@@ -1,8 +1,9 @@
 import { el, render, toast } from "../ui";
 import { resolverMedia, type Trabajo } from "../api";
 import { mostrarIntersticial } from "../ads";
-import { raiz, setNavVisible } from "../nav";
+import { raiz, irA, setNavVisible } from "../nav";
 import { pantallaHome } from "./home";
+import { pantallaAsesor } from "./asesor";
 import { baSlider } from "../ui/controls";
 
 export async function pantallaResult(t: Trabajo) {
@@ -100,6 +101,10 @@ export async function pantallaResult(t: Trabajo) {
       el("div", { class: "acciones" }, [
         el("button", { class: "btn-primario", onClick: guardar }, ["Guardar en el teléfono"]),
         el("button", { class: "btn-secundario", onClick: compartir }, ["Compartir"]),
+        el("button", { class: "btn-secundario", onClick: () => {
+          const ctx = [t.categoria, t.detalle].filter(Boolean).join(": ");
+          irA(() => pantallaAsesor(ctx || undefined));
+        }}, ["🧰 Preguntar al Maestro (materiales y consejos)"]),
         el("button", { class: "btn-secundario", onClick: () => raiz(pantallaHome) }, ["Hacer otra"]),
       ]),
     ])

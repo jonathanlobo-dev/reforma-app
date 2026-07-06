@@ -14,7 +14,7 @@ export interface Resultados {
 export interface Trabajo {
   id: string; status: "pending" | "processing" | "done" | "error";
   tipo: "imagen" | "video"; categoria: string; detalle?: string;
-  error: string | null; resultados: Resultados; creado?: string;
+  error: string | null; resultados: Resultados; creado?: string | number;
 }
 
 export function mediaUrl(rel?: string): string | undefined {
@@ -160,6 +160,33 @@ export async function getHistorial(deviceId: string, limit = 30): Promise<Trabaj
   const r = await fetch(`${API_BASE}/trabajos?device_id=${deviceId}&limit=${limit}`);
   if (!r.ok) return [];
   return r.json();
+}
+
+// ─── Asesor "El Maestro" ─────────────────────────────────────────────────────
+export interface MensajeChat { role: "user" | "assistant"; content: string; }
+
+export async function enviarAsesor(
+  deviceId: string, mensajes: MensajeChat[], contexto?: string
+): Promise<string> {
+  if (MOCK) {
+    await new Promise((r) => setTimeout(r, 900));
+    return "¡Claro! Para una pared de 3×4 m (12 m²) necesitas ~1,3 L de pintura " +
+      "por capa (rinde 10 m²/L + 10% de desperdicio). Cómprate 2 L y te sobra " +
+      "para retoques. Rango de referencia: $15–25 el galón según marca — " +
+      "confírmalo en tu ferretería. ¿Le damos una o dos manos?";
+  }
+  const r = await fetch(`${API_BASE}/asesor`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ device_id: deviceId, mensajes, contexto: contexto || null }),
+  });
+  if (r.status === 429) {
+    const j = await r.json().catch(() => ({ detail: "Límite diario alcanzado." }));
+    throw new Error(j.detail);
+  }
+  if (!r.ok) throw new Error("El Maestro no está disponible ahora. Intenta en un momento.");
+  const j = await r.json();
+  return j.respuesta;
 }
 
 export function resolverMedia(rel?: string): string | undefined {

@@ -62,6 +62,17 @@ def init() -> None:
         for t in _TABLAS:
             cur.execute(_q(t))
         con.commit()
+    # Migración: columna de mensajes del asesor en la tabla uso ya existente.
+    try:
+        with _con() as con:
+            cur = con.cursor()
+            if config.USA_POSTGRES:
+                cur.execute("ALTER TABLE uso ADD COLUMN IF NOT EXISTS chats INTEGER DEFAULT 0")
+            else:
+                cur.execute("ALTER TABLE uso ADD COLUMN chats INTEGER DEFAULT 0")
+            con.commit()
+    except Exception:
+        pass  # SQLite sin IF NOT EXISTS: si ya existe, lanza y se ignora
 
 
 # ─── Cuota ───────────────────────────────────────────────────────────────────
@@ -85,6 +96,30 @@ def puede_generar(device_id: str, tipo: str) -> tuple[bool, str]:
             if g and g["videos"] >= config.VIDEOS_GLOBAL_DIA:
                 return False, "El sistema alcanzó su límite diario de videos. Intenta mañana."
     return True, ""
+
+
+def puede_chatear(device_id: str) -> tuple[bool, str]:
+    hoy = date.today().isoformat()
+    with _con() as con:
+        cur = con.cursor()
+        cur.execute(_q(f"SELECT chats FROM uso WHERE device_id={PH} AND fecha={PH}"),
+                    (device_id, hoy))
+        fila = cur.fetchone()
+        chats = (fila["chats"] if fila and fila["chats"] is not None else 0)
+        if chats >= config.ASESOR_MENSAJES_DIA:
+            return False, f"El Maestro descansa: llegaste a los {config.ASESOR_MENSAJES_DIA} mensajes de hoy. Vuelve mañana."
+    return True, ""
+
+
+def registrar_chat(device_id: str) -> None:
+    hoy = date.today().isoformat()
+    with _con() as con:
+        cur = con.cursor()
+        cur.execute(_q(
+            f"INSERT INTO uso (device_id, fecha, chats) VALUES ({PH},{PH},1) "
+            f"ON CONFLICT(device_id, fecha) DO UPDATE SET chats=COALESCE(uso.chats,0)+1"),
+            (device_id, hoy))
+        con.commit()
 
 
 def registrar_uso(device_id: str, tipo: str) -> None:

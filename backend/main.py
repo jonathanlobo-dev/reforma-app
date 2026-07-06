@@ -13,9 +13,11 @@ from pathlib import Path
 from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
 import config
 import db
+import pipeline
 from categorias import CATEGORIAS, resolver
 from worker import procesar
 
@@ -118,5 +120,39 @@ def estado_trabajo(tid: str):
     return {
         "id": trabajo["id"], "status": trabajo["status"], "tipo": trabajo["tipo"],
         "categoria": trabajo.get("categoria"), "creado": trabajo.get("creado"),
+        "detalle": trabajo.get("detalle"),
         "error": trabajo["error"], "resultados": _urls(trabajo),
     }
+
+
+# ─── Asesor "El Maestro" (chatbot 3-en-1: obra + decoración + materiales) ────
+
+class MensajeChat(BaseModel):
+    role: str      # "user" | "assistant"
+    content: str
+
+class AsesorReq(BaseModel):
+    device_id: str
+    mensajes: list[MensajeChat]
+    contexto: str | None = None   # ej. "Remodelar: cocina moderna minimalista"
+
+
+@app.post("/asesor")
+def asesor(req: AsesorReq):
+    if not req.mensajes or req.mensajes[-1].role != "user":
+        raise HTTPException(400, "Falta el mensaje del usuario")
+    ok, motivo = db.puede_chatear(req.device_id)
+    if not ok:
+        raise HTTPException(429, motivo)
+
+    system = pipeline.ASESOR_SYSTEM
+    if req.contexto:
+        system += f"\n\nCONTEXTO de la transformación que el usuario generó en la app: {req.contexto[:400]}"
+
+    # Historial acotado: últimos 12 turnos, cada uno recortado (control de tokens)
+    historia = [{"role": m.role, "content": m.content[:1500]}
+                for m in req.mensajes[-12:] if m.role in ("user", "assistant")]
+
+    respuesta = pipeline.groq_chat([{"role": "system", "content": system}] + historia)
+    db.registrar_chat(req.device_id)
+    return {"respuesta": respuesta}

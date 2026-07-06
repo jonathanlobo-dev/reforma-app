@@ -40,6 +40,8 @@ VIDEOS_GRATIS_DIA   = int(os.getenv("VIDEOS_GRATIS_DIA", "1"))
 # Tope global de seguridad: máximo de videos que TODO el sistema genera por día,
 # sin importar cuántos dispositivos haya. Freno de mano contra un pico viral.
 VIDEOS_GLOBAL_DIA   = int(os.getenv("VIDEOS_GLOBAL_DIA", "50"))
+# Mensajes/día al asesor por dispositivo (Groq free tier aguanta de sobra)
+ASESOR_MENSAJES_DIA = int(os.getenv("ASESOR_MENSAJES_DIA", "30"))
 
 # ─── Rutas ───────────────────────────────────────────────────────────────────
 DATA   = ROOT / "data"

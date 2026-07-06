@@ -24,6 +24,9 @@ const ORDEN = ["interior", "pincel", "estilo", "remodelar", "pintar", "suelo",
 
 // Portada única por categoría (fotos generadas en /estilos). "remodelar" no está
 // aquí: usa el split antes|después real de la cocina del usuario.
+// Sin repetir portada en cards adyacentes (orden: interior, pincel, estilo,
+// remodelar(split), pintar, suelo, paredes, muebles, eliminar, restaurar,
+// exterior, plano).
 const COVERS: Record<string, string> = {
   interior: "/estilos/moderno.webp",
   pincel: "/estilos/contemporaneo.webp",
@@ -32,10 +35,10 @@ const COVERS: Record<string, string> = {
   suelo: "/estilos/escandinavo.webp",
   paredes: "/estilos/clasico.webp",
   muebles: "/estilos/minimalista.webp",
-  eliminar: "/estilos/minimalista.webp",
-  restaurar: "/estilos/rustico.webp",
-  exterior: "/estilos/rustico.webp",
-  plano: "/estilos/clasico.webp",
+  eliminar: "/estilos/rustico.webp",
+  restaurar: "/estilos/tradicional.webp",
+  exterior: "/estilos/escandinavo.webp",
+  plano: "/estilos/moderno.webp",
 };
 
 export function pantallaHome() {

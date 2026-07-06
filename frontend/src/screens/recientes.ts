@@ -4,15 +4,20 @@ import { getDeviceId } from "../device";
 import { irA, setNavVisible, setNavTab } from "../nav";
 import { pantallaResult } from "./result";
 
-function formatFecha(iso?: string): string {
-  if (!iso) return "";
-  const d = new Date(iso);
+function formatFecha(v?: string | number): string {
+  if (v === undefined || v === null || v === "") return "";
+  // El backend manda epoch en SEGUNDOS (time.time()); Date espera ms.
+  // Sin esto salía "Hace 20619 días" (interpretaba los segundos como ms → 1970).
+  const n = typeof v === "number" ? v : Number(v);
+  const d = !isNaN(n) && n > 1e6 ? new Date(n * 1000) : new Date(v);
+  if (isNaN(d.getTime())) return "";
   const ahora = new Date();
   const diff = (ahora.getTime() - d.getTime()) / 1000;
   if (diff < 60) return "Ahora mismo";
   if (diff < 3600) return `Hace ${Math.floor(diff / 60)} min`;
   if (diff < 86400) return `Hace ${Math.floor(diff / 3600)} h`;
-  return `Hace ${Math.floor(diff / 86400)} días`;
+  const dias = Math.floor(diff / 86400);
+  return dias === 1 ? "Hace 1 día" : `Hace ${dias} días`;
 }
 
 export async function pantallaRecientes() {

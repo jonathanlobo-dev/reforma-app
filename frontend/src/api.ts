@@ -166,6 +166,19 @@ export async function getHistorial(deviceId: string, limit = 30): Promise<Trabaj
   return r.json();
 }
 
+export interface EstadoPremium { premium: boolean; hasta?: number | null; plan?: string | null; }
+
+export async function getPremium(deviceId: string): Promise<EstadoPremium> {
+  if (MOCK) return { premium: false };
+  try {
+    const r = await fetch(`${API_BASE}/premium?device_id=${deviceId}`);
+    if (!r.ok) return { premium: false };
+    return r.json();
+  } catch {
+    return { premium: false };
+  }
+}
+
 export async function borrarTrabajo(id: string, deviceId: string): Promise<boolean> {
   if (MOCK) return true;
   const r = await fetch(`${API_BASE}/trabajos/${id}?device_id=${deviceId}`, { method: "DELETE" });

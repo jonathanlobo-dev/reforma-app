@@ -80,11 +80,13 @@ def procesar(tid: str) -> None:
             video = carpeta / "final.mp4"
             pipeline.animar(url_antes, url_despues, plan.get("motion_prompt", ""), video)
 
-        # Watermark "Reforma AI" en lo que el usuario comparte (no en 'antes')
-        pipeline._watermark(despues)
-        pipeline._watermark(comp)
-        if video:
-            pipeline._watermark(video)
+        # Watermark "RenovAI" en lo que el usuario comparte (no en 'antes').
+        # Premium NO lleva marca de agua (es uno de los beneficios pagados).
+        if not db.es_premium(trabajo["device_id"]):
+            pipeline._watermark(despues)
+            pipeline._watermark(comp)
+            if video:
+                pipeline._watermark(video)
 
         # Subir a storage persistente (Supabase o /media local)
         campos = {

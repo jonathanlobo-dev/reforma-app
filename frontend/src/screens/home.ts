@@ -3,6 +3,7 @@ import { state } from "../state";
 import { irA, setNavVisible, setNavTab } from "../nav";
 import { pantallaForm } from "./form";
 import { pantallaAjustes } from "./ajustes";
+import { pantallaPaywall } from "./paywall";
 import { icon } from "../ui/icons";
 
 // Pestañas de sección (estilo referencia): filtran la grilla de modos.
@@ -99,10 +100,15 @@ export function pantallaHome() {
     el("div", { class: "screen" }, [
       el("div", { class: "home-header" }, [
         el("h1", {}, ["Inicio"]),
-        el("button", {
-          class: "home-gear", "aria-label": "Ajustes",
-          onClick: () => irA(pantallaAjustes),
-        }, [icon("gear", 21)]),
+        el("div", { class: "home-acciones" }, [
+          ...(state.premium
+            ? [el("span", { class: "pro-activo" }, [icon("crown", 14), "PRO"])]
+            : [el("button", { class: "pro-btn", onClick: () => irA(pantallaPaywall) }, [icon("crown", 14), "PRO"])]),
+          el("button", {
+            class: "home-gear", "aria-label": "Ajustes",
+            onClick: () => irA(pantallaAjustes),
+          }, [icon("gear", 21)]),
+        ]),
       ]),
       tabs,
       el("div", { class: "modes-list" }, cards),

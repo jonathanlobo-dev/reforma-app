@@ -112,6 +112,14 @@ async def crear_trabajo(
     return {"id": tid, "status": "pending", "tipo": tipo}
 
 
+@app.get("/premium")
+def premium(device_id: str):
+    """Estado premium del dispositivo. El frontend lo consulta al abrir la app
+    y tras una compra. La ACTIVACIÓN real la hará RevenueCat (validando la
+    compra) llamando a db.activar_premium — nunca desde un endpoint abierto."""
+    return db.estado_premium(device_id)
+
+
 @app.get("/trabajos")
 def historial(device_id: str, limit: int = 30):
     trabajos = db.listar(device_id, max(1, min(limit, 50)))

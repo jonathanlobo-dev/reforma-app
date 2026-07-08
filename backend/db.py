@@ -52,6 +52,10 @@ _TABLAS = [
     """CREATE TABLE IF NOT EXISTS uso_ip (
         ip TEXT, fecha TEXT, imagenes INTEGER DEFAULT 0, videos INTEGER DEFAULT 0,
         chats INTEGER DEFAULT 0, PRIMARY KEY (ip, fecha))""",
+    # Premium: device_id → epoch hasta cuándo tiene premium (0/pasado = free).
+    """CREATE TABLE IF NOT EXISTS premium (
+        device_id TEXT PRIMARY KEY, hasta DOUBLE PRECISION, plan TEXT,
+        actualizado DOUBLE PRECISION)""",
 ]
 
 # Columnas añadidas después del despliegue inicial: (tabla, columna, tipo)
@@ -109,8 +113,43 @@ def init() -> None:
 
 # ─── Cuota ───────────────────────────────────────────────────────────────────
 
+def es_premium(device_id: str) -> bool:
+    with _con() as con:
+        cur = con.cursor()
+        cur.execute(_q(f"SELECT hasta FROM premium WHERE device_id={PH}"), (device_id,))
+        fila = cur.fetchone()
+        return bool(fila and fila["hasta"] and fila["hasta"] > time.time())
+
+
+def estado_premium(device_id: str) -> dict:
+    with _con() as con:
+        cur = con.cursor()
+        cur.execute(_q(f"SELECT hasta, plan FROM premium WHERE device_id={PH}"), (device_id,))
+        fila = cur.fetchone()
+    activo = bool(fila and fila["hasta"] and fila["hasta"] > time.time())
+    return {"premium": activo,
+            "hasta": (fila["hasta"] if fila else None),
+            "plan": (fila["plan"] if fila else None)}
+
+
+def activar_premium(device_id: str, hasta: float, plan: str = "") -> None:
+    """La llamará la integración de pagos (RevenueCat) tras validar la compra."""
+    with _con() as con:
+        cur = con.cursor()
+        cur.execute(_q(
+            "INSERT INTO premium (device_id, hasta, plan, actualizado) "
+            f"VALUES ({PH},{PH},{PH},{PH}) "
+            "ON CONFLICT(device_id) DO UPDATE SET hasta=EXCLUDED.hasta, "
+            "plan=EXCLUDED.plan, actualizado=EXCLUDED.actualizado"),
+            (device_id, hasta, plan, time.time()))
+        con.commit()
+
+
 def puede_generar(device_id: str, tipo: str) -> tuple[bool, str]:
     hoy = date.today().isoformat()
+    premium = es_premium(device_id)
+    lim_img = config.IMAGENES_PREMIUM_DIA if premium else config.IMAGENES_GRATIS_DIA
+    lim_vid = config.VIDEOS_PREMIUM_DIA if premium else config.VIDEOS_GRATIS_DIA
     with _con() as con:
         cur = con.cursor()
         cur.execute(_q(f"SELECT imagenes, videos FROM uso WHERE device_id={PH} AND fecha={PH}"),
@@ -118,11 +157,16 @@ def puede_generar(device_id: str, tipo: str) -> tuple[bool, str]:
         fila = cur.fetchone()
         img = fila["imagenes"] if fila else 0
         vid = fila["videos"] if fila else 0
-        if tipo == "imagen" and img >= config.IMAGENES_GRATIS_DIA:
-            return False, f"Llegaste al límite de {config.IMAGENES_GRATIS_DIA} imágenes por hoy."
+        if tipo == "imagen" and img >= lim_img:
+            extra = "" if premium else " Hazte Premium para más."
+            return False, f"Llegaste al límite de {lim_img} imágenes por hoy.{extra}"
         if tipo == "video":
-            if vid >= config.VIDEOS_GRATIS_DIA:
-                return False, f"Los videos son premium (máx {config.VIDEOS_GRATIS_DIA}/día por ahora)."
+            if vid >= lim_vid:
+                if premium:
+                    return False, f"Llegaste al límite de {lim_vid} video(s) por hoy."
+                return False, ("Los videos son Premium. Hazte Premium para desbloquearlos."
+                               if lim_vid == 0 else
+                               f"Llegaste a tu límite de {lim_vid} video(s) por hoy. Hazte Premium para más.")
             cur.execute(_q(f"SELECT videos FROM uso_global WHERE fecha={PH}"), (hoy,))
             g = cur.fetchone()
             if g and g["videos"] >= config.VIDEOS_GLOBAL_DIA:

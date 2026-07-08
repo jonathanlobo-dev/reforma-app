@@ -1,5 +1,6 @@
 import "./styles.css";
-import { getCategorias } from "./api";
+import { getCategorias, getPremium } from "./api";
+import { getDeviceId } from "./device";
 import { state } from "./state";
 import { pantallaHome } from "./screens/home";
 import { pantallaRecientes } from "./screens/recientes";
@@ -51,6 +52,8 @@ async function start() {
 
   try {
     state.categorias = await getCategorias();
+    // Estado premium (no bloquea el arranque si falla)
+    try { state.premium = (await getPremium(await getDeviceId())).premium; } catch { /* free */ }
     raiz(pantallaHome);
   } catch (e) {
     render(

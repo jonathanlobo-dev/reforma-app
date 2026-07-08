@@ -10,6 +10,9 @@ load_dotenv(ROOT / ".env")
 # ─── API keys ────────────────────────────────────────────────────────────────
 GROQ_API_KEY        = os.getenv("GROQ_API_KEY", "")
 REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN", "")
+# Clave de administrador (dueño) para otorgar premium manualmente. Se define
+# como env var en Render; si está vacía, el endpoint /admin/premium queda cerrado.
+ADMIN_KEY           = os.getenv("ADMIN_KEY", "")
 
 # ─── Persistencia externa (Supabase) ─────────────────────────────────────────
 # Sin esto, el backend cae a SQLite local + disco local (solo dev; en Render

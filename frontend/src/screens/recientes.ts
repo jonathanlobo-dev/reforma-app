@@ -5,6 +5,7 @@ import { irA, setNavVisible, setNavTab } from "../nav";
 import { pantallaResult } from "./result";
 import { icon } from "../ui/icons";
 import { generarReporte } from "../ui/reporte";
+import { mostrarIntersticial } from "../ads";
 
 function formatFecha(v?: string | number): string {
   if (v === undefined || v === null || v === "") return "";
@@ -25,6 +26,7 @@ function formatFecha(v?: string | number): string {
 export async function pantallaRecientes() {
   setNavVisible(true);
   setNavTab("recientes");
+  mostrarIntersticial(); // gratis: anuncio al entrar (respeta tope de 45 s y premium)
 
   render(
     el("div", { class: "screen centro" }, [

@@ -23,8 +23,11 @@ const BENEFICIOS: { ico: string; txt: string }[] = [
   { ico: "brush", txt: "Todos los estilos y contenidos nuevos" },
 ];
 
-export function pantallaPaywall() {
+// `alCerrar` se usa cuando el paywall sale al abrir la app: la X debe llevar a
+// Inicio (y mostrar un anuncio), no intentar salir de la app.
+export function pantallaPaywall(opciones: { alCerrar?: () => void } = {}) {
   setNavVisible(false);
+  const cerrar = opciones.alCerrar ?? atras;
   let planSel = "anual";
 
   const tarjetas = PLANES.map((p) =>
@@ -54,7 +57,7 @@ export function pantallaPaywall() {
 
   render(
     el("div", { class: "screen paywall" }, [
-      el("button", { class: "paywall-x", onClick: atras }, [icon("close", 20)]),
+      el("button", { class: "paywall-x", onClick: cerrar }, [icon("close", 20)]),
 
       el("div", { class: "paywall-hero" }, [
         el("div", { class: "paywall-hero-img" }),

@@ -1,6 +1,8 @@
-// Ajustes: cómo usar, límites/créditos, descargo de responsabilidad.
-import { el, render } from "../ui";
+// Ajustes: cómo usar, límites/créditos, descargo de responsabilidad, cuenta.
+import { el, render, toast } from "../ui";
 import { atras, setNavVisible } from "../nav";
+import { getDeviceId } from "../device";
+import { state } from "../state";
 
 const VERSION = "2.0";
 
@@ -25,6 +27,12 @@ function li(items: string[]) {
 export function pantallaAjustes() {
   setNavVisible(false);
 
+  const idValor = el("span", { class: "id-valor" }, ["…"]);
+  const idBox = el("div", { class: "id-box" }, [
+    idValor,
+    el("button", { class: "id-copiar" }, ["Copiar"]),
+  ]);
+
   render(
     el("div", { class: "screen" }, [
       el("div", { class: "topbar" }, [
@@ -47,11 +55,11 @@ export function pantallaAjustes() {
       seccion("Límites diarios (gratis)", [
         p("Cada generación usa modelos de IA que tienen costo real. El plan gratuito incluye por día:"),
         li([
-          "5 transformaciones de imagen",
-          "1 video de transformación",
+          "3 transformaciones de imagen",
+          "Video limitado",
           "30 mensajes con El Maestro",
         ]),
-        p("Los límites se reinician cada día. Pronto habrá un plan Pro con más generaciones, videos y sin marca de agua."),
+        p("Los límites se reinician cada día. Con Premium tienes más generaciones, videos y sin marca de agua."),
       ]),
 
       seccion("Descargo de responsabilidad", [
@@ -65,6 +73,12 @@ export function pantallaAjustes() {
         p("Al usar la app aceptas que las decisiones de construcción o remodelación son tu responsabilidad."),
       ]),
 
+      seccion("Mi cuenta", [
+        p(state.premium ? "Estado: Premium ✨" : "Estado: Gratis"),
+        p("Tu ID de dispositivo (por si necesitas soporte o activar tu cuenta):"),
+        idBox,
+      ]),
+
       seccion("Acerca de", [
         p(`RenovAI v${VERSION}`),
         p("Transforma fotos de tus espacios reales con inteligencia artificial: pintar, remodelar, restaurar, y míralo en video."),
@@ -72,4 +86,17 @@ export function pantallaAjustes() {
       ]),
     ])
   );
+
+  // Rellenar el ID de dispositivo (async) y cablear el botón copiar
+  getDeviceId().then((id) => {
+    idValor.textContent = id;
+    (idBox.querySelector(".id-copiar") as HTMLElement).onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(id);
+        toast("ID copiado");
+      } catch {
+        toast(id);
+      }
+    };
+  });
 }

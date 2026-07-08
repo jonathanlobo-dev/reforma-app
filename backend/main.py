@@ -8,9 +8,10 @@ Endpoints:
   /media/...                      → sirve los archivos generados
 """
 import shutil
+import time
 from pathlib import Path
 
-from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi import BackgroundTasks, FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -118,6 +119,24 @@ def premium(device_id: str):
     y tras una compra. La ACTIVACIÓN real la hará RevenueCat (validando la
     compra) llamando a db.activar_premium — nunca desde un endpoint abierto."""
     return db.estado_premium(device_id)
+
+
+@app.post("/admin/premium")
+def admin_premium(
+    device_id: str = Form(...),
+    dias: int = Form(365),
+    x_admin_key: str = Header(""),
+):
+    """Otorga premium a un device_id. SOLO para el dueño: exige la clave secreta
+    ADMIN_KEY (env var en Render, NUNCA en el APK). Así ni un APK modeado ni
+    nadie sin la clave puede darse premium — la decisión vive en el servidor.
+    Uso: curl -X POST .../admin/premium -H "X-Admin-Key: TU_CLAVE"
+             -F device_id=XXXX -F dias=365"""
+    if not config.ADMIN_KEY or x_admin_key != config.ADMIN_KEY:
+        raise HTTPException(403, "No autorizado")
+    hasta = time.time() + max(1, dias) * 86400
+    db.activar_premium(device_id, hasta, "admin")
+    return {"ok": True, "device_id": device_id, "dias": dias}
 
 
 @app.get("/trabajos")

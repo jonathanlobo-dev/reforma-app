@@ -6,12 +6,13 @@ import { pantallaHome } from "./screens/home";
 import { pantallaRecientes } from "./screens/recientes";
 import { pantallaAsesor } from "./screens/asesor";
 import { pantallaInspiracion } from "./screens/inspiracion";
-import { initAds } from "./ads";
+import { initAds, mostrarIntersticial } from "./ads";
 import { raiz, initBack, setNavVisible } from "./nav";
 import { el, render } from "./ui";
 import { initNotifTap } from "./notif";
 import { getTrabajo } from "./api";
 import { pantallaResult } from "./screens/result";
+import { pantallaPaywall } from "./screens/paywall";
 
 (window as any).__reforma = { state, pantallaHome };
 
@@ -54,7 +55,15 @@ async function start() {
     state.categorias = await getCategorias();
     // Estado premium (no bloquea el arranque si falla)
     try { state.premium = (await getPremium(await getDeviceId())).premium; } catch { /* free */ }
-    raiz(pantallaHome);
+    // Al abrir: los usuarios gratis ven el paywall; al cerrarlo (X) se muestra
+    // un anuncio y pasa a Inicio. Premium entra directo a Inicio.
+    if (state.premium) {
+      raiz(pantallaHome);
+    } else {
+      raiz(() => pantallaPaywall({
+        alCerrar: () => { raiz(pantallaHome); mostrarIntersticial(); },
+      }));
+    }
   } catch (e) {
     render(
       el("div", { class: "screen centro" }, [

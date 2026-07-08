@@ -531,6 +531,19 @@ textarea.field { resize: vertical; min-height: 80px; }
 .aj-p { color: var(--texto); font-size: 14px; line-height: 1.55; margin-bottom: 10px; }
 .aj-ul { margin: 0 0 10px 18px; color: var(--texto); font-size: 13.5px; line-height: 1.6; }
 .aj-ul li { margin-bottom: 6px; }
+.id-box {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface2); border: 1px solid var(--borde);
+  border-radius: 12px; padding: 10px 12px; margin-top: 4px;
+}
+.id-valor {
+  flex: 1; font-size: 11px; color: var(--sub); word-break: break-all;
+  font-family: monospace;
+}
+.id-copiar {
+  flex-shrink: 0; background: var(--acento); color: #fff; border: none;
+  border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer;
+}
 
 /* ─── Botón PRO en la home ──────────────────────────────── */
 .home-acciones { position: absolute; right: 0; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 6px; }

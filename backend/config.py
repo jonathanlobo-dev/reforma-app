@@ -36,7 +36,9 @@ RESOLUTION   = os.getenv("RESOLUTION", "720p")
 # ─── Control de costos (lección CatchCat: topes ANTES de llamar a Replicate) ─
 # Por dispositivo y por día. El video es caro → tope bajo (premium).
 IMAGENES_GRATIS_DIA = int(os.getenv("IMAGENES_GRATIS_DIA", "5"))
-VIDEOS_GRATIS_DIA   = int(os.getenv("VIDEOS_GRATIS_DIA", "1"))
+# 3/día durante la fase de pruebas con amigos (cada video ~$0.25 de Replicate).
+# Ajústalo en Render sin recompilar el APK: env var VIDEOS_GRATIS_DIA.
+VIDEOS_GRATIS_DIA   = int(os.getenv("VIDEOS_GRATIS_DIA", "3"))
 # Tope global de seguridad: máximo de videos que TODO el sistema genera por día,
 # sin importar cuántos dispositivos haya. Freno de mano contra un pico viral.
 VIDEOS_GLOBAL_DIA   = int(os.getenv("VIDEOS_GLOBAL_DIA", "50"))

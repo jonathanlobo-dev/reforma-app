@@ -529,6 +529,7 @@ textarea.field { resize: vertical; min-height: 80px; }
 .aj-flecha { color: var(--sub); font-size: 13px; }
 .aj-cuerpo { padding: 0 16px 16px; }
 .aj-p { color: var(--texto); font-size: 14px; line-height: 1.55; margin-bottom: 10px; }
+.aj-link { color: var(--acento); font-size: 14px; font-weight: 600; text-decoration: none; }
 .aj-ul { margin: 0 0 10px 18px; color: var(--texto); font-size: 13.5px; line-height: 1.6; }
 .aj-ul li { margin-bottom: 6px; }
 .id-box {

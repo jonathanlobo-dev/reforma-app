@@ -3,6 +3,7 @@
 import { el, render, toast } from "../ui";
 import { atras, setNavVisible } from "../nav";
 import { icon } from "../ui/icons";
+import { API_BASE } from "../config";
 
 interface Plan {
   id: string; etiqueta: string; titulo: string; sub: string; precio: string;
@@ -85,7 +86,10 @@ export function pantallaPaywall(opciones: { alCerrar?: () => void } = {}) {
       el("div", { class: "paywall-links" }, [
         el("a", { href: "#", onClick: (e: Event) => { e.preventDefault(); toast("Próximamente"); } }, ["Términos de uso"]),
         el("span", {}, ["·"]),
-        el("a", { href: "#", onClick: (e: Event) => { e.preventDefault(); toast("Próximamente"); } }, ["Política de privacidad"]),
+        el("a", {
+          href: "#",
+          onClick: (e: Event) => { e.preventDefault(); window.open(`${API_BASE}/privacidad`, "_blank"); },
+        }, ["Política de privacidad"]),
       ]),
     ])
   );

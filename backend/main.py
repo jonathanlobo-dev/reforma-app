@@ -13,6 +13,7 @@ from pathlib import Path
 
 from fastapi import BackgroundTasks, FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -42,6 +43,13 @@ def _ip_cliente(request: Request) -> str:
 @app.get("/health")
 def health():
     return {"ok": True}
+
+
+@app.get("/privacidad")
+@app.get("/privacy")
+def privacidad():
+    """Política de privacidad pública (Play Console / AdMob / RevenueCat)."""
+    return FileResponse(config.ROOT / "privacidad.html", media_type="text/html")
 
 
 @app.get("/categorias")

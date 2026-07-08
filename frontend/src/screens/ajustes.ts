@@ -3,6 +3,7 @@ import { el, render, toast } from "../ui";
 import { atras, setNavVisible } from "../nav";
 import { getDeviceId } from "../device";
 import { state } from "../state";
+import { API_BASE } from "../config";
 
 const VERSION = "2.0";
 
@@ -83,6 +84,10 @@ export function pantallaAjustes() {
         p(`RenovAI v${VERSION}`),
         p("Transforma fotos de tus espacios reales con inteligencia artificial: pintar, remodelar, restaurar, y míralo en video."),
         p("Hecho con cariño en Venezuela."),
+        el("a", {
+          class: "aj-link", href: "#",
+          onClick: (e: Event) => { e.preventDefault(); window.open(`${API_BASE}/privacidad`, "_blank"); },
+        }, ["Política de privacidad"]),
       ]),
     ])
   );

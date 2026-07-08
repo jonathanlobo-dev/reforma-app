@@ -32,7 +32,7 @@ export async function generarReporte(proyecto: string, trabajos: Trabajo[]): Pro
   pdf.setTextColor(109, 94, 252);
   pdf.setFontSize(30);
   pdf.setFont("helvetica", "bold");
-  pdf.text("Reforma AI", W / 2, 120, { align: "center" });
+  pdf.text("RenovAI", W / 2, 120, { align: "center" });
   pdf.setTextColor(244, 244, 247);
   pdf.setFontSize(20);
   pdf.text(`Proyecto: ${proyecto}`, W / 2, 140, { align: "center" });
@@ -74,11 +74,11 @@ export async function generarReporte(proyecto: string, trabajos: Trabajo[]): Pro
 
     pdf.setFontSize(8);
     pdf.setTextColor(160, 160, 170);
-    pdf.text("Generado con Reforma AI — visualización conceptual, no plano técnico.", M, 288);
+    pdf.text("Generado con RenovAI — visualización conceptual, no plano técnico.", M, 288);
   }
 
   // ── Guardar / compartir ────────────────────────────────────────────────
-  const nombre = `reforma_${proyecto.replace(/[^\w\-]+/g, "_")}.pdf`;
+  const nombre = `renovai_${proyecto.replace(/[^\w\-]+/g, "_")}.pdf`;
   try {
     const { Capacitor } = await import("@capacitor/core");
     if (Capacitor.isNativePlatform()) {

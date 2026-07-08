@@ -21,7 +21,7 @@ import pipeline
 from categorias import CATEGORIAS, resolver
 from worker import procesar
 
-app = FastAPI(title="Reforma AI — backend")
+app = FastAPI(title="RenovAI — backend")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.mount("/media", StaticFiles(directory=config.DATA), name="media")
 

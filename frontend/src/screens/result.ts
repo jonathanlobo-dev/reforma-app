@@ -53,8 +53,8 @@ export async function pantallaResult(t: Trabajo) {
   const objetivoCompartir = video || comp || despues;
   const compartir = async () => {
     if (!objetivoCompartir) return;
-    const nombre = video ? `reforma_${t.id}.mp4` : `reforma_${t.id}.png`;
-    const texto = "Mira cómo transformé mi espacio con Reforma AI";
+    const nombre = video ? `renovai_${t.id}.mp4` : `renovai_${t.id}.png`;
+    const texto = "Mira cómo transformé mi espacio con RenovAI";
     try {
       const { Capacitor } = await import("@capacitor/core");
       if (Capacitor.isNativePlatform()) {
@@ -64,16 +64,16 @@ export async function pantallaResult(t: Trabajo) {
         const escrito = await Filesystem.writeFile({
           path: nombre, data: await blobABase64(blob), directory: Directory.Cache,
         });
-        await Share.share({ title: "Reforma AI", text: texto, files: [escrito.uri] });
+        await Share.share({ title: "RenovAI", text: texto, files: [escrito.uri] });
         return;
       }
       // Web: archivo si el navegador lo soporta; si no, link
       const blob = await (await fetch(objetivoCompartir)).blob();
       const file = new File([blob], nombre, { type: blob.type });
       if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ title: "Reforma AI", text: texto, files: [file] });
+        await navigator.share({ title: "RenovAI", text: texto, files: [file] });
       } else if (navigator.share) {
-        await navigator.share({ title: "Reforma AI", text: texto, url: objetivoCompartir });
+        await navigator.share({ title: "RenovAI", text: texto, url: objetivoCompartir });
       } else {
         toast("Compartir no disponible aquí.");
       }
@@ -90,7 +90,7 @@ export async function pantallaResult(t: Trabajo) {
   const objetivoGuardar = video || despues || comp;
   const guardar = async () => {
     if (!objetivoGuardar) return;
-    const nombre = video ? `reforma_${t.id}.mp4` : `reforma_${t.id}.png`;
+    const nombre = video ? `renovai_${t.id}.mp4` : `renovai_${t.id}.png`;
 
     const { Capacitor } = await import("@capacitor/core");
     if (!Capacitor.isNativePlatform()) {

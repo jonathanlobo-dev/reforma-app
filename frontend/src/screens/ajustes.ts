@@ -66,7 +66,7 @@ export function pantallaAjustes() {
       ]),
 
       seccion("Acerca de", [
-        p(`Reforma AI v${VERSION}`),
+        p(`RenovAI v${VERSION}`),
         p("Transforma fotos de tus espacios reales con inteligencia artificial: pintar, remodelar, restaurar, y míralo en video."),
         p("Hecho con cariño en Venezuela."),
       ]),

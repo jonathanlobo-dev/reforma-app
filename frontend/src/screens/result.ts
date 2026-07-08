@@ -189,5 +189,7 @@ export async function pantallaResult(t: Trabajo) {
     ])
   );
 
-  if (t.tipo === "imagen") mostrarIntersticial();
+  // Anuncio intersticial SOLO a usuarios gratis y en resultados de imagen
+  // (el premium paga justamente por no ver anuncios).
+  if (t.tipo === "imagen" && !state.premium) mostrarIntersticial();
 }

@@ -88,6 +88,24 @@ def init() -> None:
         except Exception:
             pass  # SQLite sin IF NOT EXISTS: si ya existe, lanza y se ignora
 
+    # Seguridad (solo Postgres/Supabase): activar Row-Level Security en todas
+    # nuestras tablas. El backend usa el rol `postgres` del pooler, que IGNORA
+    # RLS, así que sigue funcionando; pero la API REST pública (anon key) queda
+    # bloqueada. Sin políticas = deny-all para roles no privilegiados.
+    # Idempotente: ENABLE no falla si ya estaba activo.
+    # NO usar FORCE: el backend se conecta como el rol dueño de las tablas y
+    # FORCE lo sujetaría a RLS (sin políticas = bloqueo total → backend caído).
+    # Con solo ENABLE, el dueño sigue accediendo y la API REST anon queda fuera.
+    if config.USA_POSTGRES:
+        for tabla in ("trabajos", "uso", "uso_global", "feedback", "uso_ip"):
+            try:
+                with _con() as con:
+                    cur = con.cursor()
+                    cur.execute(f"ALTER TABLE {tabla} ENABLE ROW LEVEL SECURITY")
+                    con.commit()
+            except Exception:
+                pass
+
 
 # ─── Cuota ───────────────────────────────────────────────────────────────────
 

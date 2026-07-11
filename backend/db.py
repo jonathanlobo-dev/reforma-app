@@ -305,6 +305,51 @@ def ocultar(tid: str, device_id: str) -> bool:
         return cur.rowcount > 0
 
 
+def stats() -> dict:
+    """Métricas globales para el dashboard del dueño (GET /admin/stats).
+    Todo en una sola conexión; consultas simples que funcionan igual en
+    Postgres y SQLite."""
+    hoy = date.today().isoformat()
+    hace7 = time.time() - 7 * 86400
+    with _con() as con:
+        cur = con.cursor()
+
+        def uno(sql: str, params: tuple = ()) -> dict:
+            cur.execute(_q(sql), params)
+            fila = cur.fetchone()
+            return dict(fila) if fila else {}
+
+        tot = uno("SELECT COUNT(*) AS n FROM trabajos")
+        t7 = uno(f"SELECT COUNT(*) AS n, COUNT(DISTINCT device_id) AS dispositivos "
+                 f"FROM trabajos WHERE creado > {PH}", (hace7,))
+        cur.execute(_q(f"SELECT status, COUNT(*) AS n FROM trabajos "
+                       f"WHERE creado > {PH} GROUP BY status"), (hace7,))
+        por_status = {f["status"]: f["n"] for f in (dict(x) for x in cur.fetchall())}
+        cur.execute(_q(f"SELECT categoria, COUNT(*) AS n FROM trabajos "
+                       f"WHERE creado > {PH} GROUP BY categoria ORDER BY n DESC"), (hace7,))
+        por_categoria = {f["categoria"]: f["n"] for f in (dict(x) for x in cur.fetchall())}
+        cur.execute(_q("SELECT error, creado FROM trabajos WHERE status='error' "
+                       "ORDER BY creado DESC LIMIT 5"))
+        errores = [dict(f) for f in cur.fetchall()]
+
+        uso_hoy = uno(f"SELECT COALESCE(SUM(imagenes),0) AS imagenes, "
+                      f"COALESCE(SUM(videos),0) AS videos, COALESCE(SUM(chats),0) AS chats, "
+                      f"COUNT(DISTINCT device_id) AS dispositivos FROM uso WHERE fecha={PH}", (hoy,))
+        fb = uno("SELECT COALESCE(SUM(CASE WHEN voto=1 THEN 1 ELSE 0 END),0) AS positivos, "
+                 "COALESCE(SUM(CASE WHEN voto=-1 THEN 1 ELSE 0 END),0) AS negativos FROM feedback")
+        prem = uno(f"SELECT COUNT(*) AS n FROM premium WHERE hasta > {PH}", (time.time(),))
+
+    return {
+        "trabajos_total": tot.get("n", 0),
+        "ultimos_7d": {"trabajos": t7.get("n", 0), "dispositivos": t7.get("dispositivos", 0),
+                       "por_status": por_status, "por_categoria": por_categoria},
+        "hoy": uso_hoy,
+        "feedback": fb,
+        "premium_activos": prem.get("n", 0),
+        "errores_recientes": errores,
+    }
+
+
 def votar(tid: str, voto: int) -> None:
     with _con() as con:
         cur = con.cursor()

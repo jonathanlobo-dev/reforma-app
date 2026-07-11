@@ -8,6 +8,7 @@ Engines:
   inpaint → flux-fill-pro (máscara del pincel + prompt de Groq + filtro)
   estilo  → flux-2-pro (foto + referencia, prompt fijo, sin Groq)
   plano   → flux-kontext (prompt fijo especializado, sin texto del usuario)
+  explorar→ flux-kontext (recorte del render del plano → vista interior, prompt fijo)
 """
 import shutil
 import traceback
@@ -51,9 +52,23 @@ _PROMPT_PLANO = (
     "the exact same wall layout and proportions, the same number of rooms, and "
     "every DOOR OPENING and window in its exact position from the plan. Do not "
     "add, move or remove any doors, walls or windows. Interior door openings "
-    "must connect the same rooms as in the plan. Modern tasteful furniture "
+    "must connect the same rooms as in the plan. IMPORTANT: the render must "
+    "contain NO text at all — remove every room label, dimension line, "
+    "measurement, annotation and title block from the plan; use them only to "
+    "decide which furniture belongs in each room. Modern tasteful furniture "
     "matching what the plan suggests, soft daylight, architectural "
     "visualization quality."
+)
+
+# "Explorar habitaciones": recorte de una habitación del render isométrico →
+# vista interior fotorrealista a nivel de ojos. Prompt fijo, sin Groq.
+_PROMPT_EXPLORAR = (
+    "This image is a cropped room from a top-down isometric 3D architectural "
+    "render. Generate a photorealistic eye-level interior photograph of this "
+    "same room, as if standing inside it. Keep the same furniture, layout, "
+    "colors, materials and door/window positions visible in the crop. Natural "
+    "soft daylight, realistic proportions, interior photography quality. No "
+    "text or labels anywhere in the image."
 )
 
 
@@ -82,6 +97,9 @@ def procesar(tid: str) -> None:
 
         elif engine == "plano":
             url_antes, url_despues = pipeline.editar(antes, _PROMPT_PLANO, despues)
+
+        elif engine == "explorar":
+            url_antes, url_despues = pipeline.editar(antes, _PROMPT_EXPLORAR, despues)
 
         else:
             # editar | inpaint → texto libre del usuario → Groq (plan + FILTRO

@@ -428,6 +428,14 @@ textarea.field { resize: vertical; min-height: 80px; }
 .mask-hint, .form-hint {
   color: var(--sub); font-size: 13.5px; line-height: 1.45; margin-top: -6px;
 }
+/* ─── Explorar habitaciones (Beta) ──────────────────────── */
+.beta-tag {
+  margin-left: 8px; padding: 2px 8px; border-radius: 999px;
+  background: rgba(109,94,252,.18); color: var(--acento);
+  font-size: 11px; font-weight: 700; letter-spacing: .04em;
+}
+.explorar-nota { color: var(--sub); font-size: 12.5px; line-height: 1.4; }
+
 .mask-tools { display: flex; gap: 8px; }
 .tool-btn {
   flex: 1; padding: 12px 8px; border-radius: 14px;

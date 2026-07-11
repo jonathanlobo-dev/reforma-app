@@ -6,6 +6,7 @@ export interface Campo { clave: string; label: string; ejemplo: string; }
 export interface Categoria {
   titulo: string; emoji: string; tipo_default: "imagen" | "video";
   campos: Campo[]; engine: string;
+  oculta?: boolean; // no aparece en la Home (ej. "explorar": solo desde un plano)
 }
 export type Categorias = Record<string, Categoria>;
 
@@ -80,6 +81,10 @@ const MOCK_CATEGORIAS: Categorias = {
   plano: {
     titulo: "Plano 2D → 3D", emoji: "📐", tipo_default: "imagen", engine: "plano",
     campos: [],
+  },
+  explorar: {
+    titulo: "Explorar habitación", emoji: "🚪", tipo_default: "imagen", engine: "explorar",
+    campos: [], oculta: true,
   },
 };
 

@@ -47,6 +47,7 @@ export function pantallaHome() {
   const seccion = SECCIONES.find((s) => s.clave === seccionActiva) ?? SECCIONES[0];
   const claves = ORDEN.filter((c) => state.categorias[c])
     .concat(Object.keys(state.categorias).filter((c) => !ORDEN.includes(c)))
+    .filter((c) => !state.categorias[c].oculta)
     .filter((c) => !seccion.filtro || seccion.filtro.includes(c));
 
   const tabs = el("div", { class: "proy-chips" },

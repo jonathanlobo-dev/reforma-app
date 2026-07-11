@@ -182,6 +182,15 @@ def admin_premium(
     return {"ok": True, "device_id": device_id, "dias": dias}
 
 
+@app.get("/admin/stats")
+def admin_stats(x_admin_key: str = Header("")):
+    """Métricas globales para el dashboard del dueño. Misma protección que
+    /admin/premium: exige ADMIN_KEY."""
+    if not config.ADMIN_KEY or x_admin_key != config.ADMIN_KEY:
+        raise HTTPException(403, "No autorizado")
+    return db.stats()
+
+
 @app.get("/trabajos")
 def historial(device_id: str, limit: int = 30):
     trabajos = db.listar(device_id, max(1, min(limit, 50)))

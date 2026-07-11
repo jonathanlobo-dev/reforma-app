@@ -174,6 +174,15 @@ export async function pantallaResult(t: Trabajo) {
     }
   };
 
+  // Explorar habitaciones (Beta): solo en resultados del plano 2D→3D — el
+  // usuario encuadra una habitación del render y genera la vista interior.
+  const fuenteExplorar = resolverMedia(t.resultados.limpio) || despues;
+  const puedeExplorar = engine === "plano" && !!fuenteExplorar;
+  const explorar = async () => {
+    const { pantallaExplorar } = await import("./explorar");
+    irA(() => pantallaExplorar(fuenteExplorar!, t.proyecto || undefined));
+  };
+
   // Video del PROCESO (premium): original → cada edición → resultado final.
   // Disponible cuando hay al menos 2 ediciones encadenadas de la misma foto.
   const puedeProceso = t.tipo === "imagen" && state.cadena.length >= 2;
@@ -206,6 +215,10 @@ export async function pantallaResult(t: Trabajo) {
           : []),
         ...(puedeReintentar
           ? [el("button", { class: "btn-secundario btn-ico", onClick: otraVersion }, [icon("refresh", 16), tr("result.otra_version")])]
+          : []),
+        ...(puedeExplorar
+          ? [el("button", { class: "btn-secundario btn-ico", onClick: explorar },
+              [icon("search", 16), tr("result.explorar")])]
           : []),
         ...(puedeProceso
           ? [el("button", { class: "btn-secundario btn-ico btn-proceso", onClick: videoProceso },

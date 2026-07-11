@@ -17,31 +17,33 @@ import requests
 import avisos
 import config
 import db
+import i18n
 import pipeline
 import storage
 from categorias import CATEGORIAS
 
 
-def _error_usuario(e: Exception) -> str:
-    """Traduce cualquier excepción a un mensaje amable en español para el
-    usuario. Lo crudo (en inglés) se queda en los logs, nunca en la app.
-    Además avisa al dueño cuando el problema es de plataforma (sin crédito)."""
+def _error_usuario(e: Exception, lang: str = "es") -> str:
+    """Traduce cualquier excepción a un mensaje amable EN EL IDIOMA del
+    usuario. Lo crudo (casi siempre en inglés) se queda en los logs, nunca en
+    la app. Además avisa al dueño cuando el problema es de plataforma (sin
+    crédito) — ese aviso siempre en español, es solo para nosotros."""
     s = str(e).lower()
     if "402" in s or "sin crédito" in s or "payment required" in s or "insufficient credit" in s:
         avisos.owner("⚠️ Replicate SIN CRÉDITO — las generaciones están fallando. Recarga en replicate.com/account/billing", clave="sin-credito")
-        return "El servicio está a máxima capacidad en este momento. Intenta de nuevo en un rato."
+        return i18n.error_msg("sin_credito", lang)
     if "flagged" in s or "sensitive" in s or "nsfw" in s or "safety" in s or "content policy" in s:
-        return "La imagen o el pedido no pasó los filtros de contenido. Intenta con otra foto u otra descripción."
+        return i18n.error_msg("contenido", lang)
     if "timeout" in s or "no terminó" in s or "timed out" in s:
-        return "La generación tardó demasiado y se canceló. Intenta de nuevo."
+        return i18n.error_msg("timeout", lang)
     if "429" in s or "rate limit" in s:
-        return "Hay muchas personas generando en este momento. Intenta en unos minutos."
+        return i18n.error_msg("rate_limit", lang)
     if "falta la máscara" in s:
-        return "Falta pintar la zona a cambiar. Vuelve atrás y usa el pincel."
+        return i18n.error_msg("falta_mascara", lang)
     if "falta la foto de referencia" in s:
-        return "Falta la foto de inspiración. Vuelve atrás y súbela."
+        return i18n.error_msg("falta_referencia", lang)
     # Cualquier otra cosa (errores técnicos en inglés incluidos): genérico.
-    return "Algo salió mal generando tu transformación. Intenta de nuevo."
+    return i18n.error_msg("generico", lang)
 
 _PROMPT_PLANO = (
     "Convert this 2D architectural floor plan into a realistic 3D furnished "
@@ -61,6 +63,7 @@ def procesar(tid: str) -> None:
         return
     carpeta = config.DATA / tid
     carpeta.mkdir(parents=True, exist_ok=True)
+    lang = trabajo.get("lang") or "es"
     try:
         db.actualizar(tid, status="processing")
         cat = CATEGORIAS[trabajo["categoria"]]
@@ -85,7 +88,7 @@ def procesar(tid: str) -> None:
             # de contenido, ANTES de gastar Replicate)
             try:
                 plan = pipeline.generar_plan(cat["titulo"], cat["guia_llm"],
-                                             trabajo["detalle"] or "")
+                                             trabajo["detalle"] or "", lang=lang)
             except pipeline.PeticionRechazada as e:
                 db.actualizar(tid, status="error", error=str(e)[:300])
                 return
@@ -141,7 +144,7 @@ def procesar(tid: str) -> None:
         db.actualizar(tid, status="done", **campos)
     except Exception as e:
         traceback.print_exc()  # lo crudo (inglés) va al log, no al usuario
-        db.actualizar(tid, status="error", error=_error_usuario(e))
+        db.actualizar(tid, status="error", error=_error_usuario(e, lang))
 
 
 def _bajar(url_o_ruta: str, destino) -> None:
@@ -159,6 +162,8 @@ def procesar_proceso(tid: str, imagenes_urls: list) -> None:
     cada edición hasta el resultado final. Solo ffmpeg → costo $0."""
     carpeta = config.DATA / tid
     carpeta.mkdir(parents=True, exist_ok=True)
+    trabajo = db.obtener(tid) or {}
+    lang = trabajo.get("lang") or "es"
     try:
         db.actualizar(tid, status="processing")
         rutas = []
@@ -179,4 +184,4 @@ def procesar_proceso(tid: str, imagenes_urls: list) -> None:
         db.actualizar(tid, status="done", **campos)
     except Exception as e:
         traceback.print_exc()
-        db.actualizar(tid, status="error", error=_error_usuario(e))
+        db.actualizar(tid, status="error", error=_error_usuario(e, lang))

@@ -19,8 +19,9 @@ from pydantic import BaseModel
 
 import config
 import db
+import i18n
 import pipeline
-from categorias import CATEGORIAS, resolver
+from categorias import categorias_traducidas, resolver
 from worker import procesar, procesar_proceso
 
 app = FastAPI(title="RenuevAI — backend")
@@ -53,11 +54,8 @@ def privacidad():
 
 
 @app.get("/categorias")
-def categorias():
-    return {k: {"titulo": v["titulo"], "emoji": v["emoji"],
-                "tipo_default": v["tipo_default"], "campos": v["campos"],
-                "engine": v.get("engine", "editar")}
-            for k, v in CATEGORIAS.items()}
+def categorias(lang: str = "es"):
+    return categorias_traducidas(lang)
 
 
 def _urls(trabajo: dict) -> dict:
@@ -77,10 +75,12 @@ async def crear_trabajo(
     detalle: str = Form(""),
     tipo: str = Form(""),
     proyecto: str = Form(""),
+    lang: str = Form("es"),
     foto: UploadFile = File(...),
     mask: UploadFile | None = File(None),        # engine=inpaint (PNG b/n del pincel)
     referencia: UploadFile | None = File(None),  # engine=estilo (foto de inspiración)
 ):
+    lang = i18n.normalizar_lang(lang)
     cat = resolver(categoria)
     engine = cat.get("engine", "editar")
     tipo = tipo or cat["tipo_default"]
@@ -96,15 +96,15 @@ async def crear_trabajo(
         raise HTTPException(400, "La referencia debe ser JPG, PNG o WEBP")
 
     # Control de costos ANTES de aceptar el trabajo (device + IP)
-    ok, motivo = db.puede_generar(device_id, tipo)
+    ok, clave, params = db.puede_generar(device_id, tipo)
     if not ok:
-        raise HTTPException(429, motivo)
+        raise HTTPException(429, i18n.cuota_msg(clave, lang, **params))
     ip = _ip_cliente(request)
     if not db.puede_ip(ip, "imagenes" if tipo == "imagen" else "videos"):
-        raise HTTPException(429, "Se alcanzó el límite diario desde esta red. Intenta mañana.")
+        raise HTTPException(429, i18n.cuota_msg("limite_ip", lang))
     db.registrar_ip(ip, "imagenes" if tipo == "imagen" else "videos")
 
-    tid = db.crear_trabajo(device_id, categoria, detalle, tipo, proyecto.strip()[:60])
+    tid = db.crear_trabajo(device_id, categoria, detalle, tipo, proyecto.strip()[:60], lang)
     carpeta = config.DATA / tid
     carpeta.mkdir(parents=True, exist_ok=True)
     destino = carpeta / f"antes{EXT_OK[foto.content_type]}"
@@ -126,6 +126,7 @@ def crear_proceso(
     background: BackgroundTasks,
     device_id: str = Form(...),
     trabajo_ids: str = Form(...),  # ids separados por coma, en orden de edición
+    lang: str = Form("es"),
 ):
     """Video del PROCESO (premium): foto original → cada edición → final,
     con fundidos. Solo ffmpeg, sin costo de Replicate, por eso no consume
@@ -149,7 +150,8 @@ def crear_proceso(
     if len(imagenes) < 2:
         raise HTTPException(400, "No hay suficientes imágenes para montar el video.")
 
-    nuevo = db.crear_trabajo(device_id, "proceso", f"Video del proceso ({len(imagenes)} pasos)", "video")
+    nuevo = db.crear_trabajo(device_id, "proceso", f"Video del proceso ({len(imagenes)} pasos)", "video",
+                             lang=i18n.normalizar_lang(lang))
     background.add_task(procesar_proceso, nuevo, imagenes)
     return {"id": nuevo, "status": "pending", "tipo": "video"}
 
@@ -237,21 +239,23 @@ class AsesorReq(BaseModel):
     device_id: str
     mensajes: list[MensajeChat]
     contexto: str | None = None   # ej. "Remodelar: cocina moderna minimalista"
+    lang: str | None = None       # idioma del usuario (es/en/pt/it); default es
 
 
 @app.post("/asesor")
 def asesor(req: AsesorReq, request: Request):
     if not req.mensajes or req.mensajes[-1].role != "user":
         raise HTTPException(400, "Falta el mensaje del usuario")
-    ok, motivo = db.puede_chatear(req.device_id)
+    lang = i18n.normalizar_lang(req.lang)
+    ok, clave, params = db.puede_chatear(req.device_id)
     if not ok:
-        raise HTTPException(429, motivo)
+        raise HTTPException(429, i18n.cuota_msg(clave, lang, **params))
     ip = _ip_cliente(request)
     if not db.puede_ip(ip, "chats"):
-        raise HTTPException(429, "Se alcanzó el límite diario desde esta red. Intenta mañana.")
+        raise HTTPException(429, i18n.cuota_msg("limite_ip", lang))
     db.registrar_ip(ip, "chats")
 
-    system = pipeline.ASESOR_SYSTEM
+    system = pipeline.ASESOR_SYSTEM + i18n.asesor_idioma_instruccion(lang)
     if req.contexto:
         system += f"\n\nCONTEXTO de la transformación que el usuario generó en la app: {req.contexto[:400]}"
 

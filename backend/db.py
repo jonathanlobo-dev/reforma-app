@@ -64,6 +64,7 @@ _MIGRACIONES = [
     ("trabajos", "oculto", "INTEGER DEFAULT 0"),
     ("trabajos", "proyecto", "TEXT"),
     ("trabajos", "limpio", "TEXT"),  # resultado SIN marca de agua (para encadenar)
+    ("trabajos", "lang", "TEXT"),    # idioma del usuario al crear el trabajo (es/en/pt/it)
 ]
 
 
@@ -146,7 +147,10 @@ def activar_premium(device_id: str, hasta: float, plan: str = "") -> None:
         con.commit()
 
 
-def puede_generar(device_id: str, tipo: str) -> tuple[bool, str]:
+def puede_generar(device_id: str, tipo: str) -> tuple[bool, str, dict]:
+    """Devuelve (ok, clave_mensaje, params) — no un string final: main.py lo
+    traduce con i18n.cuota_msg(clave, lang, **params) según el idioma del
+    request. clave="" cuando ok=True."""
     hoy = date.today().isoformat()
     premium = es_premium(device_id)
     lim_img = config.IMAGENES_PREMIUM_DIA if premium else config.IMAGENES_GRATIS_DIA
@@ -159,23 +163,23 @@ def puede_generar(device_id: str, tipo: str) -> tuple[bool, str]:
         img = fila["imagenes"] if fila else 0
         vid = fila["videos"] if fila else 0
         if tipo == "imagen" and img >= lim_img:
-            extra = "" if premium else " Hazte Premium para más."
-            return False, f"Llegaste al límite de {lim_img} imágenes por hoy.{extra}"
+            clave = "limite_imagenes_premium" if premium else "limite_imagenes_free"
+            return False, clave, {"n": lim_img}
         if tipo == "video":
             if vid >= lim_vid:
                 if premium:
-                    return False, f"Llegaste al límite de {lim_vid} video(s) por hoy."
-                return False, ("Los videos son Premium. Hazte Premium para desbloquearlos."
-                               if lim_vid == 0 else
-                               f"Llegaste a tu límite de {lim_vid} video(s) por hoy. Hazte Premium para más.")
+                    return False, "limite_videos_premium", {"n": lim_vid}
+                if lim_vid == 0:
+                    return False, "limite_videos_lock", {}
+                return False, "limite_videos_free", {"n": lim_vid}
             cur.execute(_q(f"SELECT videos FROM uso_global WHERE fecha={PH}"), (hoy,))
             g = cur.fetchone()
             if g and g["videos"] >= config.VIDEOS_GLOBAL_DIA:
-                return False, "El sistema alcanzó su límite diario de videos. Intenta mañana."
-    return True, ""
+                return False, "limite_global_videos", {}
+    return True, "", {}
 
 
-def puede_chatear(device_id: str) -> tuple[bool, str]:
+def puede_chatear(device_id: str) -> tuple[bool, str, dict]:
     hoy = date.today().isoformat()
     with _con() as con:
         cur = con.cursor()
@@ -184,8 +188,8 @@ def puede_chatear(device_id: str) -> tuple[bool, str]:
         fila = cur.fetchone()
         chats = (fila["chats"] if fila and fila["chats"] is not None else 0)
         if chats >= config.ASESOR_MENSAJES_DIA:
-            return False, f"El Maestro descansa: llegaste a los {config.ASESOR_MENSAJES_DIA} mensajes de hoy. Vuelve mañana."
-    return True, ""
+            return False, "limite_chats", {"n": config.ASESOR_MENSAJES_DIA}
+    return True, "", {}
 
 
 # ─── Tope por IP (defensa contra device_id falsificados) ────────────────────
@@ -251,15 +255,15 @@ def registrar_uso(device_id: str, tipo: str) -> None:
 # ─── Trabajos ────────────────────────────────────────────────────────────────
 
 def crear_trabajo(device_id: str, categoria: str, detalle: str, tipo: str,
-                  proyecto: str = "") -> str:
+                  proyecto: str = "", lang: str = "es") -> str:
     tid = uuid.uuid4().hex
     ahora = time.time()
     with _con() as con:
         cur = con.cursor()
         cur.execute(_q(
-            "INSERT INTO trabajos (id, device_id, categoria, detalle, tipo, status, proyecto, creado, actualizado)"
-            f" VALUES ({PH},{PH},{PH},{PH},{PH},'pending',{PH},{PH},{PH})"),
-            (tid, device_id, categoria, detalle, tipo, proyecto or None, ahora, ahora))
+            "INSERT INTO trabajos (id, device_id, categoria, detalle, tipo, status, proyecto, lang, creado, actualizado)"
+            f" VALUES ({PH},{PH},{PH},{PH},{PH},'pending',{PH},{PH},{PH},{PH})"),
+            (tid, device_id, categoria, detalle, tipo, proyecto or None, lang or "es", ahora, ahora))
         con.commit()
     return tid
 

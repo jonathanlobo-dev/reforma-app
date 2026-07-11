@@ -181,6 +181,7 @@ export async function crearProceso(
   const fd = new FormData();
   fd.append("device_id", deviceId);
   fd.append("trabajo_ids", trabajoIds.join(","));
+  fd.append("lang", idioma());
   const r = await fetch(`${API_BASE}/proceso`, { method: "POST", body: fd });
   if (r.status === 402) throw new Error(t("api.proceso_premium"));
   if (!r.ok) {

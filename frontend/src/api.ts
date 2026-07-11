@@ -1,5 +1,6 @@
 // Cliente de la API + modo MOCK para desarrollar sin gastar crédito.
 import { API_BASE, MOCK } from "./config";
+import { t, idioma } from "./i18n";
 
 export interface Campo { clave: string; label: string; ejemplo: string; }
 export interface Categoria {
@@ -102,8 +103,8 @@ const MOCK_HISTORIAL: Trabajo[] = [
 
 export async function getCategorias(): Promise<Categorias> {
   if (MOCK) return MOCK_CATEGORIAS;
-  const r = await fetch(`${API_BASE}/categorias`);
-  if (!r.ok) throw new Error("No se pudieron cargar las categorías");
+  const r = await fetch(`${API_BASE}/categorias?lang=${idioma()}`);
+  if (!r.ok) throw new Error(t("api.error_categorias"));
   return r.json();
 }
 
@@ -126,12 +127,13 @@ export async function crearTrabajo(data: {
   if (data.mask) fd.append("mask", data.mask, "mask.png");
   if (data.referencia) fd.append("referencia", data.referencia, "referencia.jpg");
   if (data.proyecto) fd.append("proyecto", data.proyecto);
+  fd.append("lang", idioma());
   const r = await fetch(`${API_BASE}/trabajos`, { method: "POST", body: fd });
   if (r.status === 429) {
-    const j = await r.json().catch(() => ({ detail: "Límite alcanzado." }));
+    const j = await r.json().catch(() => ({ detail: t("api.limite_alcanzado") }));
     throw new Error(j.detail);
   }
-  if (!r.ok) throw new Error("No se pudo crear el trabajo");
+  if (!r.ok) throw new Error(t("api.error_crear_trabajo"));
   return r.json();
 }
 
@@ -156,7 +158,7 @@ export async function getTrabajo(id: string): Promise<Trabajo> {
     };
   }
   const r = await fetch(`${API_BASE}/trabajos/${id}`);
-  if (!r.ok) throw new Error("No se pudo consultar el trabajo");
+  if (!r.ok) throw new Error(t("api.error_consultar_trabajo"));
   return r.json();
 }
 
@@ -180,9 +182,9 @@ export async function crearProceso(
   fd.append("device_id", deviceId);
   fd.append("trabajo_ids", trabajoIds.join(","));
   const r = await fetch(`${API_BASE}/proceso`, { method: "POST", body: fd });
-  if (r.status === 402) throw new Error("El video del proceso es una función Premium.");
+  if (r.status === 402) throw new Error(t("api.proceso_premium"));
   if (!r.ok) {
-    const j = await r.json().catch(() => ({ detail: "No se pudo montar el video." }));
+    const j = await r.json().catch(() => ({ detail: t("api.error_montar_video") }));
     throw new Error(j.detail);
   }
   return r.json();
@@ -232,13 +234,13 @@ export async function enviarAsesor(
   const r = await fetch(`${API_BASE}/asesor`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ device_id: deviceId, mensajes, contexto: contexto || null }),
+    body: JSON.stringify({ device_id: deviceId, mensajes, contexto: contexto || null, lang: idioma() }),
   });
   if (r.status === 429) {
-    const j = await r.json().catch(() => ({ detail: "Límite diario alcanzado." }));
+    const j = await r.json().catch(() => ({ detail: t("asesor.toast_limite") }));
     throw new Error(j.detail);
   }
-  if (!r.ok) throw new Error("El Maestro no está disponible ahora. Intenta en un momento.");
+  if (!r.ok) throw new Error(t("asesor.toast_no_disponible"));
   const j = await r.json();
   return j.respuesta;
 }

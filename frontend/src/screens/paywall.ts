@@ -4,24 +4,25 @@ import { el, render, toast } from "../ui";
 import { atras, setNavVisible } from "../nav";
 import { icon } from "../ui/icons";
 import { API_BASE } from "../config";
+import { t } from "../i18n";
 
 interface Plan {
-  id: string; etiqueta: string; titulo: string; sub: string; precio: string;
-  destacado?: boolean; badge?: string;
+  id: string; etiquetaKey: string; tituloKey: string; subKey: string; precio: string;
+  destacado?: boolean; badgeKey?: string;
 }
 
 const PLANES: Plan[] = [
-  { id: "vida", etiqueta: "PAGO ÚNICO", titulo: "De por vida", sub: "Un solo pago", precio: "USD 49,99" },
-  { id: "anual", etiqueta: "MEJOR VALOR", titulo: "1 Año", sub: "USD 0,58 / semana", precio: "USD 29,99", destacado: true, badge: "Ahorra 88%" },
-  { id: "semanal", etiqueta: "FLEXIBLE", titulo: "1 Semana", sub: "Prueba sin compromiso", precio: "USD 4,99" },
+  { id: "vida", etiquetaKey: "paywall.plan.vida.etiqueta", tituloKey: "paywall.plan.vida.titulo", subKey: "paywall.plan.vida.sub", precio: "USD 49,99" },
+  { id: "anual", etiquetaKey: "paywall.plan.anual.etiqueta", tituloKey: "paywall.plan.anual.titulo", subKey: "paywall.plan.anual.sub", precio: "USD 29,99", destacado: true, badgeKey: "paywall.plan.anual.badge" },
+  { id: "semanal", etiquetaKey: "paywall.plan.semanal.etiqueta", tituloKey: "paywall.plan.semanal.titulo", subKey: "paywall.plan.semanal.sub", precio: "USD 4,99" },
 ];
 
-const BENEFICIOS: { ico: string; txt: string }[] = [
-  { ico: "grid", txt: "Todas las funciones desbloqueadas" },
-  { ico: "sparkles", txt: "10 transformaciones de imagen al día" },
-  { ico: "image", txt: "Videos de transformación premium" },
-  { ico: "eyeoff", txt: "Sin marca de agua en tus resultados" },
-  { ico: "brush", txt: "Todos los estilos y contenidos nuevos" },
+const BENEFICIOS: { ico: string; key: string }[] = [
+  { ico: "grid", key: "paywall.beneficio.1" },
+  { ico: "sparkles", key: "paywall.beneficio.2" },
+  { ico: "image", key: "paywall.beneficio.3" },
+  { ico: "eyeoff", key: "paywall.beneficio.4" },
+  { ico: "brush", key: "paywall.beneficio.5" },
 ];
 
 // `alCerrar` se usa cuando el paywall sale al abrir la app: la X debe llevar a
@@ -37,23 +38,23 @@ export function pantallaPaywall(opciones: { alCerrar?: () => void } = {}) {
       "data-plan": p.id,
       onClick: () => { planSel = p.id; refrescarPlanes(); },
     }, [
-      ...(p.badge ? [el("div", { class: "plan-badge" }, [p.badge])] : []),
-      el("div", { class: "plan-etiqueta" }, [p.etiqueta]),
-      el("div", { class: "plan-titulo" }, [p.titulo]),
-      el("div", { class: "plan-sub" }, [p.sub]),
+      ...(p.badgeKey ? [el("div", { class: "plan-badge" }, [t(p.badgeKey)])] : []),
+      el("div", { class: "plan-etiqueta" }, [t(p.etiquetaKey)]),
+      el("div", { class: "plan-titulo" }, [t(p.tituloKey)]),
+      el("div", { class: "plan-sub" }, [t(p.subKey)]),
       el("div", { class: "plan-precio" }, [p.precio]),
     ])
   );
 
   function refrescarPlanes() {
-    tarjetas.forEach((t) => t.classList.toggle("sel", (t as HTMLElement).dataset.plan === planSel));
+    tarjetas.forEach((c) => c.classList.toggle("sel", (c as HTMLElement).dataset.plan === planSel));
   }
 
   const suscribir = () => {
     // TODO(pagos): aquí se llamará a RevenueCat (Purchases.purchasePackage) con
     // el paquete correspondiente a planSel; al confirmar la compra, RevenueCat
     // valida con Google Play y el backend marca premium (db.activar_premium).
-    toast("Los pagos se activan muy pronto — estamos configurando Google Play.");
+    toast(t("paywall.toast_pagos"));
   };
 
   render(
@@ -65,8 +66,8 @@ export function pantallaPaywall(opciones: { alCerrar?: () => void } = {}) {
         el("div", { class: "paywall-hero-grad" }),
         el("div", { class: "paywall-hero-txt" }, [
           el("div", { class: "paywall-corona" }, [icon("crown", 30)]),
-          el("h1", {}, ["RenuevAI Premium"]),
-          el("p", {}, ["Transforma tu espacio sin límites"]),
+          el("h1", {}, [t("paywall.titulo")]),
+          el("p", {}, [t("paywall.sub")]),
         ]),
       ]),
 
@@ -74,22 +75,22 @@ export function pantallaPaywall(opciones: { alCerrar?: () => void } = {}) {
         BENEFICIOS.map((b) =>
           el("div", { class: "beneficio" }, [
             el("span", { class: "beneficio-ico" }, [icon(b.ico, 20)]),
-            el("span", {}, [b.txt]),
+            el("span", {}, [t(b.key)]),
           ])
         )),
 
       el("div", { class: "planes" }, tarjetas),
 
-      el("button", { class: "btn-primario paywall-cta", onClick: suscribir }, ["Continuar"]),
+      el("button", { class: "btn-primario paywall-cta", onClick: suscribir }, [t("paywall.continuar")]),
 
-      el("p", { class: "paywall-fine" }, ["Renovación automática. Cancela cuando quieras."]),
+      el("p", { class: "paywall-fine" }, [t("paywall.letra_chica")]),
       el("div", { class: "paywall-links" }, [
-        el("a", { href: "#", onClick: (e: Event) => { e.preventDefault(); toast("Próximamente"); } }, ["Términos de uso"]),
+        el("a", { href: "#", onClick: (e: Event) => { e.preventDefault(); toast(t("paywall.toast_proximamente")); } }, [t("paywall.terminos")]),
         el("span", {}, ["·"]),
         el("a", {
           href: "#",
           onClick: (e: Event) => { e.preventDefault(); window.open(`${API_BASE}/privacidad`, "_blank"); },
-        }, ["Política de privacidad"]),
+        }, [t("paywall.privacidad")]),
       ]),
     ])
   );

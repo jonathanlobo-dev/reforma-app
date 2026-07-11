@@ -1,9 +1,10 @@
-// Ajustes: cómo usar, límites/créditos, descargo de responsabilidad, cuenta.
+// Ajustes: idioma, cómo usar, límites/créditos, descargo de responsabilidad, cuenta.
 import { el, render, toast } from "../ui";
 import { atras, setNavVisible } from "../nav";
 import { getDeviceId } from "../device";
 import { state } from "../state";
 import { API_BASE } from "../config";
+import { t, idioma, setIdioma, IDIOMAS, type Idioma } from "../i18n";
 
 const VERSION = "2.0";
 
@@ -25,69 +26,93 @@ function li(items: string[]) {
   return el("ul", { class: "aj-ul" }, items.map((i) => el("li", {}, [i])));
 }
 
+function selectorIdioma(): HTMLElement {
+  const items: HTMLElement[] = [];
+  const list = el("div", { class: "radio-list" });
+
+  function actualizar() {
+    items.forEach((i) => i.classList.toggle("sel", i.dataset.val === idioma()));
+  }
+
+  IDIOMAS.forEach((idi) => {
+    const item = el("div", {
+      class: "radio-item",
+      "data-val": idi.codigo,
+      onClick: async () => {
+        if (idi.codigo === idioma()) return;
+        await setIdioma(idi.codigo as Idioma);
+        toast(t("ajustes.idioma.cambiado"));
+      },
+    }, [
+      el("span", { class: "radio-dot" }),
+      el("span", { class: "radio-txt" }, [idi.nombre]),
+    ]);
+    list.append(item);
+    items.push(item);
+  });
+
+  actualizar();
+  return list;
+}
+
 export function pantallaAjustes() {
   setNavVisible(false);
 
   const idValor = el("span", { class: "id-valor" }, ["…"]);
   const idBox = el("div", { class: "id-box" }, [
     idValor,
-    el("button", { class: "id-copiar" }, ["Copiar"]),
+    el("button", { class: "id-copiar" }, [t("common.copiar")]),
   ]);
 
   render(
     el("div", { class: "screen" }, [
       el("div", { class: "topbar" }, [
         el("button", { class: "back", onClick: atras }, ["‹"]),
-        el("span", { class: "topbar-tit" }, ["Ajustes"]),
+        el("span", { class: "topbar-tit" }, [t("ajustes.titulo")]),
       ]),
 
-      seccion("Cómo usar la app", [
-        p("1. Elige un modo en Inicio (pintar, remodelar, pincel mágico…)."),
-        p("2. Sube una foto clara y bien iluminada de tu espacio. Mientras mejor la foto, mejor el resultado."),
-        p("3. Sé específico: di QUÉ cambiar y QUÉ conservar. La IA no adivina."),
+      seccion(t("ajustes.idioma.titulo"), [selectorIdioma()]),
+
+      seccion(t("ajustes.sec.uso.titulo"), [
+        p(t("ajustes.sec.uso.p1")),
+        p(t("ajustes.sec.uso.p2")),
+        p(t("ajustes.sec.uso.p3")),
+        li([t("ajustes.sec.uso.li1"), t("ajustes.sec.uso.li2")]),
+        p(t("ajustes.sec.uso.p4")),
+        p(t("ajustes.sec.uso.p5", { nombre: t("asesor.nombre") })),
+      ]),
+
+      seccion(t("ajustes.sec.limites.titulo"), [
+        p(t("ajustes.sec.limites.p1")),
+        li([t("ajustes.sec.limites.li1"), t("ajustes.sec.limites.li2"), t("ajustes.sec.limites.li3")]),
+        p(t("ajustes.sec.limites.p2")),
+      ]),
+
+      seccion(t("ajustes.sec.descargo.titulo"), [
+        p(t("ajustes.sec.descargo.p1")),
         li([
-          "✅ \"Pared perimetral de bloques donde está la cerca de alambre, quitar el monte, poner grama y una piscina. No tocar las casas vecinas.\"",
-          "❌ \"una piscina\" (la IA inventará todo lo demás)",
+          t("ajustes.sec.descargo.li1"),
+          t("ajustes.sec.descargo.li2"),
+          t("ajustes.sec.descargo.li3"),
+          t("ajustes.sec.descargo.li4"),
         ]),
-        p("4. Con el Pincel mágico, pinta con el dedo SOLO la zona que quieres cambiar."),
-        p("5. ¿Dudas de materiales o colores? Pregúntale a El Maestro en la pestaña central."),
+        p(t("ajustes.sec.descargo.p2")),
       ]),
 
-      seccion("Límites diarios (gratis)", [
-        p("Cada generación usa modelos de IA que tienen costo real. El plan gratuito incluye por día:"),
-        li([
-          "3 transformaciones de imagen",
-          "Video limitado",
-          "30 mensajes con El Maestro",
-        ]),
-        p("Los límites se reinician cada día. Con Premium tienes más generaciones, videos y sin marca de agua."),
-      ]),
-
-      seccion("Descargo de responsabilidad", [
-        p("Las imágenes y videos de esta app son generados por inteligencia artificial y son VISUALIZACIONES CONCEPTUALES, no diseños técnicos ni planos de construcción."),
-        li([
-          "No sustituyen la asesoría de arquitectos, ingenieros o profesionales certificados.",
-          "Las proporciones, materiales y estructuras mostradas pueden no ser exactas ni viables técnicamente.",
-          "Los cálculos y precios de El Maestro son estimados de referencia: confirma siempre cantidades y costos con tu ferretería y tu contratista.",
-          "Para trabajos eléctricos, de gas o estructurales, contrata siempre un profesional certificado.",
-        ]),
-        p("Al usar la app aceptas que las decisiones de construcción o remodelación son tu responsabilidad."),
-      ]),
-
-      seccion("Mi cuenta", [
-        p(state.premium ? "Estado: Premium ✨" : "Estado: Gratis"),
-        p("Tu ID de dispositivo (por si necesitas soporte o activar tu cuenta):"),
+      seccion(t("ajustes.sec.cuenta.titulo"), [
+        p(state.premium ? t("ajustes.sec.cuenta.premium") : t("ajustes.sec.cuenta.gratis")),
+        p(t("ajustes.sec.cuenta.id_texto")),
         idBox,
       ]),
 
-      seccion("Acerca de", [
-        p(`RenuevAI v${VERSION}`),
-        p("Transforma fotos de tus espacios reales con inteligencia artificial: pintar, remodelar, restaurar, y míralo en video."),
-        p("Hecho con cariño en Venezuela."),
+      seccion(t("ajustes.sec.acerca.titulo"), [
+        p(t("ajustes.sec.acerca.version", { v: VERSION })),
+        p(t("ajustes.sec.acerca.desc")),
+        p(t("ajustes.sec.acerca.hecho")),
         el("a", {
           class: "aj-link", href: "#",
           onClick: (e: Event) => { e.preventDefault(); window.open(`${API_BASE}/privacidad`, "_blank"); },
-        }, ["Política de privacidad"]),
+        }, [t("ajustes.sec.acerca.privacidad")]),
       ]),
     ])
   );
@@ -98,7 +123,7 @@ export function pantallaAjustes() {
     (idBox.querySelector(".id-copiar") as HTMLElement).onclick = async () => {
       try {
         await navigator.clipboard.writeText(id);
-        toast("ID copiado");
+        toast(t("ajustes.id_copiado"));
       } catch {
         toast(id);
       }

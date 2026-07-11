@@ -13,6 +13,7 @@ import { initNotifTap } from "./notif";
 import { getTrabajo } from "./api";
 import { pantallaResult } from "./screens/result";
 import { pantallaPaywall } from "./screens/paywall";
+import { initIdioma, t } from "./i18n";
 
 (window as any).__reforma = { state, pantallaHome };
 
@@ -42,11 +43,12 @@ function wireNav() {
 }
 
 async function start() {
+  await initIdioma(); // ANTES del primer render: home/paywall ya salen traducidos
   render(
     el("div", { class: "screen centro splash" }, [
       el("img", { class: "splash-logo", src: "/logo.png", alt: "RenuevAI" }),
       el("h1", { class: "splash-nombre" }, ["RenuevAI"]),
-      el("p", { class: "splash-sub" }, ["Transforma tu espacio"]),
+      el("p", { class: "splash-sub" }, [t("splash.tagline")]),
       el("div", { class: "spinner chico" }),
     ])
   );
@@ -79,8 +81,8 @@ async function start() {
   } catch (e) {
     render(
       el("div", { class: "screen centro" }, [
-        el("p", { class: "error-msg" }, ["No se pudo conectar con el servidor."]),
-        el("button", { class: "btn-primario", onClick: start }, ["Reintentar"]),
+        el("p", { class: "error-msg" }, [t("common.error_conexion")]),
+        el("button", { class: "btn-primario", onClick: start }, [t("common.reintentar")]),
       ])
     );
     console.error(e);

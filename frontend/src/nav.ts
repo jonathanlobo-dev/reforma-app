@@ -1,4 +1,5 @@
 import { toast } from "./ui";
+import { t } from "./i18n";
 
 type Pantalla = () => void;
 
@@ -35,7 +36,7 @@ export function atras() {
       salir();
     } else {
       ultimoBack = ahora;
-      toast("Presiona atrás otra vez para salir");
+      toast(t("nav.presiona_atras"));
     }
   }
 }

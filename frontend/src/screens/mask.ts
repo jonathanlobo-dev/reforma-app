@@ -3,6 +3,7 @@
 // (blanco = zona a cambiar, negro = conservar — convención flux-fill).
 import { el, render, toast } from "../ui";
 import { atras, setNavVisible } from "../nav";
+import { t } from "../i18n";
 
 interface Trazo { pts: { x: number; y: number }[]; size: number; erase: boolean; }
 
@@ -94,9 +95,9 @@ export function pantallaMask(fotoUrl: string, onListo: (mask: Blob) => void) {
   };
 
   // ── Toolbar ──────────────────────────────────────────────────────────────
-  const btnPincel = el("button", { class: "tool-btn activo", onClick: () => setTool(false) }, ["🖌️ Pincel"]);
-  const btnBorrar = el("button", { class: "tool-btn", onClick: () => setTool(true) }, ["◻️ Borrador"]);
-  const btnUndo = el("button", { class: "tool-btn", disabled: true, onClick: deshacer }, ["↩︎ Deshacer"]);
+  const btnPincel = el("button", { class: "tool-btn activo", onClick: () => setTool(false) }, [t("mask.pincel")]);
+  const btnBorrar = el("button", { class: "tool-btn", onClick: () => setTool(true) }, [t("mask.borrador")]);
+  const btnUndo = el("button", { class: "tool-btn", disabled: true, onClick: deshacer }, [t("mask.deshacer")]);
 
   function setTool(erase: boolean) {
     erasing = erase;
@@ -118,7 +119,7 @@ export function pantallaMask(fotoUrl: string, onListo: (mask: Blob) => void) {
   });
 
   const continuar = () => {
-    if (!trazos.length) { toast("Pinta la zona que quieres cambiar."); return; }
+    if (!trazos.length) { toast(t("mask.toast.pinta")); return; }
     // Exportar máscara B/N al tamaño REAL de la foto
     const out = document.createElement("canvas");
     out.width = img.naturalWidth; out.height = img.naturalHeight;
@@ -128,7 +129,7 @@ export function pantallaMask(fotoUrl: string, onListo: (mask: Blob) => void) {
     pintarTrazos(octx, img.naturalWidth / canvas.width, "#fff");
     out.toBlob((blob) => {
       if (blob) onListo(blob);
-      else toast("No se pudo crear la máscara.");
+      else toast(t("mask.toast.error"));
     }, "image/png");
   };
 
@@ -136,16 +137,16 @@ export function pantallaMask(fotoUrl: string, onListo: (mask: Blob) => void) {
     el("div", { class: "screen" }, [
       el("div", { class: "topbar" }, [
         el("button", { class: "back", onClick: atras }, ["‹"]),
-        el("span", { class: "topbar-tit" }, ["Pinta la zona a cambiar"]),
+        el("span", { class: "topbar-tit" }, [t("mask.titulo")]),
       ]),
-      el("p", { class: "mask-hint" }, ["Pasa el dedo sobre lo que quieres transformar. Solo esa zona cambiará."]),
+      el("p", { class: "mask-hint" }, [t("mask.hint")]),
       canvas,
       el("div", { class: "mask-tools" }, [btnPincel, btnBorrar, btnUndo]),
       el("div", { class: "ctrl-wrap" }, [
-        el("div", { class: "ctrl-label" }, ["Tamaño del pincel"]),
+        el("div", { class: "ctrl-label" }, [t("mask.tamano")]),
         slider,
       ]),
-      el("button", { class: "btn-primario", onClick: continuar }, ["Continuar"]),
+      el("button", { class: "btn-primario", onClick: continuar }, [t("mask.continuar")]),
     ])
   );
 }

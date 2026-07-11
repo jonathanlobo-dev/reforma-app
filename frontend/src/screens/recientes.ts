@@ -6,6 +6,7 @@ import { pantallaResult } from "./result";
 import { icon } from "../ui/icons";
 import { generarReporte } from "../ui/reporte";
 import { mostrarIntersticial } from "../ads";
+import { t } from "../i18n";
 
 function formatFecha(v?: string | number): string {
   if (v === undefined || v === null || v === "") return "";
@@ -16,11 +17,11 @@ function formatFecha(v?: string | number): string {
   if (isNaN(d.getTime())) return "";
   const ahora = new Date();
   const diff = (ahora.getTime() - d.getTime()) / 1000;
-  if (diff < 60) return "Ahora mismo";
-  if (diff < 3600) return `Hace ${Math.floor(diff / 60)} min`;
-  if (diff < 86400) return `Hace ${Math.floor(diff / 3600)} h`;
+  if (diff < 60) return t("recientes.fecha.ahora");
+  if (diff < 3600) return t("recientes.fecha.min", { n: Math.floor(diff / 60) });
+  if (diff < 86400) return t("recientes.fecha.hora", { n: Math.floor(diff / 3600) });
   const dias = Math.floor(diff / 86400);
-  return dias === 1 ? "Hace 1 día" : `Hace ${dias} días`;
+  return dias === 1 ? t("recientes.fecha.dia") : t("recientes.fecha.dias", { n: dias });
 }
 
 export async function pantallaRecientes() {
@@ -31,7 +32,7 @@ export async function pantallaRecientes() {
   render(
     el("div", { class: "screen centro" }, [
       el("div", { class: "spinner" }),
-      el("p", { class: "loader-msg" }, ["Cargando recientes…"]),
+      el("p", { class: "loader-msg" }, [t("recientes.cargando")]),
     ])
   );
 
@@ -41,24 +42,24 @@ export async function pantallaRecientes() {
     deviceId = await getDeviceId();
     trabajos = await getHistorial(deviceId);
   } catch {
-    toast("No se pudo cargar el historial.");
+    toast(t("recientes.toast_error_historial"));
   }
 
   let filtro: string | null = null; // null = Todos
 
   function pintar() {
     const visibles = filtro
-      ? trabajos.filter((t) => (t.proyecto || "") === filtro)
+      ? trabajos.filter((w) => (w.proyecto || "") === filtro)
       : trabajos;
 
     // Chips de proyectos (solo si hay al menos uno con proyecto)
-    const proyectos = [...new Set(trabajos.map((t) => t.proyecto).filter(Boolean))] as string[];
+    const proyectos = [...new Set(trabajos.map((w) => w.proyecto).filter(Boolean))] as string[];
     const chips = proyectos.length
       ? el("div", { class: "proy-chips" }, [
           el("button", {
             class: "proy-chip" + (filtro === null ? " sel" : ""),
             onClick: () => { filtro = null; pintar(); },
-          }, ["Todos"]),
+          }, [t("recientes.todos")]),
           ...proyectos.map((p) =>
             el("button", {
               class: "proy-chip btn-ico" + (filtro === p ? " sel" : ""),
@@ -71,10 +72,10 @@ export async function pantallaRecientes() {
     const cuerpo = !visibles.length
       ? el("div", { class: "hist-empty" }, [
           el("div", { class: "hist-empty-ico" }, [icon("clock", 46)]),
-          el("p", {}, [filtro ? "Este proyecto no tiene transformaciones aún." : "Aún no has generado ninguna transformación."]),
+          el("p", {}, [t(filtro ? "recientes.vacio_proyecto" : "recientes.vacio_general")]),
         ])
-      : el("div", { class: "hist-grid" }, visibles.map((t) => {
-          const thumb = resolverMedia(t.resultados.comparacion ?? t.resultados.despues);
+      : el("div", { class: "hist-grid" }, visibles.map((tr) => {
+          const thumb = resolverMedia(tr.resultados.comparacion ?? tr.resultados.despues);
           const imgEl = thumb
             ? el("img", { class: "hist-thumb", src: thumb })
             : el("div", { class: "hist-thumb", style: "display:flex;align-items:center;justify-content:center;font-size:32px" }, ["✨"]);
@@ -83,26 +84,26 @@ export async function pantallaRecientes() {
             class: "hist-borrar",
             onClick: async (e: Event) => {
               e.stopPropagation();
-              if (!confirm("¿Quitar esta transformación del historial?")) return;
-              const ok = await borrarTrabajo(t.id, deviceId);
+              if (!confirm(t("recientes.confirmar_borrar"))) return;
+              const ok = await borrarTrabajo(tr.id, deviceId);
               if (ok) {
-                trabajos = trabajos.filter((x) => x.id !== t.id);
+                trabajos = trabajos.filter((x) => x.id !== tr.id);
                 pintar();
-                toast("Eliminada del historial.");
+                toast(t("recientes.toast_eliminada"));
               } else {
-                toast("No se pudo eliminar.");
+                toast(t("recientes.toast_error_eliminar"));
               }
             },
           }, [icon("trash", 15)]);
 
           return el("div", {
             class: "hist-card",
-            onClick: () => irA(() => pantallaResult(t)),
+            onClick: () => irA(() => pantallaResult(tr)),
           }, [
             el("div", { class: "hist-thumb-wrap" }, [imgEl, btnBorrar]),
             el("div", { class: "hist-info" }, [
-              el("div", { class: "hist-cat" }, [t.categoria ?? "Transformación"]),
-              el("div", { class: "hist-fecha" }, [formatFecha(t.creado)]),
+              el("div", { class: "hist-cat" }, [tr.categoria ?? t("recientes.categoria_generica")]),
+              el("div", { class: "hist-fecha" }, [formatFecha(tr.creado)]),
             ]),
           ]);
         }));
@@ -113,16 +114,16 @@ export async function pantallaRecientes() {
           class: "btn-secundario btn-ico", style: "margin-top:4px",
           onClick: async () => {
             try { await generarReporte(filtro!, visibles); }
-            catch (e) { console.error(e); toast("No se pudo generar el reporte."); }
+            catch (e) { console.error(e); toast(t("recientes.toast_error_reporte")); }
           },
-        }, [icon("fileText", 16), `Reporte PDF de "${filtro}"`])
+        }, [icon("fileText", 16), t("recientes.reporte_pdf", { p: filtro })])
       : el("span", {});
 
     render(
       el("div", { class: "screen" }, [
         el("div", { class: "hist-header" }, [
-          el("h2", {}, ["Recientes"]),
-          el("p", { class: "sub" }, ["Tus transformaciones anteriores"]),
+          el("h2", {}, [t("recientes.titulo")]),
+          el("p", { class: "sub" }, [t("recientes.sub")]),
         ]),
         chips,
         btnReporte,

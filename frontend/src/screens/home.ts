@@ -5,30 +5,17 @@ import { pantallaForm } from "./form";
 import { pantallaAjustes } from "./ajustes";
 import { pantallaPaywall } from "./paywall";
 import { icon } from "../ui/icons";
+import { t } from "../i18n";
 
 // Pestañas de sección (estilo referencia): filtran la grilla de modos.
-const SECCIONES: Record<string, string[] | null> = {
-  Todos: null,
-  Interior: ["interior", "pintar", "suelo", "paredes", "muebles", "eliminar", "restaurar", "remodelar"],
-  Exterior: ["exterior", "plano"],
-  Herramientas: ["pincel", "estilo", "plano"],
-};
-let seccionActiva = "Todos";
-
-const SUBTITULOS: Record<string, string> = {
-  pintar: "Recolorea cualquier superficie",
-  interior: "Rediseña tu sala, cocina o dormitorio",
-  exterior: "Transforma fachadas y jardines",
-  muebles: "Cambia el mobiliario con un toque",
-  suelo: "Prueba cualquier material en tu suelo",
-  paredes: "Rediseña las paredes con un toque",
-  eliminar: "Elimina fácilmente elementos no deseados",
-  restaurar: "Devuelve la vida a muebles y superficies",
-  remodelar: "Remodelación completa del espacio",
-  pincel: "Pinta sobre cualquier objeto que quieras cambiar",
-  estilo: "Usa una imagen de referencia",
-  plano: "Convierte tu plano en un render 3D",
-};
+// Claves internas estables (no traducidas); la etiqueta visible sale de t().
+const SECCIONES: { clave: string; labelKey: string; filtro: string[] | null }[] = [
+  { clave: "todos", labelKey: "home.seccion.todos", filtro: null },
+  { clave: "interior", labelKey: "home.seccion.interior", filtro: ["interior", "pintar", "suelo", "paredes", "muebles", "eliminar", "restaurar", "remodelar"] },
+  { clave: "exterior", labelKey: "home.seccion.exterior", filtro: ["exterior", "plano"] },
+  { clave: "herramientas", labelKey: "home.seccion.herramientas", filtro: ["pincel", "estilo", "plano"] },
+];
+let seccionActiva = "todos";
 
 // Orden de las cards en la home (las estrella primero)
 const ORDEN = ["interior", "pincel", "estilo", "remodelar", "pintar", "suelo",
@@ -57,17 +44,17 @@ export function pantallaHome() {
   setNavVisible(true);
   setNavTab("inicio");
 
-  const enSeccion = SECCIONES[seccionActiva];
+  const seccion = SECCIONES.find((s) => s.clave === seccionActiva) ?? SECCIONES[0];
   const claves = ORDEN.filter((c) => state.categorias[c])
     .concat(Object.keys(state.categorias).filter((c) => !ORDEN.includes(c)))
-    .filter((c) => !enSeccion || enSeccion.includes(c));
+    .filter((c) => !seccion.filtro || seccion.filtro.includes(c));
 
   const tabs = el("div", { class: "proy-chips" },
-    Object.keys(SECCIONES).map((s) =>
+    SECCIONES.map((s) =>
       el("button", {
-        class: "proy-chip" + (s === seccionActiva ? " sel" : ""),
-        onClick: () => { seccionActiva = s; pantallaHome(); },
-      }, [s])
+        class: "proy-chip" + (s.clave === seccionActiva ? " sel" : ""),
+        onClick: () => { seccionActiva = s.clave; pantallaHome(); },
+      }, [t(s.labelKey)])
     ));
 
   const cards = claves.map((clave) => [clave, state.categorias[clave]] as const).map(([clave, cat]) => {
@@ -89,9 +76,9 @@ export function pantallaHome() {
       el("div", { class: "mode-card-body" }, [
         el("div", { class: "mode-card-txt" }, [
           el("div", { class: "mode-card-titulo" }, [cat.titulo]),
-          el("div", { class: "mode-card-sub" }, [SUBTITULOS[clave] ?? ""]),
+          el("div", { class: "mode-card-sub" }, [t(`modo.sub.${clave}`) || ""]),
         ]),
-        el("button", { class: "mode-card-probar" }, ["Probar ›"]),
+        el("button", { class: "mode-card-probar" }, [t("home.probar")]),
       ]),
     ]);
   });
@@ -99,11 +86,11 @@ export function pantallaHome() {
   render(
     el("div", { class: "screen" }, [
       el("div", { class: "home-header" }, [
-        el("h1", {}, ["Inicio"]),
+        el("h1", {}, [t("home.titulo")]),
         el("div", { class: "home-acciones" }, [
           ...(state.premium
-            ? [el("span", { class: "pro-activo" }, [icon("crown", 14), "PRO"])]
-            : [el("button", { class: "pro-btn", onClick: () => irA(pantallaPaywall) }, [icon("crown", 14), "PRO"])]),
+            ? [el("span", { class: "pro-activo" }, [icon("crown", 14), t("home.pro")])]
+            : [el("button", { class: "pro-btn", onClick: () => irA(pantallaPaywall) }, [icon("crown", 14), t("home.pro")])]),
           el("button", {
             class: "home-gear", "aria-label": "Ajustes",
             onClick: () => irA(pantallaAjustes),

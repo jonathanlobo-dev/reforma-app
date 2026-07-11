@@ -7,20 +7,10 @@ import { irA, setNavVisible, setNavTab } from "../nav";
 import { icon } from "../ui/icons";
 import { state } from "../state";
 import { pantallaForm } from "./form";
+import { t } from "../i18n";
 
 const historia: MensajeChat[] = [];
 let contextoActual: string | undefined;
-
-const SALUDO =
-  "¡Épale! Soy El Maestro — maestro de obras, decorador y calculista, todo en uno. " +
-  "Pregúntame cuánta pintura o cerámica necesitas, qué colores pegan, cómo distribuir " +
-  "tu espacio, o qué hacer primero en una reforma.";
-
-const SUGERENCIAS = [
-  "¿Cuánta pintura para una pared de 3×4 m?",
-  "¿Qué color combina con muebles de madera oscura?",
-  "¿En qué orden hago una remodelación de cocina?",
-];
 
 // ─── Formato defensivo: el prompt pide texto plano, pero si el modelo emite
 // markdown igual, lo convertimos a algo legible en vez de mostrar ** y ``` ───
@@ -29,9 +19,9 @@ function esc(s: string): string {
 }
 
 function formatearBot(txt: string): string {
-  let t = esc(txt.trim());
-  t = t.replace(/```[a-z]*\n?([\s\S]*?)```/g, (_m, c) => `<pre>${c.trim()}</pre>`);
-  const lineas = t.split("\n").map((l) => {
+  let out = esc(txt.trim());
+  out = out.replace(/```[a-z]*\n?([\s\S]*?)```/g, (_m, c) => `<pre>${c.trim()}</pre>`);
+  const lineas = out.split("\n").map((l) => {
     const s = l.trim();
     if (/^(-{3,}|\*{3,}|_{3,})$/.test(s)) return ""; // separadores ---
     let x = l;
@@ -59,21 +49,18 @@ export function pantallaAsesor(contexto?: string) {
   // Puente al generador: convierte lo conversado en una generación real.
   function accionGenerar(ultimoPedido: string) {
     return el("button", { class: "chat-accion", onClick: () => {
-      const ok = confirm(
-        "Se abrirá el generador con tu idea precargada. Al transformar " +
-        "consumirás 1 de tus generaciones gratis del día. ¿Continuar?"
-      );
+      const ok = confirm(t("asesor.confirm_generar"));
       if (!ok) return;
       state.prefillExtra = ultimoPedido.slice(0, 300);
       irA(() => pantallaForm("remodelar"));
-    }}, [icon("sparkles", 16), "Ver esto en mi espacio"]);
+    }}, [icon("sparkles", 16), t("asesor.ver_espacio")]);
   }
 
   function pintarHilo() {
     hilo.innerHTML = "";
-    hilo.append(burbuja({ role: "assistant", content: SALUDO }));
+    hilo.append(burbuja({ role: "assistant", content: t("asesor.saludo", { nombre: t("asesor.nombre") }) }));
     if (contextoActual) {
-      hilo.append(el("div", { class: "chat-ctx" }, [`Sobre tu transformación: ${contextoActual}`]));
+      hilo.append(el("div", { class: "chat-ctx" }, [t("asesor.sobre_transformacion", { c: contextoActual })]));
     }
     for (const m of historia) hilo.append(burbuja(m));
     // Tras una respuesta del Maestro, ofrecer llevar la idea al generador
@@ -82,14 +69,15 @@ export function pantallaAsesor(contexto?: string) {
       hilo.append(accionGenerar(ultimoUser.content));
     }
     if (!historia.length) {
+      const sugerencias = [t("asesor.sugerencia.1"), t("asesor.sugerencia.2"), t("asesor.sugerencia.3")];
       hilo.append(el("div", { class: "chat-sugerencias" },
-        SUGERENCIAS.map((s) => el("button", { class: "chat-chip", onClick: () => mandar(s) }, [s]))));
+        sugerencias.map((s) => el("button", { class: "chat-chip", onClick: () => mandar(s) }, [s]))));
     }
     requestAnimationFrame(() => { hilo.scrollTop = hilo.scrollHeight; });
   }
 
   const input = el("textarea", {
-    class: "chat-input", rows: 1, placeholder: "Pregúntale al Maestro…",
+    class: "chat-input", rows: 1, placeholder: t("asesor.placeholder"),
   }) as HTMLTextAreaElement;
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); mandar(input.value); }
@@ -107,7 +95,7 @@ export function pantallaAsesor(contexto?: string) {
     input.value = "";
     historia.push({ role: "user", content: texto });
     pintarHilo();
-    const escribiendo = el("div", { class: "chat-msg bot escribiendo" }, ["El Maestro está escribiendo…"]);
+    const escribiendo = el("div", { class: "chat-msg bot escribiendo" }, [t("asesor.escribiendo", { nombre: t("asesor.nombre") })]);
     hilo.append(escribiendo);
     hilo.scrollTop = hilo.scrollHeight;
     try {
@@ -131,8 +119,8 @@ export function pantallaAsesor(contexto?: string) {
       el("div", { class: "chat-header" }, [
         el("span", { class: "chat-avatar" }, [icon("tool", 22)]),
         el("div", {}, [
-          el("div", { class: "chat-nombre" }, ["El Maestro"]),
-          el("div", { class: "chat-sub" }, ["Obra · Decoración · Materiales"]),
+          el("div", { class: "chat-nombre" }, [t("asesor.nombre")]),
+          el("div", { class: "chat-sub" }, [t("asesor.subtitulo")]),
         ]),
       ]),
       hilo,

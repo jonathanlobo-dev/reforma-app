@@ -9,8 +9,9 @@ import { pantallaPaywall } from "./paywall";
 import { baSlider } from "../ui/controls";
 import { state, setFoto } from "../state";
 import { icon } from "../ui/icons";
-import { pantallaProcessing, pantallaEsperarTrabajo, PASOS_PROCESO } from "./processing";
+import { pantallaProcessing, pantallaEsperarTrabajo, pasosProceso } from "./processing";
 import { getDeviceId } from "../device";
+import { t as tr } from "../i18n"; // alias: el parámetro `t` de esta pantalla es el Trabajo
 
 function blobABase64(blob: Blob): Promise<string> {
   // FileReader aguanta archivos grandes (btoa con spread revienta el stack)
@@ -43,8 +44,8 @@ export async function pantallaResult(t: Trabajo) {
     media.push(
       slider,
       el("div", { class: "ba-tags" }, [
-        el("span", { class: "ba-tag" }, ["Antes"]),
-        el("span", { class: "ba-tag dep" }, ["Después"]),
+        el("span", { class: "ba-tag" }, [tr("result.antes")]),
+        el("span", { class: "ba-tag dep" }, [tr("result.despues")]),
       ])
     );
   } else if (comp) {
@@ -57,7 +58,7 @@ export async function pantallaResult(t: Trabajo) {
   const compartir = async () => {
     if (!objetivoCompartir) return;
     const nombre = video ? `renovai_${t.id}.mp4` : `renovai_${t.id}.png`;
-    const texto = "Mira cómo transformé mi espacio con RenuevAI";
+    const texto = tr("result.compartir_texto");
     try {
       const { Capacitor } = await import("@capacitor/core");
       if (Capacitor.isNativePlatform()) {
@@ -78,13 +79,13 @@ export async function pantallaResult(t: Trabajo) {
       } else if (navigator.share) {
         await navigator.share({ title: "RenuevAI", text: texto, url: objetivoCompartir });
       } else {
-        toast("Compartir no disponible aquí.");
+        toast(tr("result.toast.compartir_no_disponible"));
       }
     } catch (e) {
       // Cancelar el diálogo de compartir también cae aquí: no es error real
       if ((e as Error)?.name !== "AbortError") {
         console.error("compartir falló:", e);
-        toast("No se pudo compartir.");
+        toast(tr("result.toast.error_compartir"));
       }
     }
   };
@@ -100,7 +101,7 @@ export async function pantallaResult(t: Trabajo) {
       const a = document.createElement("a");
       a.href = objetivoGuardar; a.download = nombre; a.target = "_blank";
       document.body.append(a); a.click(); a.remove();
-      toast("Descargando…");
+      toast(tr("result.toast.descargando"));
       return;
     }
 
@@ -110,17 +111,17 @@ export async function pantallaResult(t: Trabajo) {
       await Filesystem.writeFile({
         path: nombre, data: await blobABase64(blob), directory: Directory.Documents,
       });
-      toast("✓ Guardado en Documentos");
+      toast(tr("result.toast.guardado"));
     } catch (e) {
       console.error("guardar falló:", e);
-      toast("No se pudo guardar. Intenta con Compartir.");
+      toast(tr("result.toast.error_guardar"));
     }
   };
 
   // 👍/👎 — feedback simple para saber qué categorías funcionan
   let votado = false;
   const votos = el("div", { class: "votos" }, [
-    el("span", { class: "votos-txt" }, ["¿Qué te pareció?"]),
+    el("span", { class: "votos-txt" }, [tr("result.pregunta_voto")]),
     el("button", { class: "voto-btn", onClick: (e: Event) => vota(1, e) }, [icon("thumbsUp", 18)]),
     el("button", { class: "voto-btn", onClick: (e: Event) => vota(-1, e) }, [icon("thumbsDown", 18)]),
   ]);
@@ -130,7 +131,7 @@ export async function pantallaResult(t: Trabajo) {
     (e.currentTarget as HTMLElement).classList.add("sel");
     votos.querySelectorAll(".voto-btn").forEach((b) => (b as HTMLButtonElement).disabled = true);
     votarTrabajo(t.id, v);
-    toast(v === 1 ? "¡Gracias!" : "Gracias — nos ayuda a mejorar.");
+    toast(v === 1 ? tr("result.voto.gracias_positivo") : tr("result.voto.gracias_negativo"));
   }
 
   // Otra versión: misma foto y mismo pedido — los modelos son no-deterministas,
@@ -139,7 +140,7 @@ export async function pantallaResult(t: Trabajo) {
   const puedeReintentar = antes && t.detalle !== undefined && (engine === "editar" || engine === "plano");
   const otraVersion = async () => {
     if (!antes) return;
-    if (!confirm("Generará una nueva versión del mismo pedido (consume 1 generación del día). ¿Continuar?")) return;
+    if (!confirm(tr("result.otra_version_confirm"))) return;
     try {
       const blob = await (await fetch(antes)).blob();
       irA(() => pantallaProcessing({
@@ -147,7 +148,7 @@ export async function pantallaResult(t: Trabajo) {
         foto: blob, proyecto: t.proyecto || undefined,
       }));
     } catch {
-      toast("No se pudo relanzar la generación.");
+      toast(tr("result.toast.error_relanzar"));
     }
   };
 
@@ -166,10 +167,10 @@ export async function pantallaResult(t: Trabajo) {
         irA(() => pantallaForm(t.categoria));
       } else {
         raiz(pantallaHome);
-        toast("Tu resultado quedó cargado como foto — elige un modo");
+        toast(tr("result.toast.elige_modo"));
       }
     } catch {
-      toast("No se pudo cargar el resultado para editar.");
+      toast(tr("result.toast.error_editar"));
     }
   };
 
@@ -178,14 +179,14 @@ export async function pantallaResult(t: Trabajo) {
   const puedeProceso = t.tipo === "imagen" && state.cadena.length >= 2;
   const videoProceso = async () => {
     if (!state.premium) {
-      toast("El video del proceso es una función Premium ✨");
+      toast(tr("result.toast.proceso_premium"));
       irA(() => pantallaPaywall());
       return;
     }
     try {
       const deviceId = await getDeviceId();
       const { id } = await crearProceso(deviceId, state.cadena);
-      irA(() => pantallaEsperarTrabajo(id, "video", PASOS_PROCESO));
+      irA(() => pantallaEsperarTrabajo(id, "video", pasosProceso()));
     } catch (e) {
       toast((e as Error).message);
     }
@@ -194,28 +195,28 @@ export async function pantallaResult(t: Trabajo) {
   render(
     el("div", { class: "screen" }, [
       el("div", { class: "topbar" }, [
-        el("span", { class: "topbar-tit" }, ["Tu transformación"]),
+        el("span", { class: "topbar-tit" }, [tr("result.titulo")]),
       ]),
       el("div", { class: "resultado-wrap" }, media),
       votos,
       el("div", { class: "acciones" }, [
-        el("button", { class: "btn-primario btn-ico", onClick: guardar }, [icon("download", 18), "Guardar en el teléfono"]),
+        el("button", { class: "btn-primario btn-ico", onClick: guardar }, [icon("download", 18), tr("result.guardar")]),
         ...(t.tipo === "imagen"
-          ? [el("button", { class: "btn-secundario btn-ico", onClick: seguirEditando }, [icon("pencil", 16), "Seguir editando este resultado"])]
+          ? [el("button", { class: "btn-secundario btn-ico", onClick: seguirEditando }, [icon("pencil", 16), tr("result.seguir_editando")])]
           : []),
         ...(puedeReintentar
-          ? [el("button", { class: "btn-secundario btn-ico", onClick: otraVersion }, [icon("refresh", 16), "Otra versión"])]
+          ? [el("button", { class: "btn-secundario btn-ico", onClick: otraVersion }, [icon("refresh", 16), tr("result.otra_version")])]
           : []),
         ...(puedeProceso
           ? [el("button", { class: "btn-secundario btn-ico btn-proceso", onClick: videoProceso },
-              [icon("sparkles", 16), `Video del proceso (${state.cadena.length} pasos)`, ...(state.premium ? [] : [icon("lock", 13)])])]
+              [icon("sparkles", 16), tr("result.video_proceso", { n: state.cadena.length }), ...(state.premium ? [] : [icon("lock", 13)])])]
           : []),
-        el("button", { class: "btn-secundario btn-ico", onClick: compartir }, [icon("share", 16), "Compartir"]),
+        el("button", { class: "btn-secundario btn-ico", onClick: compartir }, [icon("share", 16), tr("result.compartir")]),
         el("button", { class: "btn-secundario btn-ico", onClick: () => {
           const ctx = [t.categoria, t.detalle].filter(Boolean).join(": ");
           irA(() => pantallaAsesor(ctx || undefined));
-        }}, [icon("tool", 16), "Preguntar al Maestro"]),
-        el("button", { class: "btn-secundario", onClick: () => raiz(pantallaHome) }, ["Hacer otra"]),
+        }}, [icon("tool", 16), tr("result.preguntar_maestro", { nombre: tr("asesor.nombre") })]),
+        el("button", { class: "btn-secundario", onClick: () => raiz(pantallaHome) }, [tr("result.hacer_otra")]),
       ]),
     ])
   );

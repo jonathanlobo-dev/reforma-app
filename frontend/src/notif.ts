@@ -1,5 +1,7 @@
 // Notificación local "tu transformación está lista" (solo nativo; en web no-op).
 // El tap abre el resultado: main.ts registra el listener con el trabajo_id.
+import { t } from "./i18n";
+
 let permisoPedido = false;
 
 export async function pedirPermisoNotif(): Promise<void> {
@@ -17,10 +19,8 @@ export async function notificarListo(tid: string, tipo: "imagen" | "video"): Pro
     await LocalNotifications.schedule({
       notifications: [{
         id: Math.floor(Date.now() % 2147483647),
-        title: "RenuevAI",
-        body: tipo === "video"
-          ? "Tu video de transformación está listo 🎬"
-          : "Tu transformación está lista ✨",
+        title: t("notif.titulo"),
+        body: t(tipo === "video" ? "notif.video_listo" : "notif.imagen_lista"),
         extra: { tid },
       }],
     });

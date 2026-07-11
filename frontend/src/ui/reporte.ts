@@ -3,6 +3,7 @@
 // Se genera en el dispositivo con jsPDF y se comparte/guarda como archivo.
 import { toast } from "../ui";
 import { resolverMedia, type Trabajo } from "../api";
+import { t } from "../i18n";
 
 // Descarga una imagen y la devuelve como dataURL JPEG reescalada (PDF liviano)
 async function imgADataUrl(url: string, maxW = 900): Promise<{ data: string; w: number; h: number } | null> {
@@ -21,7 +22,7 @@ async function imgADataUrl(url: string, maxW = 900): Promise<{ data: string; w: 
 }
 
 export async function generarReporte(proyecto: string, trabajos: Trabajo[]): Promise<void> {
-  toast("Generando reporte PDF…");
+  toast(t("reporte.generando"));
   const { jsPDF } = await import("jspdf");
   const pdf = new jsPDF({ unit: "mm", format: "a4" });
   const W = 210, M = 15, ancho = W - M * 2;
@@ -35,31 +36,31 @@ export async function generarReporte(proyecto: string, trabajos: Trabajo[]): Pro
   pdf.text("RenuevAI", W / 2, 120, { align: "center" });
   pdf.setTextColor(244, 244, 247);
   pdf.setFontSize(20);
-  pdf.text(`Proyecto: ${proyecto}`, W / 2, 140, { align: "center" });
+  pdf.text(t("reporte.proyecto", { p: proyecto }), W / 2, 140, { align: "center" });
   pdf.setFontSize(11);
   pdf.setFont("helvetica", "normal");
   pdf.setTextColor(154, 155, 171);
-  pdf.text(new Date().toLocaleDateString("es-VE", { day: "numeric", month: "long", year: "numeric" }),
+  pdf.text(new Date().toLocaleDateString(t("reporte.locale"), { day: "numeric", month: "long", year: "numeric" }),
     W / 2, 152, { align: "center" });
-  pdf.text(`${trabajos.length} transformación(es)`, W / 2, 160, { align: "center" });
+  pdf.text(t("reporte.transformaciones", { n: trabajos.length }), W / 2, 160, { align: "center" });
 
   // ── Una página por transformación ──────────────────────────────────────
   for (let i = 0; i < trabajos.length; i++) {
-    const t = trabajos[i];
+    const trab = trabajos[i];
     pdf.addPage();
     pdf.setTextColor(20, 20, 30);
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(15);
-    pdf.text(`${i + 1}. ${t.categoria ?? "Transformación"}`, M, 20);
+    pdf.text(`${i + 1}. ${trab.categoria ?? t("reporte.categoria_generica")}`, M, 20);
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(10);
     pdf.setTextColor(90, 90, 100);
-    if (t.detalle) pdf.text(pdf.splitTextToSize(t.detalle, ancho), M, 27);
+    if (trab.detalle) pdf.text(pdf.splitTextToSize(trab.detalle, ancho), M, 27);
 
     let y = 38;
-    const antes = resolverMedia(t.resultados.antes);
-    const despues = resolverMedia(t.resultados.despues);
-    for (const [etiqueta, url] of [["ANTES", antes], ["DESPUÉS", despues]] as const) {
+    const antes = resolverMedia(trab.resultados.antes);
+    const despues = resolverMedia(trab.resultados.despues);
+    for (const [etiqueta, url] of [[t("reporte.antes"), antes], [t("reporte.despues"), despues]] as const) {
       if (!url) continue;
       const img = await imgADataUrl(url);
       if (!img) continue;
@@ -74,7 +75,7 @@ export async function generarReporte(proyecto: string, trabajos: Trabajo[]): Pro
 
     pdf.setFontSize(8);
     pdf.setTextColor(160, 160, 170);
-    pdf.text("Generado con RenuevAI — visualización conceptual, no plano técnico.", M, 288);
+    pdf.text(t("reporte.pie"), M, 288);
   }
 
   // ── Guardar / compartir ────────────────────────────────────────────────
@@ -86,7 +87,7 @@ export async function generarReporte(proyecto: string, trabajos: Trabajo[]): Pro
       const { Share } = await import("@capacitor/share");
       const b64 = (pdf.output("datauristring") as string).split(",")[1];
       const escrito = await Filesystem.writeFile({ path: nombre, data: b64, directory: Directory.Cache });
-      await Share.share({ title: `Proyecto ${proyecto}`, files: [escrito.uri] });
+      await Share.share({ title: t("reporte.proyecto", { p: proyecto }), files: [escrito.uri] });
       return;
     }
   } catch (e) {

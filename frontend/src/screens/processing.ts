@@ -6,6 +6,7 @@ import { pantallaResult } from "./result";
 import { pantallaForm } from "./form";
 import { state } from "../state";
 import { pedirPermisoNotif, notificarListo } from "../notif";
+import { t } from "../i18n";
 
 interface Args {
   categoria: string; detalle: string; tipo: "imagen" | "video"; foto: Blob;
@@ -13,27 +14,15 @@ interface Args {
 }
 
 // Mensajes rotativos: la espera percibida baja cuando el texto avanza.
-const PASOS_IMAGEN = [
-  "Analizando tu espacio…",
-  "Entendiendo lo que pediste…",
-  "Aplicando la transformación…",
-  "Puliendo los detalles…",
-  "Casi listo…",
-];
-const PASOS_VIDEO = [
-  "Analizando tu espacio…",
-  "Generando la transformación…",
-  "Creando los fotogramas del video…",
-  "Animando la transición…",
-  "Montando el video final…",
-  "Casi listo, esto vale la pena…",
-];
-const PASOS_PROCESO = [
-  "Reuniendo tus ediciones…",
-  "Ordenando el antes y el después…",
-  "Montando las transiciones…",
-  "Renderizando tu video del proceso…",
-];
+function pasosImagen(): string[] {
+  return [1, 2, 3, 4, 5].map((n) => t(`processing.imagen.${n}`));
+}
+function pasosVideo(): string[] {
+  return [1, 2, 3, 4, 5, 6].map((n) => t(`processing.video.${n}`));
+}
+function pasosProceso(): string[] {
+  return [1, 2, 3, 4].map((n) => t(`processing.proceso.${n}`));
+}
 
 // Token de la generación en curso: si el usuario navega a otra pantalla (o
 // lanza otra generación), el polling viejo deja de tener derecho a navegar.
@@ -43,7 +32,7 @@ let generacionActual = 0;
 export function pantallaEsperarTrabajo(
   id: string,
   tipo: "imagen" | "video",
-  pasos: string[] = tipo === "video" ? PASOS_VIDEO : PASOS_IMAGEN,
+  pasos: string[] = tipo === "video" ? pasosVideo() : pasosImagen(),
 ) {
   const miGeneracion = ++generacionActual;
   const sigoActivo = () => generacionActual === miGeneracion && !!document.querySelector(".proc-screen");
@@ -51,7 +40,7 @@ export function pantallaEsperarTrabajo(
   let paso = 0;
   const msg = el("p", { class: "loader-msg" }, [pasos[0]]);
   const sub = el("p", { class: "loader-sub" }, [
-    tipo === "video" ? "Puede tardar 1–2 minutos. Te avisamos cuando esté." : "Unos segundos…",
+    t(tipo === "video" ? "processing.sub.video" : "processing.sub.imagen"),
   ]);
 
   render(
@@ -79,7 +68,7 @@ export function pantallaEsperarTrabajo(
         el("button", {
           class: "btn-primario",
           onClick: () => reemplazar(() => pantallaForm(state.categoriaSel || "interior")),
-        }, ["Reintentar"]),
+        }, [t("common.reintentar")]),
       ])
     );
   };
@@ -89,27 +78,27 @@ export function pantallaEsperarTrabajo(
     if (generacionActual !== miGeneracion) { clearInterval(timer); terminar(); return; }
     if (Date.now() - inicio > 5 * 60 * 1000) {
       clearInterval(timer);
-      mostrarError("Está tardando demasiado. Intenta de nuevo en un momento.");
+      mostrarError(t("processing.timeout"));
       return;
     }
     try {
-      const t = await getTrabajo(id);
-      if (t.status === "done") {
+      const t2 = await getTrabajo(id);
+      if (t2.status === "done") {
         clearInterval(timer);
         terminar();
         // La cadena de ediciones (para el video del proceso) crece con cada
         // imagen generada de la misma foto.
-        if (t.tipo === "imagen") state.cadena.push(t.id);
-        if (document.hidden) notificarListo(id, t.tipo); // app en background
+        if (t2.tipo === "imagen") state.cadena.push(t2.id);
+        if (document.hidden) notificarListo(id, t2.tipo); // app en background
         if (sigoActivo()) {
-          reemplazar(() => pantallaResult(t));
+          reemplazar(() => pantallaResult(t2));
         } else {
-          notificarListo(id, t.tipo);
-          toast("Tu transformación está lista ✨ — mírala en Recientes.");
+          notificarListo(id, t2.tipo);
+          toast(t("processing.listo_fondo"));
         }
-      } else if (t.status === "error") {
+      } else if (t2.status === "error") {
         clearInterval(timer);
-        mostrarError(t.error || "Algo salió mal generando tu transformación.");
+        mostrarError(t2.error || t("processing.error_generico"));
       }
     } catch (e) {
       clearInterval(timer);
@@ -118,14 +107,14 @@ export function pantallaEsperarTrabajo(
   }, 3000);
 }
 
-export { PASOS_PROCESO };
+export { pasosProceso };
 
 export async function pantallaProcessing(args: Args) {
   // Pantalla de espera inmediata (mientras sube la foto)
   render(
     el("div", { class: "screen centro proc-screen" }, [
       el("div", { class: "spinner" }),
-      el("p", { class: "loader-msg" }, ["Enviando tu foto…"]),
+      el("p", { class: "loader-msg" }, [t("processing.enviando")]),
     ])
   );
   pedirPermisoNotif();
@@ -141,7 +130,7 @@ export async function pantallaProcessing(args: Args) {
         el("button", {
           class: "btn-primario",
           onClick: () => reemplazar(() => pantallaForm(state.categoriaSel || "interior")),
-        }, ["Reintentar"]),
+        }, [t("common.reintentar")]),
       ])
     );
   }

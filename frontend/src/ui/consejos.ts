@@ -1,6 +1,7 @@
 // Modal de consejos de foto (estilo SnapHome): buenos/malos ejemplos.
 // Se abre solo la primera vez por dispositivo; luego desde el botón "Consejos".
 import { el } from "../ui";
+import { t } from "../i18n";
 
 const KEY = "reforma_consejos_visto";
 
@@ -12,24 +13,22 @@ export function abrirConsejos(onCerrar?: () => void) {
   localStorage.setItem(KEY, "1");
   const overlay = el("div", { class: "sheet-overlay", onClick: cerrar });
   const sheet = el("div", { class: "sheet consejos-sheet", onClick: (e: Event) => e.stopPropagation() }, [
-    el("div", { class: "sheet-tit" }, ["Para los mejores resultados"]),
-    el("div", { class: "consejo-txt" }, [
-      "Fotografía desde un ángulo amplio, con buena luz, mostrando la pared o el espacio completo.",
-    ]),
+    el("div", { class: "sheet-tit" }, [t("consejos.titulo")]),
+    el("div", { class: "consejo-txt" }, [t("consejos.texto")]),
 
-    el("div", { class: "consejo-grupo mal" }, ["✗ Evita esto"]),
+    el("div", { class: "consejo-grupo mal" }, [t("consejos.evitar")]),
     el("div", { class: "consejo-grid" }, [
-      ejemplo("/consejos/mala_primerplano.jpg", "Primer plano", true),
-      ejemplo("/consejos/mala_oscura.jpg", "Habitación oscura", true),
+      ejemplo("/consejos/mala_primerplano.jpg", t("consejos.primer_plano"), true),
+      ejemplo("/consejos/mala_oscura.jpg", t("consejos.habitacion_oscura"), true),
     ]),
 
-    el("div", { class: "consejo-grupo bien" }, ["✓ Así sí"]),
+    el("div", { class: "consejo-grupo bien" }, [t("consejos.asi_si")]),
     el("div", { class: "consejo-grid" }, [
-      ejemplo("/consejos/buena_amplia.jpg", "Ángulo amplio", false),
-      ejemplo("/consejos/buena_iluminada.jpg", "Bien iluminada", false),
+      ejemplo("/consejos/buena_amplia.jpg", t("consejos.angulo_amplio"), false),
+      ejemplo("/consejos/buena_iluminada.jpg", t("consejos.bien_iluminada"), false),
     ]),
 
-    el("button", { class: "btn-primario", onClick: cerrar, style: "margin-top:14px;width:100%" }, ["Entendido"]),
+    el("button", { class: "btn-primario", onClick: cerrar, style: "margin-top:14px;width:100%" }, [t("common.entendido")]),
   ]);
   overlay.append(sheet);
   document.body.append(overlay);

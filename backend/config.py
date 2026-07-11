@@ -13,6 +13,8 @@ REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN", "")
 # Clave de administrador (dueño) para otorgar premium manualmente. Se define
 # como env var en Render; si está vacía, el endpoint /admin/premium queda cerrado.
 ADMIN_KEY           = os.getenv("ADMIN_KEY", "")
+# Topic de ntfy.sh para avisos al dueño (sin crédito, errores). Vacío = sin avisos.
+NTFY_TOPIC          = os.getenv("NTFY_TOPIC", "")
 
 # ─── Persistencia externa (Supabase) ─────────────────────────────────────────
 # Sin esto, el backend cae a SQLite local + disco local (solo dev; en Render

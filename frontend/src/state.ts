@@ -9,9 +9,10 @@ export interface AppState {
   referencia?: { blob: Blob; url: string }; // foto de inspiración (engine estilo)
   prefillExtra?: string;                    // idea que viene del chat del Maestro
   premium?: boolean;                        // suscripción activa
+  cadena: string[];                         // ids de la cadena de ediciones (misma foto)
 }
 
-export const state: AppState = { categorias: {} };
+export const state: AppState = { categorias: {}, cadena: [] };
 
 // Reemplazan la foto/referencia liberando el blob URL anterior (las fotos de
 // cámara pesan varios MB y sin revoke quedan retenidas toda la sesión).

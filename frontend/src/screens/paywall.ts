@@ -65,7 +65,7 @@ export function pantallaPaywall(opciones: { alCerrar?: () => void } = {}) {
         el("div", { class: "paywall-hero-grad" }),
         el("div", { class: "paywall-hero-txt" }, [
           el("div", { class: "paywall-corona" }, [icon("crown", 30)]),
-          el("h1", {}, ["RenovAI Premium"]),
+          el("h1", {}, ["RenuevAI Premium"]),
           el("p", {}, ["Transforma tu espacio sin límites"]),
         ]),
       ]),

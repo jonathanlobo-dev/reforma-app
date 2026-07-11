@@ -1,13 +1,16 @@
 import { el, render, toast } from "../ui";
-import { resolverMedia, votarTrabajo, type Trabajo } from "../api";
+import { resolverMedia, votarTrabajo, crearProceso, type Trabajo } from "../api";
 import { mostrarIntersticial } from "../ads";
 import { raiz, irA, setNavVisible } from "../nav";
 import { pantallaHome } from "./home";
+import { pantallaForm } from "./form";
 import { pantallaAsesor } from "./asesor";
+import { pantallaPaywall } from "./paywall";
 import { baSlider } from "../ui/controls";
 import { state, setFoto } from "../state";
 import { icon } from "../ui/icons";
-import { pantallaProcessing } from "./processing";
+import { pantallaProcessing, pantallaEsperarTrabajo, PASOS_PROCESO } from "./processing";
+import { getDeviceId } from "../device";
 
 function blobABase64(blob: Blob): Promise<string> {
   // FileReader aguanta archivos grandes (btoa con spread revienta el stack)
@@ -54,7 +57,7 @@ export async function pantallaResult(t: Trabajo) {
   const compartir = async () => {
     if (!objetivoCompartir) return;
     const nombre = video ? `renovai_${t.id}.mp4` : `renovai_${t.id}.png`;
-    const texto = "Mira cómo transformé mi espacio con RenovAI";
+    const texto = "Mira cómo transformé mi espacio con RenuevAI";
     try {
       const { Capacitor } = await import("@capacitor/core");
       if (Capacitor.isNativePlatform()) {
@@ -64,16 +67,16 @@ export async function pantallaResult(t: Trabajo) {
         const escrito = await Filesystem.writeFile({
           path: nombre, data: await blobABase64(blob), directory: Directory.Cache,
         });
-        await Share.share({ title: "RenovAI", text: texto, files: [escrito.uri] });
+        await Share.share({ title: "RenuevAI", text: texto, files: [escrito.uri] });
         return;
       }
       // Web: archivo si el navegador lo soporta; si no, link
       const blob = await (await fetch(objetivoCompartir)).blob();
       const file = new File([blob], nombre, { type: blob.type });
       if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ title: "RenovAI", text: texto, files: [file] });
+        await navigator.share({ title: "RenuevAI", text: texto, files: [file] });
       } else if (navigator.share) {
-        await navigator.share({ title: "RenovAI", text: texto, url: objetivoCompartir });
+        await navigator.share({ title: "RenuevAI", text: texto, url: objetivoCompartir });
       } else {
         toast("Compartir no disponible aquí.");
       }
@@ -148,19 +151,43 @@ export async function pantallaResult(t: Trabajo) {
     }
   };
 
-  // Seguir editando: el resultado pasa a ser la foto de partida de otro modo
+  // Seguir editando: el resultado LIMPIO (sin marca de agua, para no apilar
+  // marcas) pasa a ser la foto de partida, y se abre directo el form de la
+  // misma categoría con sus selectores — sin pasar por Inicio.
   const seguirEditando = async () => {
-    const src = despues || comp;
+    const src = resolverMedia(t.resultados.limpio) || despues || comp;
     if (!src) return;
     try {
       const r = await fetch(src);
       const blob = await r.blob();
       setFoto({ blob, url: URL.createObjectURL(blob) });
       state.mask = undefined;
-      raiz(pantallaHome);
-      toast("Tu resultado quedó cargado como foto — elige un modo");
+      if (t.categoria && state.categorias[t.categoria]) {
+        irA(() => pantallaForm(t.categoria));
+      } else {
+        raiz(pantallaHome);
+        toast("Tu resultado quedó cargado como foto — elige un modo");
+      }
     } catch {
       toast("No se pudo cargar el resultado para editar.");
+    }
+  };
+
+  // Video del PROCESO (premium): original → cada edición → resultado final.
+  // Disponible cuando hay al menos 2 ediciones encadenadas de la misma foto.
+  const puedeProceso = t.tipo === "imagen" && state.cadena.length >= 2;
+  const videoProceso = async () => {
+    if (!state.premium) {
+      toast("El video del proceso es una función Premium ✨");
+      irA(() => pantallaPaywall());
+      return;
+    }
+    try {
+      const deviceId = await getDeviceId();
+      const { id } = await crearProceso(deviceId, state.cadena);
+      irA(() => pantallaEsperarTrabajo(id, "video", PASOS_PROCESO));
+    } catch (e) {
+      toast((e as Error).message);
     }
   };
 
@@ -178,6 +205,10 @@ export async function pantallaResult(t: Trabajo) {
           : []),
         ...(puedeReintentar
           ? [el("button", { class: "btn-secundario btn-ico", onClick: otraVersion }, [icon("refresh", 16), "Otra versión"])]
+          : []),
+        ...(puedeProceso
+          ? [el("button", { class: "btn-secundario btn-ico btn-proceso", onClick: videoProceso },
+              [icon("sparkles", 16), `Video del proceso (${state.cadena.length} pasos)`, ...(state.premium ? [] : [icon("lock", 13)])])]
           : []),
         el("button", { class: "btn-secundario btn-ico", onClick: compartir }, [icon("share", 16), "Compartir"]),
         el("button", { class: "btn-secundario btn-ico", onClick: () => {

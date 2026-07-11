@@ -2,7 +2,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
   appId: "com.reforma.ai",
-  appName: "RenovAI",
+  appName: "RenuevAI",
   webDir: "dist",
   server: {
     // Permite http (backend local) durante desarrollo en el dispositivo.

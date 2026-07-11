@@ -21,9 +21,9 @@ import config
 import db
 import pipeline
 from categorias import CATEGORIAS, resolver
-from worker import procesar
+from worker import procesar, procesar_proceso
 
-app = FastAPI(title="RenovAI — backend")
+app = FastAPI(title="RenuevAI — backend")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.mount("/media", StaticFiles(directory=config.DATA), name="media")
 
@@ -64,7 +64,7 @@ def _urls(trabajo: dict) -> dict:
     """Devuelve las URLs de resultados. Ya están completas en la DB:
     Supabase → https absoluta; local → /media/<id>/<archivo> (el frontend le
     antepone API_BASE)."""
-    return {k: trabajo[k] for k in ("antes", "despues", "comparacion", "video")
+    return {k: trabajo[k] for k in ("antes", "despues", "comparacion", "video", "limpio")
             if trabajo.get(k)}
 
 
@@ -119,6 +119,39 @@ async def crear_trabajo(
 
     background.add_task(procesar, tid)
     return {"id": tid, "status": "pending", "tipo": tipo}
+
+
+@app.post("/proceso")
+def crear_proceso(
+    background: BackgroundTasks,
+    device_id: str = Form(...),
+    trabajo_ids: str = Form(...),  # ids separados por coma, en orden de edición
+):
+    """Video del PROCESO (premium): foto original → cada edición → final,
+    con fundidos. Solo ffmpeg, sin costo de Replicate, por eso no consume
+    la cuota de videos."""
+    if not db.es_premium(device_id):
+        raise HTTPException(402, "El video del proceso es una función Premium.")
+    ids = [t.strip() for t in trabajo_ids.split(",") if t.strip()][:8]
+    if len(ids) < 2:
+        raise HTTPException(400, "Se necesitan al menos 2 ediciones para el video del proceso.")
+
+    imagenes: list[str] = []
+    for i, tid in enumerate(ids):
+        t = db.obtener(tid)
+        if not t or t["device_id"] != device_id or t["status"] != "done":
+            raise HTTPException(404, f"Edición {i + 1} no encontrada.")
+        if i == 0 and t.get("antes"):
+            imagenes.append(t["antes"])          # la foto original arranca el video
+        resultado = t.get("limpio") or t.get("despues")
+        if resultado:
+            imagenes.append(resultado)
+    if len(imagenes) < 2:
+        raise HTTPException(400, "No hay suficientes imágenes para montar el video.")
+
+    nuevo = db.crear_trabajo(device_id, "proceso", f"Video del proceso ({len(imagenes)} pasos)", "video")
+    background.add_task(procesar_proceso, nuevo, imagenes)
+    return {"id": nuevo, "status": "pending", "tipo": "video"}
 
 
 @app.get("/premium")

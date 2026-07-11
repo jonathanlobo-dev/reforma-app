@@ -44,8 +44,8 @@ function wireNav() {
 async function start() {
   render(
     el("div", { class: "screen centro splash" }, [
-      el("img", { class: "splash-logo", src: "/logo.png", alt: "RenovAI" }),
-      el("h1", { class: "splash-nombre" }, ["RenovAI"]),
+      el("img", { class: "splash-logo", src: "/logo.png", alt: "RenuevAI" }),
+      el("h1", { class: "splash-nombre" }, ["RenuevAI"]),
       el("p", { class: "splash-sub" }, ["Transforma tu espacio"]),
       el("div", { class: "spinner chico" }),
     ])

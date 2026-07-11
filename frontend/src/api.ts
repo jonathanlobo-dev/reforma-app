@@ -10,6 +10,7 @@ export type Categorias = Record<string, Categoria>;
 
 export interface Resultados {
   antes?: string; despues?: string; comparacion?: string; video?: string;
+  limpio?: string; // resultado sin marca de agua (para encadenar ediciones)
 }
 export interface Trabajo {
   id: string; status: "pending" | "processing" | "done" | "error";
@@ -163,6 +164,27 @@ export async function getHistorial(deviceId: string, limit = 30): Promise<Trabaj
   if (MOCK) return MOCK_HISTORIAL;
   const r = await fetch(`${API_BASE}/trabajos?device_id=${deviceId}&limit=${limit}`);
   if (!r.ok) return [];
+  return r.json();
+}
+
+// Video del PROCESO (premium): original → ediciones → final, con fundidos.
+export async function crearProceso(
+  deviceId: string, trabajoIds: string[]
+): Promise<{ id: string; status: string; tipo: string }> {
+  if (MOCK) {
+    const id = "mock-" + crypto.randomUUID().slice(0, 8);
+    mockJobs.set(id, { creado: Date.now(), tipo: "video", categoria: "proceso", detalle: "" });
+    return { id, status: "pending", tipo: "video" };
+  }
+  const fd = new FormData();
+  fd.append("device_id", deviceId);
+  fd.append("trabajo_ids", trabajoIds.join(","));
+  const r = await fetch(`${API_BASE}/proceso`, { method: "POST", body: fd });
+  if (r.status === 402) throw new Error("El video del proceso es una función Premium.");
+  if (!r.ok) {
+    const j = await r.json().catch(() => ({ detail: "No se pudo montar el video." }));
+    throw new Error(j.detail);
+  }
   return r.json();
 }
 

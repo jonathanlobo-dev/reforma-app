@@ -17,7 +17,7 @@ export async function notificarListo(tid: string, tipo: "imagen" | "video"): Pro
     await LocalNotifications.schedule({
       notifications: [{
         id: Math.floor(Date.now() % 2147483647),
-        title: "RenovAI",
+        title: "RenuevAI",
         body: tipo === "video"
           ? "Tu video de transformación está listo 🎬"
           : "Tu transformación está lista ✨",

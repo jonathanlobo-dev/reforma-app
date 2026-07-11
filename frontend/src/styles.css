@@ -512,9 +512,9 @@ textarea.field { resize: vertical; min-height: 80px; }
 
 /* ─── Ajustes ───────────────────────────────────────────── */
 .home-gear {
-  position: absolute; right: 0; top: 50%; transform: translateY(-50%);
   background: none; border: none; font-size: 21px; cursor: pointer;
-  padding: 8px; opacity: .85;
+  padding: 6px; opacity: .85; display: inline-flex; align-items: center;
+  color: var(--texto);
 }
 .home-header { position: relative; }
 .aj-seccion {
@@ -545,6 +545,9 @@ textarea.field { resize: vertical; min-height: 80px; }
   flex-shrink: 0; background: var(--acento); color: #fff; border: none;
   border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer;
 }
+
+/* Botón "Video del proceso" (premium) — acento dorado */
+.btn-proceso { border-color: rgba(255, 216, 94, .55); color: #ffd85e; }
 
 /* ─── Botón PRO en la home ──────────────────────────────── */
 .home-acciones { position: absolute; right: 0; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 6px; }

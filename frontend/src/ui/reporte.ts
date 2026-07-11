@@ -32,7 +32,7 @@ export async function generarReporte(proyecto: string, trabajos: Trabajo[]): Pro
   pdf.setTextColor(109, 94, 252);
   pdf.setFontSize(30);
   pdf.setFont("helvetica", "bold");
-  pdf.text("RenovAI", W / 2, 120, { align: "center" });
+  pdf.text("RenuevAI", W / 2, 120, { align: "center" });
   pdf.setTextColor(244, 244, 247);
   pdf.setFontSize(20);
   pdf.text(`Proyecto: ${proyecto}`, W / 2, 140, { align: "center" });
@@ -74,7 +74,7 @@ export async function generarReporte(proyecto: string, trabajos: Trabajo[]): Pro
 
     pdf.setFontSize(8);
     pdf.setTextColor(160, 160, 170);
-    pdf.text("Generado con RenovAI — visualización conceptual, no plano técnico.", M, 288);
+    pdf.text("Generado con RenuevAI — visualización conceptual, no plano técnico.", M, 288);
   }
 
   // ── Guardar / compartir ────────────────────────────────────────────────

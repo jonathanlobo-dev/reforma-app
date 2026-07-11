@@ -56,6 +56,7 @@ export function pantallaForm(claveCat: string) {
     const f = await elegirFoto();
     if (f) {
       setFoto(f); state.mask = undefined; selMuestra = -1;
+      state.cadena = []; // foto nueva = cadena de ediciones nueva
       refrescarFoto(); refrescarMuestras();
       if (engine === "inpaint") abrirPincel();
     }
@@ -81,6 +82,7 @@ export function pantallaForm(claveCat: string) {
         const blob = await r.blob();
         setFoto({ blob, url: URL.createObjectURL(blob) });
         state.mask = undefined;
+        state.cadena = []; // muestra = foto nueva, cadena nueva
         refrescarFoto();
         if (engine === "inpaint") abrirPincel();
       } catch { toast("No se pudo cargar la muestra."); }

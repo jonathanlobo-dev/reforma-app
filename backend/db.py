@@ -63,6 +63,7 @@ _MIGRACIONES = [
     ("uso", "chats", "INTEGER DEFAULT 0"),
     ("trabajos", "oculto", "INTEGER DEFAULT 0"),
     ("trabajos", "proyecto", "TEXT"),
+    ("trabajos", "limpio", "TEXT"),  # resultado SIN marca de agua (para encadenar)
 ]
 
 

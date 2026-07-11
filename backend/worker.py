@@ -9,7 +9,10 @@ Engines:
   estilo  → flux-2-pro (foto + referencia, prompt fijo, sin Groq)
   plano   → flux-kontext (prompt fijo especializado, sin texto del usuario)
 """
+import shutil
 import traceback
+
+import requests
 
 import config
 import db
@@ -19,9 +22,13 @@ from categorias import CATEGORIAS
 
 _PROMPT_PLANO = (
     "Convert this 2D architectural floor plan into a realistic 3D furnished "
-    "top-down isometric render. Keep exactly the same room layout, wall "
-    "positions and proportions as the plan. Modern tasteful furniture, "
-    "soft daylight, architectural visualization quality."
+    "top-down isometric render. CRITICAL: reproduce the plan faithfully — keep "
+    "the exact same wall layout and proportions, the same number of rooms, and "
+    "every DOOR OPENING and window in its exact position from the plan. Do not "
+    "add, move or remove any doors, walls or windows. Interior door openings "
+    "must connect the same rooms as in the plan. Modern tasteful furniture "
+    "matching what the plan suggests, soft daylight, architectural "
+    "visualization quality."
 )
 
 
@@ -80,9 +87,17 @@ def procesar(tid: str) -> None:
             video = carpeta / "final.mp4"
             pipeline.animar(url_antes, url_despues, plan.get("motion_prompt", ""), video)
 
-        # Watermark "RenovAI" en lo que el usuario comparte (no en 'antes').
+        premium = db.es_premium(trabajo["device_id"])
+
+        # Copia LIMPIA (sin marca de agua) del resultado, ANTES de estampar.
+        # Se usa para "seguir editando" (no apilar marcas) y para montar el
+        # video del proceso. Para premium, despues ya es limpio.
+        limpio = carpeta / "limpio.png"
+        shutil.copy(despues, limpio)
+
+        # Watermark "RenuevAI" en lo que el usuario comparte (no en 'antes').
         # Premium NO lleva marca de agua (es uno de los beneficios pagados).
-        if not db.es_premium(trabajo["device_id"]):
+        if not premium:
             pipeline._watermark(despues)
             pipeline._watermark(comp)
             if video:
@@ -94,10 +109,50 @@ def procesar(tid: str) -> None:
             "despues": storage.subir(despues, tid, "despues.png"),
             "comparacion": storage.subir(comp, tid, "comparacion.png"),
         }
+        # limpio: si es premium, despues ya es limpio (reusa su URL, no re-sube)
+        campos["limpio"] = campos["despues"] if premium else storage.subir(limpio, tid, "limpio.png")
         if video:
             campos["video"] = storage.subir(video, tid, "final.mp4")
 
         db.registrar_uso(trabajo["device_id"], trabajo["tipo"])
+        db.actualizar(tid, status="done", **campos)
+    except Exception as e:
+        traceback.print_exc()
+        db.actualizar(tid, status="error", error=str(e)[:300])
+
+
+def _bajar(url_o_ruta: str, destino) -> None:
+    """Trae una imagen de resultado: URL absoluta (Supabase) o /media local."""
+    if url_o_ruta.startswith("http"):
+        destino.write_bytes(requests.get(url_o_ruta, timeout=120).content)
+    else:
+        # "/media/<tid>/<archivo>" → archivo en disco local (solo dev)
+        rel = url_o_ruta.replace("/media/", "", 1)
+        shutil.copy(config.DATA / rel, destino)
+
+
+def procesar_proceso(tid: str, imagenes_urls: list) -> None:
+    """Video del PROCESO (premium): crossfade de la foto original pasando por
+    cada edición hasta el resultado final. Solo ffmpeg → costo $0."""
+    carpeta = config.DATA / tid
+    carpeta.mkdir(parents=True, exist_ok=True)
+    try:
+        db.actualizar(tid, status="processing")
+        rutas = []
+        for i, url in enumerate(imagenes_urls):
+            destino = carpeta / f"paso{i}.png"
+            _bajar(url, destino)
+            rutas.append(destino)
+
+        video = carpeta / "final.mp4"
+        pipeline.crossfade_multi(rutas, video)
+        # Es una función premium: sin marca de agua.
+
+        campos = {
+            "antes": storage.subir(rutas[0], tid, "antes.png"),
+            "despues": storage.subir(rutas[-1], tid, "despues.png"),
+            "video": storage.subir(video, tid, "final.mp4"),
+        }
         db.actualizar(tid, status="done", **campos)
     except Exception as e:
         traceback.print_exc()

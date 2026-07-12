@@ -63,12 +63,13 @@ _PROMPT_PLANO = (
 # "Explorar habitaciones": recorte de una habitación del render isométrico →
 # vista interior fotorrealista a nivel de ojos. Prompt fijo, sin Groq.
 _PROMPT_EXPLORAR = (
-    "This image is a cropped room from a top-down isometric 3D architectural "
-    "render. Generate a photorealistic eye-level interior photograph of this "
-    "same room, as if standing inside it. Keep the same furniture, layout, "
-    "colors, materials and door/window positions visible in the crop. Natural "
-    "soft daylight, realistic proportions, interior photography quality. No "
-    "text or labels anywhere in the image."
+    "CHANGE THE CAMERA COMPLETELY: move the camera down INSIDE this room and "
+    "shoot it at human eye level (1.6 m height), standing at one end looking "
+    "across the room. The input is a top-down dollhouse view; the output must "
+    "be a normal interior photograph with vertical walls, visible ceiling and "
+    "one-point perspective — NOT a top-down or isometric view. Recreate the "
+    "same furniture, colors, materials, rug, windows and layout seen in the "
+    "input. Photorealistic, natural daylight, interior photography. No text."
 )
 
 

@@ -21,24 +21,11 @@ let seccionActiva = "todos";
 const ORDEN = ["interior", "pincel", "estilo", "remodelar", "pintar", "suelo",
                "paredes", "muebles", "eliminar", "restaurar", "exterior", "plano"];
 
-// Portada única por categoría (fotos generadas en /estilos). "remodelar" no está
-// aquí: usa el split antes|después real de la cocina del usuario.
-// Sin repetir portada en cards adyacentes (orden: interior, pincel, estilo,
-// remodelar(split), pintar, suelo, paredes, muebles, eliminar, restaurar,
-// exterior, plano).
-const COVERS: Record<string, string> = {
-  interior: "/estilos/moderno.webp",
-  pincel: "/estilos/contemporaneo.webp",
-  estilo: "/estilos/industrial.webp",
-  pintar: "/estilos/tradicional.webp",
-  suelo: "/estilos/escandinavo.webp",
-  paredes: "/estilos/clasico.webp",
-  muebles: "/estilos/minimalista.webp",
-  eliminar: "/estilos/rustico.webp",
-  restaurar: "/estilos/tradicional.webp",
-  exterior: "/estilos/escandinavo.webp",
-  plano: "/estilos/moderno.webp",
-};
+// Portadas antes|después por categoría (pares generados en /covers con
+// tools/gen_assets.py: <cat>_a.webp = antes, <cat>_d.webp = después).
+// "remodelar" no está aquí: usa el split genérico de /mock (CSS por defecto).
+const PARES = ["pintar", "interior", "exterior", "muebles", "suelo", "paredes",
+               "eliminar", "restaurar", "pincel", "estilo", "plano"];
 
 export function pantallaHome() {
   setNavVisible(true);
@@ -59,9 +46,13 @@ export function pantallaHome() {
     ));
 
   const cards = claves.map((clave) => [clave, state.categorias[clave]] as const).map(([clave, cat]) => {
-    // Fondo: portada única, o split antes|después (remodelar = demo real)
-    const fondo = COVERS[clave]
-      ? el("div", { class: "mode-card-cover", style: `background-image:url('${COVERS[clave]}')` })
+    // Fondo: split antes|después propio de la categoría, o el genérico de /mock
+    const fondo = PARES.includes(clave)
+      ? el("div", { class: "mode-card-split" }, [
+          el("div", { class: "mode-card-half", style: `background-image:url('/covers/${clave}_a.webp')` }),
+          el("div", { class: "mode-card-half", style: `background-image:url('/covers/${clave}_d.webp')` }),
+          el("div", { class: "mode-card-divline" }),
+        ])
       : el("div", { class: "mode-card-split" }, [
           el("div", { class: "mode-card-half antes" }),
           el("div", { class: "mode-card-half despues" }),

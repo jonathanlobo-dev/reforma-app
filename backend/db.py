@@ -116,6 +116,8 @@ def init() -> None:
 # ─── Cuota ───────────────────────────────────────────────────────────────────
 
 def es_premium(device_id: str) -> bool:
+    if device_id in config.ADMIN_DEVICES:
+        return True
     with _con() as con:
         cur = con.cursor()
         cur.execute(_q(f"SELECT hasta FROM premium WHERE device_id={PH}"), (device_id,))
@@ -151,6 +153,8 @@ def puede_generar(device_id: str, tipo: str) -> tuple[bool, str, dict]:
     """Devuelve (ok, clave_mensaje, params) — no un string final: main.py lo
     traduce con i18n.cuota_msg(clave, lang, **params) según el idioma del
     request. clave="" cuando ok=True."""
+    if device_id in config.ADMIN_DEVICES:
+        return True, "", {}  # el dueño no tiene límites (ni cuenta en el global)
     hoy = date.today().isoformat()
     premium = es_premium(device_id)
     lim_img = config.IMAGENES_PREMIUM_DIA if premium else config.IMAGENES_GRATIS_DIA
@@ -180,6 +184,8 @@ def puede_generar(device_id: str, tipo: str) -> tuple[bool, str, dict]:
 
 
 def puede_chatear(device_id: str) -> tuple[bool, str, dict]:
+    if device_id in config.ADMIN_DEVICES:
+        return True, "", {}
     hoy = date.today().isoformat()
     with _con() as con:
         cur = con.cursor()

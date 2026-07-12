@@ -15,6 +15,11 @@ REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN", "")
 ADMIN_KEY           = os.getenv("ADMIN_KEY", "")
 # Topic de ntfy.sh para avisos al dueño (sin crédito, errores). Vacío = sin avisos.
 NTFY_TOPIC          = os.getenv("NTFY_TOPIC", "")
+# Dispositivos del DUEÑO sin límites de cuota (coma-separados). Solo se puede
+# definir como env var en Render — no hay endpoint que lo modifique, así que
+# nadie puede auto-agregarse. Estos dispositivos: sin límite diario de imágenes/
+# videos/chats, sin tope por IP y tratados como premium (sin marca, sin ads).
+ADMIN_DEVICES       = {d.strip() for d in os.getenv("ADMIN_DEVICES", "").split(",") if d.strip()}
 
 # ─── Persistencia externa (Supabase) ─────────────────────────────────────────
 # Sin esto, el backend cae a SQLite local + disco local (solo dev; en Render

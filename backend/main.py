@@ -99,10 +99,11 @@ async def crear_trabajo(
     ok, clave, params = db.puede_generar(device_id, tipo)
     if not ok:
         raise HTTPException(429, i18n.cuota_msg(clave, lang, **params))
-    ip = _ip_cliente(request)
-    if not db.puede_ip(ip, "imagenes" if tipo == "imagen" else "videos"):
-        raise HTTPException(429, i18n.cuota_msg("limite_ip", lang))
-    db.registrar_ip(ip, "imagenes" if tipo == "imagen" else "videos")
+    if device_id not in config.ADMIN_DEVICES:  # el dueño no consume tope por IP
+        ip = _ip_cliente(request)
+        if not db.puede_ip(ip, "imagenes" if tipo == "imagen" else "videos"):
+            raise HTTPException(429, i18n.cuota_msg("limite_ip", lang))
+        db.registrar_ip(ip, "imagenes" if tipo == "imagen" else "videos")
 
     tid = db.crear_trabajo(device_id, categoria, detalle, tipo, proyecto.strip()[:60], lang)
     carpeta = config.DATA / tid
@@ -283,10 +284,11 @@ def asesor(req: AsesorReq, request: Request):
     ok, clave, params = db.puede_chatear(req.device_id)
     if not ok:
         raise HTTPException(429, i18n.cuota_msg(clave, lang, **params))
-    ip = _ip_cliente(request)
-    if not db.puede_ip(ip, "chats"):
-        raise HTTPException(429, i18n.cuota_msg("limite_ip", lang))
-    db.registrar_ip(ip, "chats")
+    if req.device_id not in config.ADMIN_DEVICES:  # el dueño no consume tope por IP
+        ip = _ip_cliente(request)
+        if not db.puede_ip(ip, "chats"):
+            raise HTTPException(429, i18n.cuota_msg("limite_ip", lang))
+        db.registrar_ip(ip, "chats")
 
     system = pipeline.ASESOR_SYSTEM + i18n.asesor_idioma_instruccion(lang)
     if req.contexto:

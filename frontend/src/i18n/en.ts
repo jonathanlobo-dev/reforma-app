@@ -193,6 +193,7 @@ export const en: Record<string, string> = {
   "result.preguntar_maestro": "Ask {nombre}",
   "result.hacer_otra": "Make another",
   "result.explorar": "Explore rooms",
+  "result.retocar_pincel": "Touch up with brush",
   "explorar.titulo": "Explore room",
   "explorar.hint": "Drag over the render to frame the room you want to see from inside.",
   "explorar.nota": "Beta: the generated view is an approximate interpretation of the room — use it as inspiration.",

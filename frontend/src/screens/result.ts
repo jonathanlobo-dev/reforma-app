@@ -174,6 +174,22 @@ export async function pantallaResult(t: Trabajo) {
     }
   };
 
+  // Retocar con pincel: el resultado limpio pasa a ser la foto y se abre el
+  // modo Pincel mágico — para señalar una zona exacta del resultado y cambiar
+  // SOLO eso (ej. "aquí una piscina con esta forma").
+  const retocarPincel = async () => {
+    const src = resolverMedia(t.resultados.limpio) || despues || comp;
+    if (!src || !state.categorias["pincel"]) return;
+    try {
+      const blob = await (await fetch(src)).blob();
+      setFoto({ blob, url: URL.createObjectURL(blob) });
+      state.mask = undefined;
+      irA(() => pantallaForm("pincel"));
+    } catch {
+      toast(tr("result.toast.error_editar"));
+    }
+  };
+
   // Explorar habitaciones (Beta): solo en resultados del plano 2D→3D — el
   // usuario encuadra una habitación del render y genera la vista interior.
   const fuenteExplorar = resolverMedia(t.resultados.limpio) || despues;
@@ -215,6 +231,9 @@ export async function pantallaResult(t: Trabajo) {
           : []),
         ...(puedeReintentar
           ? [el("button", { class: "btn-secundario btn-ico", onClick: otraVersion }, [icon("refresh", 16), tr("result.otra_version")])]
+          : []),
+        ...(t.tipo === "imagen" && state.categorias["pincel"]
+          ? [el("button", { class: "btn-secundario btn-ico", onClick: retocarPincel }, [icon("brush", 16), tr("result.retocar_pincel")])]
           : []),
         ...(puedeExplorar
           ? [el("button", { class: "btn-secundario btn-ico", onClick: explorar },

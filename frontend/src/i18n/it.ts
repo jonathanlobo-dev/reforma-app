@@ -193,6 +193,7 @@ export const it: Record<string, string> = {
   "result.preguntar_maestro": "Chiedi a {nombre}",
   "result.hacer_otra": "Fai un'altra",
   "result.explorar": "Esplora stanze",
+  "result.retocar_pincel": "Ritocca col pennello",
   "explorar.titulo": "Esplora stanza",
   "explorar.hint": "Trascina sul render per inquadrare la stanza che vuoi vedere dall'interno.",
   "explorar.nota": "Beta: la vista generata è un'interpretazione approssimativa della stanza — usala come ispirazione.",

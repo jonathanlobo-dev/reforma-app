@@ -194,6 +194,7 @@ export const es: Record<string, string> = {
   "result.hacer_otra": "Hacer otra",
   "result.explorar": "Explorar habitaciones",
   "result.retocar_pincel": "Retocar con pincel",
+  "api.sin_conexion": "No hay conexión con el servidor. Revisa tu internet e intenta de nuevo en unos segundos.",
   "explorar.titulo": "Explorar habitación",
   "explorar.hint": "Arrastra sobre el render para encuadrar la habitación que quieres ver por dentro.",
   "explorar.nota": "Beta: la vista generada es una interpretación aproximada de la habitación — úsala como inspiración.",

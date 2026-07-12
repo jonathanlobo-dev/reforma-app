@@ -74,6 +74,10 @@ export function pantallaEsperarTrabajo(
   };
 
   const inicio = Date.now();
+  // Fallos de red transitorios (backend reiniciando, wifi parpadeando) NO
+  // matan la espera: el trabajo sigue corriendo en el servidor. Solo se rinde
+  // tras varios fallos consecutivos.
+  let fallosSeguidos = 0;
   const timer = setInterval(async () => {
     if (generacionActual !== miGeneracion) { clearInterval(timer); terminar(); return; }
     if (Date.now() - inicio > 5 * 60 * 1000) {
@@ -83,6 +87,7 @@ export function pantallaEsperarTrabajo(
     }
     try {
       const t2 = await getTrabajo(id);
+      fallosSeguidos = 0;
       if (t2.status === "done") {
         clearInterval(timer);
         terminar();
@@ -101,8 +106,11 @@ export function pantallaEsperarTrabajo(
         mostrarError(t2.error || t("processing.error_generico"));
       }
     } catch (e) {
-      clearInterval(timer);
-      mostrarError((e as Error).message);
+      fallosSeguidos++;
+      if (fallosSeguidos >= 10) { // ~30s sin poder consultar: recién ahí se rinde
+        clearInterval(timer);
+        mostrarError((e as Error).message);
+      }
     }
   }, 3000);
 }

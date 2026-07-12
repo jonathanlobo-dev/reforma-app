@@ -7,6 +7,7 @@ Endpoints:
   GET  /trabajos/{id}             → estado + URLs de resultados
   /media/...                      → sirve los archivos generados
 """
+import os
 import shutil
 import time
 from pathlib import Path
@@ -43,7 +44,9 @@ def _ip_cliente(request: Request) -> str:
 
 @app.get("/health")
 def health():
-    return {"ok": True}
+    # version = commit desplegado (Render setea RENDER_GIT_COMMIT) — permite
+    # verificar desde afuera qué código está corriendo.
+    return {"ok": True, "version": os.getenv("RENDER_GIT_COMMIT", "dev")[:7]}
 
 
 @app.get("/privacidad")

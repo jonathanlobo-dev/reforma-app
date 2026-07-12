@@ -194,6 +194,7 @@ export const pt: Record<string, string> = {
   "result.hacer_otra": "Fazer outra",
   "result.explorar": "Explorar cômodos",
   "result.retocar_pincel": "Retocar com pincel",
+  "api.sin_conexion": "Sem conexão com o servidor. Verifique sua internet e tente novamente em alguns segundos.",
   "explorar.titulo": "Explorar cômodo",
   "explorar.hint": "Arraste sobre o render para enquadrar o cômodo que você quer ver por dentro.",
   "explorar.nota": "Beta: a vista gerada é uma interpretação aproximada do cômodo — use como inspiração.",

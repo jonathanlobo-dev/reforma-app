@@ -194,6 +194,7 @@ export const en: Record<string, string> = {
   "result.hacer_otra": "Make another",
   "result.explorar": "Explore rooms",
   "result.retocar_pincel": "Touch up with brush",
+  "api.sin_conexion": "Can't reach the server. Check your internet and try again in a few seconds.",
   "explorar.titulo": "Explore room",
   "explorar.hint": "Drag over the render to frame the room you want to see from inside.",
   "explorar.nota": "Beta: the generated view is an approximate interpretation of the room — use it as inspiration.",

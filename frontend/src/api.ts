@@ -106,9 +106,19 @@ const MOCK_HISTORIAL: Trabajo[] = [
   },
 ];
 
+// fetch con error de red amable: sin esto, un backend reiniciando o un wifi
+// caído mostraba el "Failed to fetch" crudo del navegador al usuario.
+async function fetchApi(url: string, init?: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, init);
+  } catch {
+    throw new Error(t("api.sin_conexion"));
+  }
+}
+
 export async function getCategorias(): Promise<Categorias> {
   if (MOCK) return MOCK_CATEGORIAS;
-  const r = await fetch(`${API_BASE}/categorias?lang=${idioma()}`);
+  const r = await fetchApi(`${API_BASE}/categorias?lang=${idioma()}`);
   if (!r.ok) throw new Error(t("api.error_categorias"));
   return r.json();
 }
@@ -133,7 +143,7 @@ export async function crearTrabajo(data: {
   if (data.referencia) fd.append("referencia", data.referencia, "referencia.jpg");
   if (data.proyecto) fd.append("proyecto", data.proyecto);
   fd.append("lang", idioma());
-  const r = await fetch(`${API_BASE}/trabajos`, { method: "POST", body: fd });
+  const r = await fetchApi(`${API_BASE}/trabajos`, { method: "POST", body: fd });
   if (r.status === 429) {
     const j = await r.json().catch(() => ({ detail: t("api.limite_alcanzado") }));
     throw new Error(j.detail);
@@ -162,14 +172,14 @@ export async function getTrabajo(id: string): Promise<Trabajo> {
         : {},
     };
   }
-  const r = await fetch(`${API_BASE}/trabajos/${id}`);
+  const r = await fetchApi(`${API_BASE}/trabajos/${id}`);
   if (!r.ok) throw new Error(t("api.error_consultar_trabajo"));
   return r.json();
 }
 
 export async function getHistorial(deviceId: string, limit = 30): Promise<Trabajo[]> {
   if (MOCK) return MOCK_HISTORIAL;
-  const r = await fetch(`${API_BASE}/trabajos?device_id=${deviceId}&limit=${limit}`);
+  const r = await fetchApi(`${API_BASE}/trabajos?device_id=${deviceId}&limit=${limit}`);
   if (!r.ok) return [];
   return r.json();
 }
@@ -187,7 +197,7 @@ export async function crearProceso(
   fd.append("device_id", deviceId);
   fd.append("trabajo_ids", trabajoIds.join(","));
   fd.append("lang", idioma());
-  const r = await fetch(`${API_BASE}/proceso`, { method: "POST", body: fd });
+  const r = await fetchApi(`${API_BASE}/proceso`, { method: "POST", body: fd });
   if (r.status === 402) throw new Error(t("api.proceso_premium"));
   if (!r.ok) {
     const j = await r.json().catch(() => ({ detail: t("api.error_montar_video") }));
@@ -201,7 +211,7 @@ export interface EstadoPremium { premium: boolean; hasta?: number | null; plan?:
 export async function getPremium(deviceId: string): Promise<EstadoPremium> {
   if (MOCK) return { premium: false };
   try {
-    const r = await fetch(`${API_BASE}/premium?device_id=${deviceId}`);
+    const r = await fetchApi(`${API_BASE}/premium?device_id=${deviceId}`);
     if (!r.ok) return { premium: false };
     return r.json();
   } catch {
@@ -211,7 +221,7 @@ export async function getPremium(deviceId: string): Promise<EstadoPremium> {
 
 export async function borrarTrabajo(id: string, deviceId: string): Promise<boolean> {
   if (MOCK) return true;
-  const r = await fetch(`${API_BASE}/trabajos/${id}?device_id=${deviceId}`, { method: "DELETE" });
+  const r = await fetchApi(`${API_BASE}/trabajos/${id}?device_id=${deviceId}`, { method: "DELETE" });
   return r.ok;
 }
 
@@ -237,7 +247,7 @@ export async function enviarAsesor(
       "para retoques. Rango de referencia: $15–25 el galón según marca — " +
       "confírmalo en tu ferretería. ¿Le damos una o dos manos?";
   }
-  const r = await fetch(`${API_BASE}/asesor`, {
+  const r = await fetchApi(`${API_BASE}/asesor`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ device_id: deviceId, mensajes, contexto: contexto || null, lang: idioma() }),

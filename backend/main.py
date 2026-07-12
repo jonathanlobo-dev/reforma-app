@@ -177,18 +177,42 @@ def admin_premium(
              -F device_id=XXXX -F dias=365"""
     if not config.ADMIN_KEY or x_admin_key != config.ADMIN_KEY:
         raise HTTPException(403, "No autorizado")
-    hasta = time.time() + max(1, dias) * 86400
-    db.activar_premium(device_id, hasta, "admin")
-    return {"ok": True, "device_id": device_id, "dias": dias}
+    # dias <= 0 → revocar premium (expira ya mismo)
+    hasta = time.time() + dias * 86400 if dias > 0 else time.time() - 1
+    db.activar_premium(device_id, hasta, "admin" if dias > 0 else "revocado")
+    return {"ok": True, "device_id": device_id, "dias": dias,
+            "premium": dias > 0}
+
+
+def _check_admin(x_admin_key: str) -> None:
+    if not config.ADMIN_KEY or x_admin_key != config.ADMIN_KEY:
+        raise HTTPException(403, "No autorizado")
 
 
 @app.get("/admin/stats")
 def admin_stats(x_admin_key: str = Header("")):
     """Métricas globales para el dashboard del dueño. Misma protección que
     /admin/premium: exige ADMIN_KEY."""
-    if not config.ADMIN_KEY or x_admin_key != config.ADMIN_KEY:
-        raise HTTPException(403, "No autorizado")
+    _check_admin(x_admin_key)
     return db.stats()
+
+
+@app.get("/admin/usuarios")
+def admin_usuarios(x_admin_key: str = Header("")):
+    _check_admin(x_admin_key)
+    return db.admin_usuarios()
+
+
+@app.get("/admin/trabajos")
+def admin_trabajos(dias: int = 7, x_admin_key: str = Header("")):
+    _check_admin(x_admin_key)
+    return db.admin_trabajos(max(1, min(dias, 90)))
+
+
+@app.get("/admin/feedback")
+def admin_feedback(x_admin_key: str = Header("")):
+    _check_admin(x_admin_key)
+    return db.admin_feedback()
 
 
 @app.get("/trabajos")

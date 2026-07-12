@@ -305,6 +305,54 @@ def ocultar(tid: str, device_id: str) -> bool:
         return cur.rowcount > 0
 
 
+def admin_usuarios() -> list[dict]:
+    """Usuarios (dispositivos) para el panel admin: uso acumulado, última
+    actividad, premium y cantidad de trabajos."""
+    with _con() as con:
+        cur = con.cursor()
+        cur.execute(_q(
+            "SELECT device_id, SUM(imagenes) AS imagenes, SUM(videos) AS videos, "
+            "SUM(COALESCE(chats,0)) AS chats, MAX(fecha) AS ultima_actividad "
+            "FROM uso GROUP BY device_id"))
+        usuarios = {f["device_id"]: dict(f) for f in cur.fetchall()}
+        cur.execute(_q("SELECT device_id, COUNT(*) AS trabajos FROM trabajos GROUP BY device_id"))
+        for f in cur.fetchall():
+            usuarios.setdefault(f["device_id"], {"device_id": f["device_id"]})["trabajos"] = f["trabajos"]
+        cur.execute(_q("SELECT device_id, hasta, plan FROM premium"))
+        ahora = time.time()
+        for f in cur.fetchall():
+            u = usuarios.setdefault(f["device_id"], {"device_id": f["device_id"]})
+            u["premium"] = bool(f["hasta"] and f["hasta"] > ahora)
+            u["premium_hasta"] = f["hasta"]
+            u["premium_plan"] = f["plan"]
+    out = list(usuarios.values())
+    out.sort(key=lambda u: u.get("ultima_actividad") or "", reverse=True)
+    return out
+
+
+def admin_trabajos(dias: int = 7, limit: int = 200) -> list[dict]:
+    """Trabajos recientes para el panel admin (todos los dispositivos)."""
+    desde = time.time() - dias * 86400
+    with _con() as con:
+        cur = con.cursor()
+        cur.execute(_q(
+            "SELECT id, device_id, categoria, tipo, status, error, detalle, "
+            f"proyecto, lang, creado, despues FROM trabajos WHERE creado > {PH} "
+            f"ORDER BY creado DESC LIMIT {PH}"), (desde, limit))
+        return [dict(f) for f in cur.fetchall()]
+
+
+def admin_feedback(limit: int = 100) -> list[dict]:
+    """Votos 👍/👎 con el contexto del trabajo votado."""
+    with _con() as con:
+        cur = con.cursor()
+        cur.execute(_q(
+            "SELECT f.trabajo_id, f.voto, f.creado, t.device_id, t.categoria, "
+            "t.detalle, t.despues FROM feedback f LEFT JOIN trabajos t "
+            f"ON t.id = f.trabajo_id ORDER BY f.creado DESC LIMIT {PH}"), (limit,))
+        return [dict(f) for f in cur.fetchall()]
+
+
 def stats() -> dict:
     """Métricas globales para el dashboard del dueño (GET /admin/stats).
     Todo en una sola conexión; consultas simples que funcionan igual en

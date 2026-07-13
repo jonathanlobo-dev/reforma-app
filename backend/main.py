@@ -31,6 +31,13 @@ app.mount("/media", StaticFiles(directory=config.DATA), name="media")
 
 db.init()
 
+# Sanear zombis: trabajos que quedaron en pending/processing porque el server
+# se reinició a mitad de una generación (ej. OOM). Sin esto la app los sigue
+# consultando para siempre y en Recientes nunca aparecen ni fallan.
+for _z in db.zombis():
+    db.actualizar(_z["id"], status="error",
+                  error=i18n.error_msg("generico", _z.get("lang") or "es"))
+
 EXT_OK = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp"}
 
 
@@ -65,7 +72,7 @@ def _urls(trabajo: dict) -> dict:
     """Devuelve las URLs de resultados. Ya están completas en la DB:
     Supabase → https absoluta; local → /media/<id>/<archivo> (el frontend le
     antepone API_BASE)."""
-    return {k: trabajo[k] for k in ("antes", "despues", "comparacion", "video", "limpio")
+    return {k: trabajo[k] for k in ("antes", "despues", "comparacion", "video", "limpio", "thumb")
             if trabajo.get(k)}
 
 

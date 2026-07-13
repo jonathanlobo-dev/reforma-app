@@ -75,10 +75,14 @@ export async function pantallaRecientes() {
           el("p", {}, [t(filtro ? "recientes.vacio_proyecto" : "recientes.vacio_general")]),
         ])
       : el("div", { class: "hist-grid" }, visibles.map((tr) => {
-          const thumb = resolverMedia(tr.resultados.comparacion ?? tr.resultados.despues);
+          // thumb liviano primero; trabajos viejos caen a la imagen completa
+          const thumb = resolverMedia(tr.resultados.thumb ?? tr.resultados.comparacion ?? tr.resultados.despues);
           const imgEl = thumb
-            ? el("img", { class: "hist-thumb", src: thumb })
+            ? el("img", { class: "hist-thumb", src: thumb, loading: "lazy", decoding: "async" })
             : el("div", { class: "hist-thumb", style: "display:flex;align-items:center;justify-content:center;font-size:32px" }, ["✨"]);
+          const badgeVideo = tr.tipo === "video"
+            ? el("span", { class: "hist-video-badge" }, ["▶"])
+            : el("span", {});
 
           const btnBorrar = el("button", {
             class: "hist-borrar",
@@ -100,7 +104,7 @@ export async function pantallaRecientes() {
             class: "hist-card",
             onClick: () => irA(() => pantallaResult(tr)),
           }, [
-            el("div", { class: "hist-thumb-wrap" }, [imgEl, btnBorrar]),
+            el("div", { class: "hist-thumb-wrap" }, [imgEl, badgeVideo, btnBorrar]),
             el("div", { class: "hist-info" }, [
               el("div", { class: "hist-cat" }, [tr.categoria ?? t("recientes.categoria_generica")]),
               el("div", { class: "hist-fecha" }, [formatFecha(tr.creado)]),

@@ -59,13 +59,53 @@ export function pantallaForm(claveCat: string) {
 
   // ── Foto principal ────────────────────────────────────────────────────────
   const fotoZone = el("div", { class: "foto-zone", onClick: elegirYActualizar });
+
+  // Vista previa con la máscara ENCIMA (rojo translúcido): sin esto el usuario
+  // no veía qué zona había pintado al volver del pincel.
+  async function previewConMascara(fotoUrl: string, mask: Blob): Promise<string> {
+    const cargar = (src: string) => new Promise<HTMLImageElement>((res, rej) => {
+      const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src;
+    });
+    const maskUrl = URL.createObjectURL(mask);
+    try {
+      const [foto, m] = await Promise.all([cargar(fotoUrl), cargar(maskUrl)]);
+      const w = Math.min(800, foto.naturalWidth);
+      const h = Math.round(w * (foto.naturalHeight / foto.naturalWidth));
+      const c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      const ctx = c.getContext("2d")!;
+      ctx.drawImage(foto, 0, 0, w, h);
+      // La máscara es blanco (cambiar) sobre negro OPACO → convertir la
+      // luminancia en alpha para teñir de rojo solo lo pintado.
+      const mc = document.createElement("canvas");
+      mc.width = w; mc.height = h;
+      const mctx = mc.getContext("2d")!;
+      mctx.drawImage(m, 0, 0, w, h);
+      const px = mctx.getImageData(0, 0, w, h);
+      for (let i = 0; i < px.data.length; i += 4) {
+        const lum = px.data[i];
+        px.data[i] = 255; px.data[i + 1] = 59; px.data[i + 2] = 92;
+        px.data[i + 3] = Math.round(lum * 0.55);
+      }
+      mctx.putImageData(px, 0, 0);
+      ctx.drawImage(mc, 0, 0);
+      return c.toDataURL("image/jpeg", 0.85);
+    } finally {
+      URL.revokeObjectURL(maskUrl);
+    }
+  }
+
   const refrescarFoto = () => {
     fotoZone.innerHTML = "";
     if (state.foto) {
-      fotoZone.append(el("img", { src: state.foto.url }));
+      const img = el("img", { src: state.foto.url }) as HTMLImageElement;
+      fotoZone.append(img);
       fotoZone.append(el("div", { class: "foto-overlay" }, [t("form.foto.cambiar")]));
       if (engine === "inpaint" && state.mask) {
         fotoZone.append(el("div", { class: "mask-badge" }, [t("form.foto.zona_pintada")]));
+        previewConMascara(state.foto.url, state.mask)
+          .then((data) => { img.src = data; })
+          .catch(() => {}); // si falla, queda la foto sin overlay (no es crítico)
       }
     } else {
       fotoZone.append(

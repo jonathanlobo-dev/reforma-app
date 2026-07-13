@@ -148,11 +148,18 @@ def procesar(tid: str) -> None:
             if video:
                 pipeline._watermark(video)
 
+        # Miniatura liviana (~25 KB) para la grilla de Recientes: sin esto las
+        # cards bajaban la comparación completa (2-5 MB) y en conexiones lentas
+        # tardaban o se veían rotas mientras cargaban.
+        thumb = carpeta / "thumb.jpg"
+        pipeline.miniatura(comp, thumb)
+
         # Subir a storage persistente (Supabase o /media local)
         campos = {
             "antes": storage.subir(antes, tid, antes.name),
             "despues": storage.subir(despues, tid, "despues.png"),
             "comparacion": storage.subir(comp, tid, "comparacion.png"),
+            "thumb": storage.subir(thumb, tid, "thumb.jpg"),
         }
         # limpio: si es premium, despues ya es limpio (reusa su URL, no re-sube)
         campos["limpio"] = campos["despues"] if premium else storage.subir(limpio, tid, "limpio.png")
@@ -195,10 +202,14 @@ def procesar_proceso(tid: str, imagenes_urls: list) -> None:
         pipeline.crossfade_multi(rutas, video)
         # Es una función premium: sin marca de agua.
 
+        thumb = carpeta / "thumb.jpg"
+        pipeline.miniatura(rutas[-1], thumb)
+
         campos = {
             "antes": storage.subir(rutas[0], tid, "antes.png"),
             "despues": storage.subir(rutas[-1], tid, "despues.png"),
             "video": storage.subir(video, tid, "final.mp4"),
+            "thumb": storage.subir(thumb, tid, "thumb.jpg"),
         }
         db.actualizar(tid, status="done", **campos)
     except Exception as e:

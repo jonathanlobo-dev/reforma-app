@@ -65,6 +65,7 @@ _MIGRACIONES = [
     ("trabajos", "proyecto", "TEXT"),
     ("trabajos", "limpio", "TEXT"),  # resultado SIN marca de agua (para encadenar)
     ("trabajos", "lang", "TEXT"),    # idioma del usuario al crear el trabajo (es/en/pt/it)
+    ("trabajos", "thumb", "TEXT"),   # miniatura liviana para la grilla de Recientes
 ]
 
 
@@ -309,6 +310,18 @@ def ocultar(tid: str, device_id: str) -> bool:
                     (tid, device_id))
         con.commit()
         return cur.rowcount > 0
+
+
+def zombis(max_edad_s: int = 900) -> list[dict]:
+    """Trabajos clavados en pending/processing (ej. el server se reinició a
+    mitad de una generación). Devuelve (id, lang) para marcarlos como error
+    con mensaje traducido desde main."""
+    with _con() as con:
+        cur = con.cursor()
+        cur.execute(_q(
+            f"SELECT id, lang FROM trabajos WHERE status IN ('pending','processing') "
+            f"AND actualizado < {PH}"), (time.time() - max_edad_s,))
+        return [dict(f) for f in cur.fetchall()]
 
 
 def admin_usuarios() -> list[dict]:

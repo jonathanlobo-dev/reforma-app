@@ -13,6 +13,7 @@ export type Categorias = Record<string, Categoria>;
 export interface Resultados {
   antes?: string; despues?: string; comparacion?: string; video?: string;
   limpio?: string; // resultado sin marca de agua (para encadenar ediciones)
+  thumb?: string;  // miniatura liviana (~25 KB) para la grilla de Recientes
 }
 export interface Trabajo {
   id: string; status: "pending" | "processing" | "done" | "error";

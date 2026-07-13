@@ -436,6 +436,15 @@ textarea.field { resize: vertical; min-height: 80px; }
 }
 .explorar-nota { color: var(--sub); font-size: 12.5px; line-height: 1.4; }
 
+/* Insignia ▶ en cards de video de Recientes */
+.hist-video-badge {
+  position: absolute; left: 8px; bottom: 8px;
+  width: 26px; height: 26px; border-radius: 999px;
+  background: rgba(0,0,0,.62); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; pointer-events: none;
+}
+
 .mask-tools { display: flex; gap: 8px; }
 .tool-btn {
   flex: 1; padding: 12px 8px; border-radius: 14px;

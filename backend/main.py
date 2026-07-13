@@ -186,8 +186,7 @@ def admin_premium(
     nadie sin la clave puede darse premium — la decisión vive en el servidor.
     Uso: curl -X POST .../admin/premium -H "X-Admin-Key: TU_CLAVE"
              -F device_id=XXXX -F dias=365"""
-    if not config.ADMIN_KEY or x_admin_key != config.ADMIN_KEY:
-        raise HTTPException(403, "No autorizado")
+    _check_admin(x_admin_key)
     # dias <= 0 → revocar premium (expira ya mismo)
     hasta = time.time() + dias * 86400 if dias > 0 else time.time() - 1
     db.activar_premium(device_id, hasta, "admin" if dias > 0 else "revocado")
@@ -196,7 +195,10 @@ def admin_premium(
 
 
 def _check_admin(x_admin_key: str) -> None:
-    if not config.ADMIN_KEY or x_admin_key != config.ADMIN_KEY:
+    # compare_digest: comparación en tiempo constante (evita timing attacks
+    # que adivinan la clave carácter a carácter midiendo latencias).
+    import hmac
+    if not config.ADMIN_KEY or not hmac.compare_digest(x_admin_key, config.ADMIN_KEY):
         raise HTTPException(403, "No autorizado")
 
 

@@ -53,7 +53,13 @@ def groq_json(system: str, user: str, max_tokens: int = 1200) -> dict:
 
 
 # Prompts del producto: viven en prompts_privados.py (no versionado).
-from prompts_privados import ASESOR_SYSTEM, _SYSTEM_PLAN
+# En Render se sube como Secret File y queda montado en /etc/secrets.
+try:
+    from prompts_privados import ASESOR_SYSTEM, _SYSTEM_PLAN
+except ImportError:
+    import sys
+    sys.path.append("/etc/secrets")
+    from prompts_privados import ASESOR_SYSTEM, _SYSTEM_PLAN
 
 
 def groq_chat(mensajes: list, max_tokens: int = 700, model: str = "") -> str:

@@ -9,7 +9,13 @@ visibles al usuario (ES base; EN/PT/IT completos desde la Fase 3).
 from i18n import normalizar_lang
 
 # El catalogo con las guias afinadas vive en prompts_privados.py (no versionado).
-from prompts_privados import CATEGORIAS
+# En Render se sube como Secret File y queda montado en /etc/secrets.
+try:
+    from prompts_privados import CATEGORIAS
+except ImportError:
+    import sys
+    sys.path.append("/etc/secrets")
+    from prompts_privados import CATEGORIAS
 
 
 def resolver(nombre: str) -> dict:

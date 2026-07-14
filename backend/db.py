@@ -29,8 +29,17 @@ else:
     import sqlite3
     PH = "?"
 
+    class _ConCerrable(sqlite3.Connection):
+        """El context manager de sqlite3 hace commit/rollback pero NO cierra la
+        conexión → fuga de file descriptors con el tiempo. Este cierra al salir."""
+        def __exit__(self, *exc):
+            try:
+                super().__exit__(*exc)
+            finally:
+                self.close()
+
     def _con():
-        con = sqlite3.connect(config.DB_PATH, timeout=30)
+        con = sqlite3.connect(config.DB_PATH, timeout=30, factory=_ConCerrable)
         con.row_factory = sqlite3.Row
         return con
 
@@ -220,6 +229,8 @@ def puede_ip(ip: str, col: str) -> bool:
 
 
 def registrar_ip(ip: str, col: str) -> None:
+    if col not in _TOPES_IP:  # whitelist: col se interpola en el SQL
+        raise ValueError(f"columna inválida: {col}")
     if not ip:
         return
     hoy = date.today().isoformat()

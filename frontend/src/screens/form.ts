@@ -45,6 +45,7 @@ const HINT_KEYS: Record<string, string> = {
   pincel: "form.hint.pincel",
   estilo: "form.hint.estilo",
   plano: "form.hint.plano",
+  vaciar: "form.hint.vaciar",
 };
 
 export function pantallaForm(claveCat: string) {

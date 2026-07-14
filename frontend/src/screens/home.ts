@@ -11,15 +11,16 @@ import { t } from "../i18n";
 // Claves internas estables (no traducidas); la etiqueta visible sale de t().
 const SECCIONES: { clave: string; labelKey: string; filtro: string[] | null }[] = [
   { clave: "todos", labelKey: "home.seccion.todos", filtro: null },
-  { clave: "interior", labelKey: "home.seccion.interior", filtro: ["interior", "pintar", "suelo", "paredes", "muebles", "eliminar", "restaurar", "remodelar"] },
+  { clave: "interior", labelKey: "home.seccion.interior", filtro: ["interior", "pintar", "suelo", "paredes", "muebles", "eliminar", "vaciar", "iluminacion", "restaurar", "remodelar"] },
   { clave: "exterior", labelKey: "home.seccion.exterior", filtro: ["exterior", "plano"] },
-  { clave: "herramientas", labelKey: "home.seccion.herramientas", filtro: ["pincel", "estilo", "plano"] },
+  { clave: "herramientas", labelKey: "home.seccion.herramientas", filtro: ["pincel", "estilo", "plano", "vaciar"] },
 ];
 let seccionActiva = "todos";
 
 // Orden de las cards en la home (las estrella primero)
 const ORDEN = ["interior", "pincel", "estilo", "remodelar", "pintar", "suelo",
-               "paredes", "muebles", "eliminar", "restaurar", "exterior", "plano"];
+               "paredes", "muebles", "eliminar", "vaciar", "iluminacion",
+               "restaurar", "exterior", "plano"];
 
 // Portadas antes|después por categoría (pares generados en /covers con
 // tools/gen_assets.py: <cat>_a.webp = antes, <cat>_d.webp = después).

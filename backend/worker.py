@@ -60,6 +60,17 @@ _PROMPT_PLANO = (
     "visualization quality."
 )
 
+# "Vaciar habitación" (virtual staging inverso, B2B inmobiliaria): quita TODO
+# el mobiliario y desorden dejando el espacio vacío y limpio. Prompt fijo.
+_PROMPT_VACIAR = (
+    "Remove ALL furniture, appliances, decorations, boxes, clutter and loose "
+    "objects from this room, leaving it completely EMPTY. Realistically "
+    "reconstruct the walls, floor and ceiling behind the removed items, keeping "
+    "their current materials, colors and condition. Do not change the "
+    "architecture: same walls, windows, doors, ceiling, floor and camera angle. "
+    "The result is the same room, just completely empty and clean."
+)
+
 # "Explorar habitaciones": recorte de una habitación del render isométrico →
 # vista interior fotorrealista a nivel de ojos. Prompt fijo, sin Groq.
 _PROMPT_EXPLORAR = (
@@ -101,6 +112,9 @@ def procesar(tid: str) -> None:
 
         elif engine == "explorar":
             url_antes, url_despues = pipeline.editar(antes, _PROMPT_EXPLORAR, despues)
+
+        elif engine == "vaciar":
+            url_antes, url_despues = pipeline.editar(antes, _PROMPT_VACIAR, despues)
 
         else:
             # editar | inpaint → texto libre del usuario → Groq (plan + FILTRO

@@ -10,7 +10,20 @@ import { pantallaForm } from "./form";
 import { t } from "../i18n";
 
 const historia: MensajeChat[] = [];
+// Miniaturas de fotos adjuntas, paralelo a `historia` (solo para pintar burbujas)
+const historiaImg: (string | undefined)[] = [];
 let contextoActual: string | undefined;
+
+// Reduce la foto a máx 1024px JPEG (el backend acepta data URLs de hasta ~1 MB)
+async function fotoADataUrl(blob: Blob): Promise<string> {
+  const img = await createImageBitmap(blob);
+  const esc = Math.min(1, 1024 / Math.max(img.width, img.height));
+  const c = document.createElement("canvas");
+  c.width = Math.round(img.width * esc);
+  c.height = Math.round(img.height * esc);
+  c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
+  return c.toDataURL("image/jpeg", 0.8);
+}
 
 // ─── Formato defensivo: el prompt pide texto plano, pero si el modelo emite
 // markdown igual, lo convertimos a algo legible en vez de mostrar ** y ``` ───
@@ -41,8 +54,13 @@ export function pantallaAsesor(contexto?: string) {
 
   const hilo = el("div", { class: "chat-hilo" });
 
-  function burbuja(m: MensajeChat) {
-    if (m.role === "user") return el("div", { class: "chat-msg yo" }, [m.content]);
+  function burbuja(m: MensajeChat, img?: string) {
+    if (m.role === "user") {
+      const hijos: (Node | string)[] = [];
+      if (img) hijos.push(el("img", { class: "chat-foto", src: img }));
+      hijos.push(m.content);
+      return el("div", { class: "chat-msg yo" }, hijos);
+    }
     return el("div", { class: "chat-msg bot", html: formatearBot(m.content) });
   }
 
@@ -62,7 +80,7 @@ export function pantallaAsesor(contexto?: string) {
     if (contextoActual) {
       hilo.append(el("div", { class: "chat-ctx" }, [t("asesor.sobre_transformacion", { c: contextoActual })]));
     }
-    for (const m of historia) hilo.append(burbuja(m));
+    historia.forEach((m, i) => hilo.append(burbuja(m, historiaImg[i])));
     // Tras una respuesta del Maestro, ofrecer llevar la idea al generador
     const ultimoUser = [...historia].reverse().find((m) => m.role === "user");
     if (historia.length && historia[historia.length - 1].role === "assistant" && ultimoUser) {
@@ -86,6 +104,35 @@ export function pantallaAsesor(contexto?: string) {
   const btnEnviar = el("button", { class: "chat-enviar", onClick: () => mandar(input.value) },
     [icon("send", 18)]) as HTMLButtonElement;
 
+  // Foto adjunta pendiente (ej. una grieta): viaja con el próximo mensaje y
+  // el backend usa el modelo de VISIÓN para diagnosticarla.
+  let fotoPendiente: string | undefined;
+  const chipFoto = el("div", { class: "chat-foto-chip", style: "display:none" });
+  function pintarChipFoto() {
+    chipFoto.style.display = fotoPendiente ? "" : "none";
+    chipFoto.innerHTML = "";
+    if (fotoPendiente) {
+      chipFoto.append(
+        el("img", { src: fotoPendiente }),
+        el("span", {}, [t("asesor.foto_lista")]),
+        el("button", { class: "chat-foto-x", "aria-label": t("asesor.quitar_foto"),
+          onClick: () => { fotoPendiente = undefined; pintarChipFoto(); } }, ["✕"]),
+      );
+    }
+  }
+  const btnFoto = el("button", {
+    class: "chat-enviar sec", "aria-label": t("asesor.adjuntar_foto"),
+    onClick: async () => {
+      try {
+        const { elegirFoto } = await import("../foto");
+        const f = await elegirFoto();
+        if (!f) return;
+        fotoPendiente = await fotoADataUrl(f.blob);
+        pintarChipFoto();
+      } catch { toast(t("asesor.toast_error_foto")); }
+    },
+  }, [icon("camera", 18)]) as HTMLButtonElement;
+
   let ocupado = false;
   async function mandar(texto: string) {
     texto = texto.trim();
@@ -93,7 +140,11 @@ export function pantallaAsesor(contexto?: string) {
     ocupado = true;
     btnEnviar.disabled = true;
     input.value = "";
+    const fotoDeEste = fotoPendiente;
+    fotoPendiente = undefined;
+    pintarChipFoto();
     historia.push({ role: "user", content: texto });
+    historiaImg[historia.length - 1] = fotoDeEste;
     pintarHilo();
     const escribiendo = el("div", { class: "chat-msg bot escribiendo" }, [t("asesor.escribiendo", { nombre: t("asesor.nombre") })]);
     hilo.append(escribiendo);
@@ -102,9 +153,12 @@ export function pantallaAsesor(contexto?: string) {
       const deviceId = await getDeviceId();
       // Solo los últimos 12 turnos viajan por red (el backend recorta igual);
       // y el historial en memoria se acota para sesiones largas.
-      const resp = await enviarAsesor(deviceId, historia.slice(-12), contextoActual);
+      const resp = await enviarAsesor(deviceId, historia.slice(-12), contextoActual, fotoDeEste);
       historia.push({ role: "assistant", content: resp });
-      if (historia.length > 60) historia.splice(0, historia.length - 60);
+      if (historia.length > 60) {
+        historia.splice(0, historia.length - 60);
+        historiaImg.splice(0, historiaImg.length - 60);
+      }
     } catch (e) {
       historia.pop(); // no contar el mensaje fallido
       toast((e as Error).message);
@@ -124,7 +178,8 @@ export function pantallaAsesor(contexto?: string) {
         ]),
       ]),
       hilo,
-      el("div", { class: "chat-barra" }, [input, btnEnviar]),
+      chipFoto,
+      el("div", { class: "chat-barra" }, [btnFoto, input, btnEnviar]),
     ])
   );
   pintarHilo();

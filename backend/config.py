@@ -35,6 +35,9 @@ USA_SUPABASE = bool(SUPABASE_URL and SUPABASE_SERVICE_KEY)
 
 # ─── Modelos (validados en shorts-pipeline) ──────────────────────────────────
 GROQ_MODEL   = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+# Modelo multimodal para el asesor cuando el usuario adjunta una foto
+# (grieta, humedad, tubería). Llama 4 Scout en Groq: rápido y con visión.
+GROQ_VISION_MODEL = os.getenv("GROQ_VISION_MODEL", "meta-llama/llama-4-scout-17b-16e-instruct")
 EDIT_MODEL   = os.getenv("EDIT_MODEL", "black-forest-labs/flux-kontext-pro")  # edita preservando
 VIDEO_MODEL  = os.getenv("VIDEO_MODEL", "bytedance/seedance-1.5-pro")         # anima (last_frame)
 INPAINT_MODEL = os.getenv("INPAINT_MODEL", "black-forest-labs/flux-fill-pro")  # pincel/máscara

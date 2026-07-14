@@ -83,6 +83,14 @@ const MOCK_CATEGORIAS: Categorias = {
     titulo: "Plano 2D → 3D", emoji: "📐", tipo_default: "imagen", engine: "plano",
     campos: [],
   },
+  vaciar: {
+    titulo: "Vaciar habitación", emoji: "📦", tipo_default: "imagen", engine: "vaciar",
+    campos: [],
+  },
+  iluminacion: {
+    titulo: "Iluminación / ambiente", emoji: "💡", tipo_default: "imagen", engine: "editar",
+    campos: [{ clave: "ambiente", label: "Ambiente deseado", ejemplo: "atardecer dorado" }],
+  },
   explorar: {
     titulo: "Explorar habitación", emoji: "🚪", tipo_default: "imagen", engine: "explorar",
     campos: [], oculta: true,
@@ -239,7 +247,7 @@ export async function votarTrabajo(id: string, voto: 1 | -1): Promise<void> {
 export interface MensajeChat { role: "user" | "assistant"; content: string; }
 
 export async function enviarAsesor(
-  deviceId: string, mensajes: MensajeChat[], contexto?: string
+  deviceId: string, mensajes: MensajeChat[], contexto?: string, imagen?: string
 ): Promise<string> {
   if (MOCK) {
     await new Promise((r) => setTimeout(r, 900));
@@ -251,7 +259,8 @@ export async function enviarAsesor(
   const r = await fetchApi(`${API_BASE}/asesor`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ device_id: deviceId, mensajes, contexto: contexto || null, lang: idioma() }),
+    body: JSON.stringify({ device_id: deviceId, mensajes, contexto: contexto || null,
+                           lang: idioma(), imagen: imagen || null }),
   });
   if (r.status === 429) {
     const j = await r.json().catch(() => ({ detail: t("asesor.toast_limite") }));

@@ -62,3 +62,11 @@ Todo configurable por env en `config.py`.
 - **Cola real** (Redis/RQ) en vez de BackgroundTasks para escalar.
 - **Storage** en S3/R2 en vez de disco local (en Render free el disco es efímero).
 - **Pagos** para el tier premium (video) — mecanismo LATAM por definir.
+
+## 🔒 Prompts del producto
+
+Los prompts afinados del planificador/asesor y el catálogo completo de categorías
+viven en `backend/prompts_privados.py`, que **no se versiona**. Para ejecutar el
+backend copia `backend/prompts_privados.example.py` como `prompts_privados.py`
+(en Render: súbelo como *Secret File*). La plantilla trae versiones genéricas
+funcionales con 2 categorías de muestra.

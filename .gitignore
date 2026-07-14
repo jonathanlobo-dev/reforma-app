@@ -27,3 +27,6 @@ photo_*.jpg
 video_*.mp4
 tools/_*
 patio.jpg
+
+# Prompts del producto y catalogo afinado (privado — ver prompts_privados.example.py)
+backend/prompts_privados.py

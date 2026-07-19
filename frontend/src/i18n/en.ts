@@ -388,4 +388,17 @@ export const en: Record<string, string> = {
   "notif.titulo": "RenuevAI",
   "notif.video_listo": "Your transformation video is ready 🎬",
   "notif.imagen_lista": "Your transformation is ready ✨",
+
+  // ─── Onboarding ───
+  "onb.saltar": "Skip",
+  "onb.siguiente": "Next",
+  "onb.empezar": "Let's go!",
+  "onb.1.titulo": "Transform your space with AI",
+  "onb.1.texto": "Take a photo of your home, choose what to change and see the result in seconds — no construction, no spending.",
+  "onb.2.titulo": "A mode for every idea",
+  "onb.2.texto": "Paint walls, change furniture, remove objects, empty rooms, copy styles from another photo or touch up exact areas with the brush.",
+  "onb.3.titulo": "From 2D floor plan to 3D render",
+  "onb.3.texto": "Upload a photo of a floor plan and we turn it into a furnished 3D render. Then tap a room to see it from inside.",
+  "onb.4.titulo": "Videos of your transformation",
+  "onb.4.texto": "Turn your before & after into a shareable video, or chain several edits and generate the full process video.",
 };

@@ -14,6 +14,7 @@ import { getTrabajo } from "./api";
 import { pantallaResult } from "./screens/result";
 import { pantallaPaywall } from "./screens/paywall";
 import { initIdioma, t } from "./i18n";
+import { onboardingPendiente, pantallaOnboarding } from "./screens/onboarding";
 
 (window as any).__reforma = { state, pantallaHome };
 
@@ -71,7 +72,11 @@ async function start() {
     // Al abrir: los usuarios gratis ven el paywall en 1 de cada 3 aperturas
     // (no en todas, para no molestar). Al cerrarlo (X) se muestra un anuncio y
     // pasa a Inicio. Premium entra directo a Inicio, siempre.
-    if (!state.premium && tocaPaywallApertura()) {
+    // Primera apertura: tutorial de tarjetas (una sola vez). Ese arranque no
+    // muestra paywall de apertura — la primera impresión es el tutorial.
+    if (onboardingPendiente()) {
+      raiz(() => pantallaOnboarding(() => raiz(pantallaHome)));
+    } else if (!state.premium && tocaPaywallApertura()) {
       raiz(() => pantallaPaywall({
         alCerrar: () => { raiz(pantallaHome); mostrarIntersticial(); },
       }));

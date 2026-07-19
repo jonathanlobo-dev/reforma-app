@@ -754,6 +754,23 @@ textarea.field { resize: vertical; min-height: 80px; }
 }
 .estilo-card-emoji { font-size: 26px; }
 
+/* ─── Onboarding (tarjetas de primera apertura) ───────────── */
+.onb-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 14px; padding: 24px 20px; min-height: 100dvh; }
+.onb-saltar { position: absolute; top: 18px; right: 18px; background: none; border: 0; color: var(--sub); font-size: 13.5px; cursor: pointer; padding: 8px; }
+.onb-media { width: 100%; max-width: 340px; }
+.onb-img { width: 100%; aspect-ratio: 4/5; object-fit: cover; border-radius: 22px; }
+.onb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.onb-grid img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 16px; }
+.onb-split { display: flex; align-items: center; gap: 8px; }
+.onb-split img { flex: 1; min-width: 0; aspect-ratio: 3/4; object-fit: cover; border-radius: 16px; }
+.onb-flecha { font-size: 22px; color: var(--acento); flex: none; }
+.onb-titulo { font-size: 21px; margin-top: 4px; }
+.onb-texto { color: var(--sub); font-size: 14.5px; line-height: 1.5; max-width: 320px; }
+.onb-dots { display: flex; gap: 7px; margin: 4px 0; }
+.onb-dot { width: 8px; height: 8px; border-radius: 99px; background: var(--borde); transition: background .15s; }
+.onb-dot.sel { background: var(--acento); }
+.onb-btn { width: 100%; max-width: 340px; }
+
 /* Foto adjunta en el chat del Maestro */
 .chat-foto { display: block; max-width: 160px; border-radius: 12px; margin-bottom: 6px; }
 .chat-foto-chip {

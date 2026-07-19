@@ -388,4 +388,17 @@ export const it: Record<string, string> = {
   "api.error_consultar_trabajo": "Impossibile verificare lo stato del lavoro",
   "api.proceso_premium": "Il video del processo è una funzione Premium.",
   "api.error_montar_video": "Impossibile montare il video.",
+
+  // ─── Onboarding ───
+  "onb.saltar": "Salta",
+  "onb.siguiente": "Avanti",
+  "onb.empezar": "Inizia!",
+  "onb.1.titulo": "Trasforma il tuo spazio con l'IA",
+  "onb.1.texto": "Scatta una foto di casa tua, scegli cosa cambiare e vedi il risultato in pochi secondi — senza lavori, senza spese.",
+  "onb.2.titulo": "Una modalità per ogni idea",
+  "onb.2.texto": "Dipingi pareti, cambia mobili, rimuovi oggetti, svuota stanze, copia stili da un'altra foto o ritocca aree esatte col pennello.",
+  "onb.3.titulo": "Dalla planimetria 2D al render 3D",
+  "onb.3.texto": "Carica la foto di una planimetria e la trasformiamo in un render 3D arredato. Poi tocca una stanza per vederla dall'interno.",
+  "onb.4.titulo": "Video della tua trasformazione",
+  "onb.4.texto": "Trasforma il tuo prima e dopo in un video da condividere, o concatena più modifiche e genera il video dell'intero processo.",
 };

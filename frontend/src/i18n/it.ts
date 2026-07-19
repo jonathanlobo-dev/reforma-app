@@ -90,6 +90,8 @@ export const it: Record<string, string> = {
   "ctrl.acabado_label": "Finitura",
   "ctrl.color_elegir": "Scegli un colore",
 
+  "estilo.ninguno": "Nessuno stile",
+  "estilo.personalizado": "Personalizzato",
   "estilo.moderno": "Moderno",
   "estilo.minimalista": "Minimalista",
   "estilo.escandinavo": "Scandinavo",

@@ -317,18 +317,26 @@ function buildControles(clave: string, engine: string): { node: HTMLElement; get
       const hab = dropdown("ctrl.habitacion_label", HABITACIONES, "sala");
       const intens = dropdown("ctrl.intensidad_label", INTENSIDADES, "media");
       const extra = campoExtra();
+      // "ninguno"/"personalizado": no se impone ningún estilo del catálogo —
+      // manda solo lo que el usuario escribió en el campo de texto.
+      const fraseEstilo = () =>
+        ["ninguno", "personalizado"].includes(estilo.getSlug())
+          ? "" : `${t("ctrl.estilo_label")}: ${estilo.getValue()}. `;
       return {
         node: el("div", { class: "ctrl-stack" }, [estilo.node, hab.node, intens.node, extra.node]),
-        getDetalle: () => `${t("ctrl.estilo_label")}: ${estilo.getValue()}. ${t("ctrl.habitacion_label")}: ${hab.getValue()}. ${t("ctrl.intensidad_label")}: ${intens.getValue()}.${extra.getValue()}`,
+        getDetalle: () => `${fraseEstilo()}${t("ctrl.habitacion_label")}: ${hab.getValue()}. ${t("ctrl.intensidad_label")}: ${intens.getValue()}.${extra.getValue()}`,
       };
     }
     case "exterior": {
       const estilo = estiloCarrusel("contemporaneo");
       const intens = dropdown("ctrl.intensidad_label", INTENSIDADES, "media");
       const extra = campoExtra();
+      const fraseEstilo = () =>
+        ["ninguno", "personalizado"].includes(estilo.getSlug())
+          ? "" : `${t("ctrl.estilo_label")}: ${estilo.getValue()}. `;
       return {
         node: el("div", { class: "ctrl-stack" }, [estilo.node, intens.node, extra.node]),
-        getDetalle: () => `${t("ctrl.estilo_label")}: ${estilo.getValue()}. ${t("ctrl.intensidad_label")}: ${intens.getValue()}.${extra.getValue()}`,
+        getDetalle: () => `${fraseEstilo()}${t("ctrl.intensidad_label")}: ${intens.getValue()}.${extra.getValue()}`,
       };
     }
     case "suelo": {

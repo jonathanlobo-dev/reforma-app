@@ -747,6 +747,13 @@ textarea.field { resize: vertical; min-height: 80px; }
 .chat-enviar:disabled { opacity: .5; }
 .chat-enviar.sec { background: var(--surface2); color: var(--sub); border: 1px solid var(--borde); }
 
+/* Cards especiales del carrusel de estilos (sin foto: Sin estilo / Personalizado) */
+.estilo-card.especial {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: var(--surface2); gap: 6px;
+}
+.estilo-card-emoji { font-size: 26px; }
+
 /* Foto adjunta en el chat del Maestro */
 .chat-foto { display: block; max-width: 160px; border-radius: 12px; margin-bottom: 6px; }
 .chat-foto-chip {

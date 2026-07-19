@@ -11,6 +11,15 @@ const ESTILOS = [
   "contemporaneo", "rustico", "clasico", "tradicional",
 ];
 
+// Opciones especiales SIN foto: "ninguno" (no imponer ningún estilo — solo
+// aplicar lo que el usuario pida en el campo de texto) y "personalizado"
+// (el estilo lo describe el usuario con sus palabras). getSlug() permite al
+// form omitir la frase "Estilo: X." cuando no corresponde.
+const ESTILOS_ESPECIALES = [
+  { slug: "ninguno", emoji: "🚫" },
+  { slug: "personalizado", emoji: "✏️" },
+];
+
 export function estiloCarrusel(inicialSlug = "moderno") {
   let sel = inicialSlug;
   let cards: HTMLElement[] = [];
@@ -21,19 +30,34 @@ export function estiloCarrusel(inicialSlug = "moderno") {
     cards.forEach((c) => c.classList.toggle("sel", c.dataset.val === sel));
   }
 
-  cards = ESTILOS.map((slug) => {
-    const card = el("button", {
-      class: "estilo-card",
-      "data-val": slug,
-      onClick: () => { sel = slug; actualizar(); },
-    }, [
-      el("img", { class: "estilo-card-img", src: `/estilos/${slug}.webp`, loading: "lazy", alt: t(`estilo.${slug}`) }),
-      el("span", { class: "estilo-card-nombre" }, [t(`estilo.${slug}`)]),
-      el("span", { class: "estilo-card-check" }, ["✓"]),
-    ]);
-    row.append(card);
-    return card;
-  });
+  cards = [
+    ...ESTILOS_ESPECIALES.map(({ slug, emoji }) => {
+      const card = el("button", {
+        class: "estilo-card especial",
+        "data-val": slug,
+        onClick: () => { sel = slug; actualizar(); },
+      }, [
+        el("span", { class: "estilo-card-emoji" }, [emoji]),
+        el("span", { class: "estilo-card-nombre" }, [t(`estilo.${slug}`)]),
+        el("span", { class: "estilo-card-check" }, ["✓"]),
+      ]);
+      row.append(card);
+      return card;
+    }),
+    ...ESTILOS.map((slug) => {
+      const card = el("button", {
+        class: "estilo-card",
+        "data-val": slug,
+        onClick: () => { sel = slug; actualizar(); },
+      }, [
+        el("img", { class: "estilo-card-img", src: `/estilos/${slug}.webp`, loading: "lazy", alt: t(`estilo.${slug}`) }),
+        el("span", { class: "estilo-card-nombre" }, [t(`estilo.${slug}`)]),
+        el("span", { class: "estilo-card-check" }, ["✓"]),
+      ]);
+      row.append(card);
+      return card;
+    }),
+  ];
 
   actualizar();
   return {
@@ -42,6 +66,7 @@ export function estiloCarrusel(inicialSlug = "moderno") {
       row,
     ]),
     getValue: () => t(`estilo.${sel}`),
+    getSlug: () => sel,
   };
 }
 

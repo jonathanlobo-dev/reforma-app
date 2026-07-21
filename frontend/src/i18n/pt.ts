@@ -130,6 +130,8 @@ export const pt: Record<string, string> = {
   "habitacion.bano": "Banheiro",
   "habitacion.comedor": "Sala de jantar",
   "habitacion.exterior": "Exterior",
+  "habitacion.local": "Loja / comércio",
+  "habitacion.oficina": "Escritório",
 
   "intensidad.sutil": "Sutil",
   "intensidad.media": "Média",

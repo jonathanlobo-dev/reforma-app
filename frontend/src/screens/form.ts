@@ -16,6 +16,11 @@ const HABITACIONES: OpcionDropdown[] = [
   { slug: "bano", labelKey: "habitacion.bano" },
   { slug: "comedor", labelKey: "habitacion.comedor" },
   { slug: "exterior", labelKey: "habitacion.exterior" },
+  // Espacios comerciales: un local vacío que se convierte en tienda/bodegón es
+  // un caso de uso real, y sin esta opción el desplegable obligaba a decir
+  // "sala de estar", que contradecía la petición.
+  { slug: "local", labelKey: "habitacion.local" },
+  { slug: "oficina", labelKey: "habitacion.oficina" },
 ];
 const INTENSIDADES: OpcionDropdown[] = [
   { slug: "sutil", labelKey: "intensidad.sutil" },

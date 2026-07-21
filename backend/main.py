@@ -56,6 +56,19 @@ def health():
     return {"ok": True, "version": os.getenv("RENDER_GIT_COMMIT", "dev")[:7]}
 
 
+@app.get("/config")
+def app_config():
+    """Configuración remota que la app lee al arrancar. Permite cambiar el
+    comportamiento (paywall, video, ads) desde Render sin recompilar el APK.
+    Ver config.APP_MODE."""
+    return {
+        "mode": config.APP_MODE,
+        "paywall": config.PAYWALL_ON,   # ¿mostrar el paywall bloqueante?
+        "video": config.VIDEO_ON,       # ¿habilitar generación de video?
+        "ads": config.ADS_ON,           # ¿mostrar anuncios?
+    }
+
+
 @app.get("/privacidad")
 @app.get("/privacy")
 def privacidad():
@@ -114,6 +127,11 @@ async def crear_trabajo(
     tipo = tipo or cat["tipo_default"]
     if tipo not in ("imagen", "video"):
         raise HTTPException(400, "tipo debe ser 'imagen' o 'video'")
+    # Video apagado (fase test): se bloquea en el servidor, no solo en la UI —
+    # el APK es falsificable, un tester con curl podría pedir video igual y
+    # gastarnos crédito de Replicate. El dueño (admin) siempre puede probar.
+    if tipo == "video" and not config.VIDEO_ON and device_id not in config.ADMIN_DEVICES:
+        raise HTTPException(403, "La generación de video no está disponible por ahora.")
     if foto.content_type not in EXT_OK:
         raise HTTPException(400, "La foto debe ser JPG, PNG o WEBP")
     if engine == "inpaint" and not mask:
@@ -156,6 +174,8 @@ def crear_proceso(
     """Video del PROCESO (premium): foto original → cada edición → final,
     con fundidos. Solo ffmpeg, sin costo de Replicate, por eso no consume
     la cuota de videos."""
+    if not config.VIDEO_ON and device_id not in config.ADMIN_DEVICES:
+        raise HTTPException(403, "La generación de video no está disponible por ahora.")
     if not db.es_premium(device_id):
         raise HTTPException(402, "El video del proceso es una función Premium.")
     ids = [t.strip() for t in trabajo_ids.split(",") if t.strip()][:8]

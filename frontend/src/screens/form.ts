@@ -192,7 +192,9 @@ export function pantallaForm(claveCat: string) {
   const controles = buildControles(claveCat, engine);
 
   // ── Toggle imagen/video (solo engines que animan) ─────────────────────────
-  const permiteVideo = engine === "editar" || engine === "inpaint";
+  // El flag remoto (fase test) puede apagar el video para todos; el backend
+  // igual lo rechaza server-side (config.VIDEO_ON) por si acaso.
+  const permiteVideo = state.config.video && (engine === "editar" || engine === "inpaint");
   const toggleNode = permiteVideo
     ? el("div", { class: "toggle" }, [
         el("button", {

@@ -201,7 +201,7 @@ export async function pantallaResult(t: Trabajo) {
 
   // Video del PROCESO (premium): original → cada edición → resultado final.
   // Disponible cuando hay al menos 2 ediciones encadenadas de la misma foto.
-  const puedeProceso = t.tipo === "imagen" && state.cadena.length >= 2;
+  const puedeProceso = state.config.video && t.tipo === "imagen" && state.cadena.length >= 2;
   const videoProceso = async () => {
     if (!state.premium) {
       toast(tr("result.toast.proceso_premium"));

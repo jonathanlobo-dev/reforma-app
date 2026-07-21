@@ -8,6 +8,7 @@ const MIN_MS = 45_000;
 let ultimoAd = 0;
 
 export async function mostrarIntersticial(): Promise<void> {
+  if (!state.config.ads) return;                   // ads apagados (fase test)
   if (state.premium) return;                       // premium no ve anuncios
   if (Date.now() - ultimoAd < MIN_MS) return;      // tope de frecuencia
   ultimoAd = Date.now();

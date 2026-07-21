@@ -1,5 +1,5 @@
 import "./styles.css";
-import { getCategorias, getPremium } from "./api";
+import { getCategorias, getConfigRemota, getPremium } from "./api";
 import { getDeviceId } from "./device";
 import { state } from "./state";
 import { pantallaHome } from "./screens/home";
@@ -54,7 +54,6 @@ async function start() {
     ])
   );
   setNavVisible(false);
-  initAds();
   initBack();
   wireNav();
   // Tocar la notificación "está lista" abre el resultado
@@ -66,7 +65,11 @@ async function start() {
   });
 
   try {
-    state.categorias = await getCategorias();
+    // Config remota + categorías en paralelo (una sola espera de red)
+    const [cfg, cats] = await Promise.all([getConfigRemota(), getCategorias()]);
+    state.config = cfg;
+    state.categorias = cats;
+    if (cfg.ads) initAds(); // AdMob solo se inicializa si los ads están activos
     // Estado premium (no bloquea el arranque si falla)
     try { state.premium = (await getPremium(await getDeviceId())).premium; } catch { /* free */ }
     // Al abrir: los usuarios gratis ven el paywall en 1 de cada 3 aperturas
@@ -76,7 +79,7 @@ async function start() {
     // muestra paywall de apertura — la primera impresión es el tutorial.
     if (onboardingPendiente()) {
       raiz(() => pantallaOnboarding(() => raiz(pantallaHome)));
-    } else if (!state.premium && tocaPaywallApertura()) {
+    } else if (state.config.paywall && !state.premium && tocaPaywallApertura()) {
       raiz(() => pantallaPaywall({
         alCerrar: () => { raiz(pantallaHome); mostrarIntersticial(); },
       }));

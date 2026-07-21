@@ -46,6 +46,29 @@ STYLE_MODEL   = os.getenv("STYLE_MODEL", "black-forest-labs/flux-2-pro")       #
 CLIP_SECONDS = int(os.getenv("CLIP_SECONDS", "5"))
 RESOLUTION   = os.getenv("RESOLUTION", "720p")
 
+# ─── Modo de la app (flag remoto, se cambia en Render sin recompilar el APK) ──
+#   "test" → fase de pruebas (testers VE sin tarjeta): sin paywall, sin video,
+#            solo imágenes con cuota baja.
+#   "soft" → lanzamiento suave: sin paywall bloqueante, con video, cuota media.
+#   "prod" → producción: paywall obligatorio (RevenueCat), video por créditos.
+# La app lee GET /config al arrancar y se comporta según esto.
+APP_MODE = os.getenv("APP_MODE", "test")
+
+# Overrides individuales (si están vacíos, se derivan de APP_MODE). Permiten
+# ajustar una sola palanca en Render sin cambiar de modo. Valores: "1"/"0".
+def _flag(nombre: str, defecto: bool) -> bool:
+    v = os.getenv(nombre, "").strip()
+    if v == "":
+        return defecto
+    return v not in ("0", "false", "False", "no")
+
+# ¿Mostrar el paywall bloqueante al abrir? Solo en prod por defecto.
+PAYWALL_ON = _flag("PAYWALL_ON", APP_MODE == "prod")
+# ¿Habilitar generación de video? Apagado en test (cada video ~$0.25).
+VIDEO_ON   = _flag("VIDEO_ON", APP_MODE != "test")
+# ¿Mostrar anuncios? En test se apagan para no molestar a los testers.
+ADS_ON     = _flag("ADS_ON", APP_MODE != "test")
+
 # ─── Control de costos (lección CatchCat: topes ANTES de llamar a Replicate) ─
 # Por dispositivo y por día. El video es caro → tope bajo (premium).
 IMAGENES_GRATIS_DIA = int(os.getenv("IMAGENES_GRATIS_DIA", "3"))

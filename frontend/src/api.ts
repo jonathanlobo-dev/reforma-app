@@ -215,6 +215,24 @@ export async function crearProceso(
   return r.json();
 }
 
+// ─── Config remota (GET /config) ─────────────────────────────────────────────
+// El backend decide el comportamiento (paywall/video/ads) según APP_MODE en
+// Render. Si la petición falla, defaults conservadores: sin paywall (no
+// bloquear a nadie por un fallo de red) y sin video (no gastar).
+export interface ConfigRemota { mode: string; paywall: boolean; video: boolean; ads: boolean; }
+
+export async function getConfigRemota(): Promise<ConfigRemota> {
+  const defecto: ConfigRemota = { mode: "test", paywall: false, video: false, ads: false };
+  if (MOCK) return { ...defecto, video: true };
+  try {
+    const r = await fetchApi(`${API_BASE}/config`);
+    if (!r.ok) return defecto;
+    return { ...defecto, ...(await r.json()) };
+  } catch {
+    return defecto;
+  }
+}
+
 export interface EstadoPremium { premium: boolean; hasta?: number | null; plan?: string | null; }
 
 export async function getPremium(deviceId: string): Promise<EstadoPremium> {

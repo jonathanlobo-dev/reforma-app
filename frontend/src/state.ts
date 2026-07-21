@@ -1,5 +1,5 @@
 // Estado compartido mínimo entre pantallas.
-import type { Categoria } from "./api";
+import type { Categoria, ConfigRemota } from "./api";
 
 export interface AppState {
   categorias: Record<string, Categoria>;
@@ -10,9 +10,15 @@ export interface AppState {
   prefillExtra?: string;                    // idea que viene del chat del Maestro
   premium?: boolean;                        // suscripción activa
   cadena: string[];                         // ids de la cadena de ediciones (misma foto)
+  config: ConfigRemota;                     // flags remotos (GET /config al arrancar)
 }
 
-export const state: AppState = { categorias: {}, cadena: [] };
+export const state: AppState = {
+  categorias: {},
+  cadena: [],
+  // Defaults conservadores hasta que /config responda: sin paywall, sin video.
+  config: { mode: "test", paywall: false, video: false, ads: false },
+};
 
 // Reemplazan la foto/referencia liberando el blob URL anterior (las fotos de
 // cámara pesan varios MB y sin revoke quedan retenidas toda la sesión).

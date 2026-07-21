@@ -25,6 +25,16 @@ export function reemplazar(p: Pantalla) {
   p();
 }
 
+/** Navega a `p` colapsando el historial a la raíz (queda [raíz, p]).
+ *  Para cadenas de edición (seguir editando / retocar): sin esto, cada ciclo
+ *  form→resultado se apila y el botón atrás repite toda la historia de la
+ *  cadena en vez de volver a Inicio. */
+export function desdeRaiz(p: Pantalla) {
+  stack.length = Math.min(stack.length, 1);
+  stack.push(p);
+  p();
+}
+
 /** Vuelve atrás; en la raíz pide doble toque para salir. */
 export function atras() {
   if (stack.length > 1) {

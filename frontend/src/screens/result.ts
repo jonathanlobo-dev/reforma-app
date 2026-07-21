@@ -1,7 +1,7 @@
 import { el, render, toast } from "../ui";
 import { resolverMedia, votarTrabajo, crearProceso, type Trabajo } from "../api";
 import { mostrarIntersticial } from "../ads";
-import { raiz, irA, setNavVisible } from "../nav";
+import { raiz, irA, desdeRaiz, setNavVisible } from "../nav";
 import { pantallaHome } from "./home";
 import { pantallaForm } from "./form";
 import { pantallaAsesor } from "./asesor";
@@ -164,7 +164,7 @@ export async function pantallaResult(t: Trabajo) {
       setFoto({ blob, url: URL.createObjectURL(blob) });
       state.mask = undefined;
       if (t.categoria && state.categorias[t.categoria]) {
-        irA(() => pantallaForm(t.categoria));
+        desdeRaiz(() => pantallaForm(t.categoria));
       } else {
         raiz(pantallaHome);
         toast(tr("result.toast.elige_modo"));
@@ -184,7 +184,7 @@ export async function pantallaResult(t: Trabajo) {
       const blob = await (await fetch(src)).blob();
       setFoto({ blob, url: URL.createObjectURL(blob) });
       state.mask = undefined;
-      irA(() => pantallaForm("pincel"));
+      desdeRaiz(() => pantallaForm("pincel"));
     } catch {
       toast(tr("result.toast.error_editar"));
     }

@@ -47,34 +47,44 @@ CLIP_SECONDS = int(os.getenv("CLIP_SECONDS", "5"))
 RESOLUTION   = os.getenv("RESOLUTION", "720p")
 
 # ─── Modo de la app (flag remoto, se cambia en Render sin recompilar el APK) ──
-#   "test" → fase de pruebas (testers VE sin tarjeta): sin paywall, sin video,
-#            solo imágenes con cuota baja.
-#   "soft" → lanzamiento suave: sin paywall bloqueante, con video, cuota media.
-#   "prod" → producción: paywall obligatorio (RevenueCat), video por créditos.
+#   "test" → pruebas con el círculo cercano (testers VE sin tarjeta). El paywall
+#            SE VE pero se cierra con la X: sirve para medir interés sin bloquear
+#            a quien no puede pagar. Gratis: 3 imágenes y 1 video al día.
+#   "prod" → producción. El paywall BLOQUEA: sin suscripción no se genera nada.
+#            Al suscribirse arranca la prueba de 3 días (2 imágenes/día, con ads
+#            y sin video); después, el plan pagado por créditos.
 # La app lee GET /config al arrancar y se comporta según esto.
 APP_MODE = os.getenv("APP_MODE", "test")
 
 # Overrides individuales (si están vacíos, se derivan de APP_MODE). Permiten
-# ajustar una sola palanca en Render sin cambiar de modo. Valores: "1"/"0".
+# mover una sola palanca en Render sin cambiar de modo. Valores: "1"/"0".
 def _flag(nombre: str, defecto: bool) -> bool:
     v = os.getenv(nombre, "").strip()
     if v == "":
         return defecto
     return v not in ("0", "false", "False", "no")
 
-# ¿Mostrar el paywall bloqueante al abrir? Solo en prod por defecto.
-PAYWALL_ON = _flag("PAYWALL_ON", APP_MODE == "prod")
-# ¿Habilitar generación de video? Apagado en test (cada video ~$0.25).
-VIDEO_ON   = _flag("VIDEO_ON", APP_MODE != "test")
-# ¿Mostrar anuncios? En test se apagan para no molestar a los testers.
-ADS_ON     = _flag("ADS_ON", APP_MODE != "test")
+# ¿El paywall BLOQUEA el uso? En test no (se cierra con la X y se usa gratis);
+# en prod sí (sin suscripción no hay generación). Cuando pasa a True, el
+# servidor además rechaza generar a quien no sea premium — no basta con la UI.
+PAYWALL_DURO = _flag("PAYWALL_DURO", APP_MODE == "prod")
+# ¿Habilitar generación de video? En test sí (1/día, ~12 videos en total con el
+# círculo cercano ≈ $3-6 de Replicate). En prod el tier gratis no tiene video.
+VIDEO_ON     = _flag("VIDEO_ON", True)
+# ¿Mostrar anuncios? Siempre sí: en test para probarlos, en prod durante la
+# prueba de 3 días. Solo el plan pagado los quita (eso lo decide el cliente
+# según el estado premium, no este flag).
+ADS_ON       = _flag("ADS_ON", True)
 
 # ─── Control de costos (lección CatchCat: topes ANTES de llamar a Replicate) ─
 # Por dispositivo y por día. El video es caro → tope bajo (premium).
-IMAGENES_GRATIS_DIA = int(os.getenv("IMAGENES_GRATIS_DIA", "3"))
-# 3/día durante la fase de pruebas con amigos (cada video ~$0.25 de Replicate).
-# Ajústalo en Render sin recompilar el APK: env var VIDEOS_GRATIS_DIA.
-VIDEOS_GRATIS_DIA   = int(os.getenv("VIDEOS_GRATIS_DIA", "3"))
+# En prod el tier gratis no existe (el paywall duro ya rechaza antes de mirar
+# cuotas); dejarlos en 0 es una segunda barrera por si el paywall se apagara.
+IMAGENES_GRATIS_DIA = int(os.getenv("IMAGENES_GRATIS_DIA", "0" if APP_MODE == "prod" else "3"))
+# 1/día en la fase de pruebas (cada video ~$0.25-0.50 de Replicate).
+VIDEOS_GRATIS_DIA   = int(os.getenv("VIDEOS_GRATIS_DIA", "0" if APP_MODE == "prod" else "1"))
+# Tope de imágenes durante la PRUEBA de 3 días de la suscripción (modo prod).
+IMAGENES_TRIAL_DIA  = int(os.getenv("IMAGENES_TRIAL_DIA", "2"))
 # ── Tier PREMIUM (suscripción) ──────────────────────────────────────────────
 # Video cuesta ~$0.25 → mantener bajo aunque sea premium (o perder margen).
 IMAGENES_PREMIUM_DIA = int(os.getenv("IMAGENES_PREMIUM_DIA", "10"))

@@ -16,8 +16,9 @@ export interface AppState {
 export const state: AppState = {
   categorias: {},
   cadena: [],
-  // Defaults conservadores hasta que /config responda: sin paywall, sin video.
-  config: { mode: "test", paywall: false, video: false, ads: false },
+  // Defaults conservadores hasta que /config responda: sin bloquear a nadie por
+  // un fallo de red, y sin video (que es lo que cuesta dinero).
+  config: { mode: "test", paywall_duro: false, video: false, ads: false },
 };
 
 // Reemplazan la foto/referencia liberando el blob URL anterior (las fotos de

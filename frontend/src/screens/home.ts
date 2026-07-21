@@ -81,11 +81,10 @@ export function pantallaHome() {
       el("div", { class: "home-header" }, [
         el("h1", {}, [t("home.titulo")]),
         el("div", { class: "home-acciones" }, [
-          ...(state.premium
-            ? [el("span", { class: "pro-activo" }, [icon("crown", 14), t("home.pro")])]
-            : state.config.paywall
-              ? [el("button", { class: "pro-btn", onClick: () => irA(pantallaPaywall) }, [icon("crown", 14), t("home.pro")])]
-              : []), // fase test: sin botón PRO (no hay nada que comprar aún)
+          state.premium
+            ? el("span", { class: "pro-activo" }, [icon("crown", 14), t("home.pro")])
+            : el("button", { class: "pro-btn", onClick: () => irA(pantallaPaywall) },
+                 [icon("crown", 14), t("home.pro")]),
           el("button", {
             class: "home-gear", "aria-label": "Ajustes",
             onClick: () => irA(pantallaAjustes),

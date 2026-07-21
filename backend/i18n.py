@@ -125,6 +125,12 @@ CUOTAS = {
         "pt": "O limite diário desta rede foi atingido. Tente amanhã.",
         "it": "È stato raggiunto il limite giornaliero per questa rete. Riprova domani.",
     },
+    "requiere_suscripcion": {
+        "es": "Necesitas una suscripción activa para generar. Empieza tu prueba gratis.",
+        "en": "You need an active subscription to generate. Start your free trial.",
+        "pt": "Você precisa de uma assinatura ativa para gerar. Comece seu teste grátis.",
+        "it": "Serve un abbonamento attivo per generare. Inizia la prova gratuita.",
+    },
 }
 
 

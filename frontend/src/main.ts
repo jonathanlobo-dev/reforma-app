@@ -79,7 +79,10 @@ async function start() {
     // muestra paywall de apertura — la primera impresión es el tutorial.
     if (onboardingPendiente()) {
       raiz(() => pantallaOnboarding(() => raiz(pantallaHome)));
-    } else if (state.config.paywall && !state.premium && tocaPaywallApertura()) {
+    } else if (!state.premium && (state.config.paywall_duro || tocaPaywallApertura())) {
+      // Paywall duro (producción): sale SIEMPRE al abrir, porque sin suscripción
+      // no se puede generar. En pruebas sale 1 de cada 3 aperturas y la X lleva
+      // a Inicio, donde se puede usar la app gratis.
       raiz(() => pantallaPaywall({
         alCerrar: () => { raiz(pantallaHome); mostrarIntersticial(); },
       }));

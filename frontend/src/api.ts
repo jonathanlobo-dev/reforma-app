@@ -219,10 +219,13 @@ export async function crearProceso(
 // El backend decide el comportamiento (paywall/video/ads) según APP_MODE en
 // Render. Si la petición falla, defaults conservadores: sin paywall (no
 // bloquear a nadie por un fallo de red) y sin video (no gastar).
-export interface ConfigRemota { mode: string; paywall: boolean; video: boolean; ads: boolean; }
+// paywall_duro: false → el paywall se ve pero se cierra con la X y se puede
+// usar la app gratis (fase de pruebas). true → sin suscripción no se genera
+// nada (producción); el servidor lo exige además de la UI.
+export interface ConfigRemota { mode: string; paywall_duro: boolean; video: boolean; ads: boolean; }
 
 export async function getConfigRemota(): Promise<ConfigRemota> {
-  const defecto: ConfigRemota = { mode: "test", paywall: false, video: false, ads: false };
+  const defecto: ConfigRemota = { mode: "test", paywall_duro: false, video: false, ads: false };
   if (MOCK) return { ...defecto, video: true };
   try {
     const r = await fetchApi(`${API_BASE}/config`);

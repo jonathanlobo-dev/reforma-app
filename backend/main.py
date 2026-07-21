@@ -63,7 +63,9 @@ def app_config():
     Ver config.APP_MODE."""
     return {
         "mode": config.APP_MODE,
-        "paywall": config.PAYWALL_ON,   # ¿mostrar el paywall bloqueante?
+        # False → el paywall se ve pero se cierra con la X (fase de pruebas).
+        # True  → sin suscripción no se puede generar (producción).
+        "paywall_duro": config.PAYWALL_DURO,
         "video": config.VIDEO_ON,       # ¿habilitar generación de video?
         "ads": config.ADS_ON,           # ¿mostrar anuncios?
     }
@@ -127,11 +129,16 @@ async def crear_trabajo(
     tipo = tipo or cat["tipo_default"]
     if tipo not in ("imagen", "video"):
         raise HTTPException(400, "tipo debe ser 'imagen' o 'video'")
-    # Video apagado (fase test): se bloquea en el servidor, no solo en la UI —
-    # el APK es falsificable, un tester con curl podría pedir video igual y
-    # gastarnos crédito de Replicate. El dueño (admin) siempre puede probar.
+    # Video apagado: se bloquea en el servidor, no solo en la UI — el APK es
+    # falsificable, alguien con curl podría pedir video igual y gastarnos
+    # crédito de Replicate. El dueño (admin) siempre puede probar.
     if tipo == "video" and not config.VIDEO_ON and device_id not in config.ADMIN_DEVICES:
         raise HTTPException(403, "La generación de video no está disponible por ahora.")
+    # Paywall DURO (producción): sin suscripción no se genera nada. Se decide
+    # aquí, no en el cliente: el paywall de la UI es una cortesía, esta línea es
+    # la que de verdad protege el crédito de Replicate.
+    if config.PAYWALL_DURO and not db.es_premium(device_id):
+        raise HTTPException(402, i18n.cuota_msg("requiere_suscripcion", lang))
     if foto.content_type not in EXT_OK:
         raise HTTPException(400, "La foto debe ser JPG, PNG o WEBP")
     if engine == "inpaint" and not mask:

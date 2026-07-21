@@ -8,10 +8,13 @@ export const API_BASE = "https://reforma-backend-cgu8.onrender.com";
 // Ponlo en true para desarrollar la UI sin gastar (imágenes de ejemplo en /public/mock).
 export const MOCK = false;
 
-// AdMob — IDs de PRUEBA de Google (seguros para desarrollo).
-// TODO: reemplazar por los IDs reales cuando haya cuenta de AdMob.
+// AdMob — IDs REALES de RenuevAI.
+// testing: en desarrollo (`npm run dev`) se piden anuncios de prueba, que son
+// seguros; el build de producción pide anuncios reales.
+// ⚠️ NUNCA hagas clic en tus propios anuncios reales: AdMob lo considera fraude
+// de clics y suspende la cuenta (perdiendo lo acumulado).
 export const ADMOB = {
-  appId: "ca-app-pub-3940256099942544~3347511713",
-  interstitialId: "ca-app-pub-3940256099942544/1033173712",
-  testing: true,
+  appId: "ca-app-pub-8302037284208937~1331963779",
+  interstitialId: "ca-app-pub-8302037284208937/6618849398",
+  testing: import.meta.env.DEV,
 };

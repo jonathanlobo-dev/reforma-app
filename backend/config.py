@@ -83,6 +83,10 @@ ADS_ON       = _flag("ADS_ON", True)
 IMAGENES_GRATIS_DIA = int(os.getenv("IMAGENES_GRATIS_DIA", "0" if APP_MODE == "prod" else "3"))
 # 1/día en la fase de pruebas (cada video ~$0.25-0.50 de Replicate).
 VIDEOS_GRATIS_DIA   = int(os.getenv("VIDEOS_GRATIS_DIA", "0" if APP_MODE == "prod" else "1"))
+# Tope ACUMULADO de videos gratis por dispositivo (no por día: en toda la vida
+# de la instalación). En pruebas: 1 video por tester para que vea qué es, y ya.
+# En producción: 0 — el video es exclusivo de suscriptores que han pagado.
+VIDEOS_GRATIS_TOTAL = int(os.getenv("VIDEOS_GRATIS_TOTAL", "0" if APP_MODE == "prod" else "1"))
 # Tope de imágenes durante la PRUEBA de 3 días de la suscripción (modo prod).
 IMAGENES_TRIAL_DIA  = int(os.getenv("IMAGENES_TRIAL_DIA", "2"))
 # ── Tier PREMIUM (suscripción) ──────────────────────────────────────────────

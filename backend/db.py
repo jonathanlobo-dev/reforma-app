@@ -180,6 +180,16 @@ def puede_generar(device_id: str, tipo: str) -> tuple[bool, str, dict]:
             clave = "limite_imagenes_premium" if premium else "limite_imagenes_free"
             return False, clave, {"n": lim_img}
         if tipo == "video":
+            # Tope ACUMULADO del tier gratis: el video gratis es una muestra
+            # (1 por dispositivo en toda la vida de la instalación), no una
+            # cuota que se renueva cada día. En producción es 0.
+            if not premium:
+                cur.execute(_q(f"SELECT COALESCE(SUM(videos), 0) AS n FROM uso WHERE device_id={PH}"),
+                            (device_id,))
+                f = cur.fetchone()
+                usados = (f["n"] if f and f["n"] is not None else 0)
+                if usados >= config.VIDEOS_GRATIS_TOTAL:
+                    return False, "limite_videos_lock", {}
             if vid >= lim_vid:
                 if premium:
                     return False, "limite_videos_premium", {"n": lim_vid}

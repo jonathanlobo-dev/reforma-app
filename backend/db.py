@@ -136,6 +136,12 @@ def es_premium(device_id: str) -> bool:
 
 
 def estado_premium(device_id: str) -> dict:
+    # Los dispositivos del dueño se reportan como premium a la app. Sin esto la
+    # app les mostraría ANUNCIOS REALES (riesgo de clic propio → AdMob banea la
+    # cuenta por fraude) y el paywall. Coherente con es_premium(), que ya los
+    # exime de cuotas.
+    if device_id in config.ADMIN_DEVICES:
+        return {"premium": True, "hasta": None, "plan": "admin"}
     with _con() as con:
         cur = con.cursor()
         cur.execute(_q(f"SELECT hasta, plan FROM premium WHERE device_id={PH}"), (device_id,))

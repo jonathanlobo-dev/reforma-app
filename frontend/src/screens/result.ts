@@ -1,5 +1,5 @@
 import { el, render, toast } from "../ui";
-import { resolverMedia, votarTrabajo, crearProceso, type Trabajo } from "../api";
+import { resolverMedia, votarTrabajo, crearProceso, crearAnimacion, type Trabajo } from "../api";
 import { mostrarIntersticial } from "../ads";
 import { raiz, irA, desdeRaiz, setNavVisible } from "../nav";
 import { pantallaHome } from "./home";
@@ -199,9 +199,15 @@ export async function pantallaResult(t: Trabajo) {
     irA(() => pantallaExplorar(fuenteExplorar!, t.proyecto || undefined));
   };
 
-  // Video del PROCESO (premium): original → cada edición → resultado final.
-  // Disponible cuando hay al menos 2 ediciones encadenadas de la misma foto.
+  // ── Video, con DOS opciones muy distintas ───────────────────────────────────
+  //  · Animado: Seedance interpola el antes→después. Es el que se ve vivo, y
+  //    cuesta una llamada a Replicate (consume cuota de video).
+  //  · Diapositivas: ffmpeg encadena la cadena de ediciones con fundidos.
+  //    Costo $0, pero necesita 2+ ediciones de la misma foto.
   const puedeProceso = state.config.video && t.tipo === "imagen" && state.cadena.length >= 2;
+  const puedeAnimar = state.config.video && t.tipo === "imagen";
+  const puedeVideo = puedeAnimar || puedeProceso;
+
   const videoProceso = async () => {
     if (!state.premium) {
       toast(tr("result.toast.proceso_premium"));
@@ -215,6 +221,37 @@ export async function pantallaResult(t: Trabajo) {
     } catch (e) {
       toast((e as Error).message);
     }
+  };
+
+  const videoAnimado = async () => {
+    try {
+      const deviceId = await getDeviceId();
+      const { id } = await crearAnimacion(deviceId, t.id);
+      irA(() => pantallaEsperarTrabajo(id, "video"));
+    } catch (e) {
+      toast((e as Error).message);
+    }
+  };
+
+  /** Hoja de selección: deja claro cuál anima de verdad y cuál es un resumen. */
+  const elegirVideo = () => {
+    const overlay = el("div", { class: "sheet-overlay", onClick: () => overlay.remove() });
+    const opcion = (titulo: string, sub: string, onClick: () => void) =>
+      el("div", { class: "sheet-opt opt-video", onClick: () => { overlay.remove(); onClick(); } }, [
+        el("div", {}, [
+          el("div", { class: "opt-video-tit" }, [titulo]),
+          el("div", { class: "opt-video-sub" }, [sub]),
+        ]),
+      ]);
+    const sheet = el("div", { class: "sheet", onClick: (e: Event) => e.stopPropagation() }, [
+      el("div", { class: "sheet-tit" }, [tr("result.video.elegir")]),
+      ...(puedeAnimar ? [opcion(tr("result.video.animado"), tr("result.video.animado_sub"), videoAnimado)] : []),
+      ...(puedeProceso
+        ? [opcion(tr("result.video.slides", { n: state.cadena.length }), tr("result.video.slides_sub"), videoProceso)]
+        : []),
+    ]);
+    overlay.append(sheet);
+    document.body.append(overlay);
   };
 
   render(
@@ -239,9 +276,9 @@ export async function pantallaResult(t: Trabajo) {
           ? [el("button", { class: "btn-secundario btn-ico", onClick: explorar },
               [icon("search", 16), tr("result.explorar")])]
           : []),
-        ...(puedeProceso
-          ? [el("button", { class: "btn-secundario btn-ico btn-proceso", onClick: videoProceso },
-              [icon("sparkles", 16), tr("result.video_proceso", { n: state.cadena.length }), ...(state.premium ? [] : [icon("lock", 13)])])]
+        ...(puedeVideo
+          ? [el("button", { class: "btn-secundario btn-ico btn-proceso", onClick: elegirVideo },
+              [icon("sparkles", 16), tr("result.generar_video")])]
           : []),
         el("button", { class: "btn-secundario btn-ico", onClick: compartir }, [icon("share", 16), tr("result.compartir")]),
         el("button", { class: "btn-secundario btn-ico", onClick: () => {

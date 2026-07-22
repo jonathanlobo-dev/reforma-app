@@ -23,7 +23,7 @@ import db
 import i18n
 import pipeline
 from categorias import categorias_traducidas, resolver
-from worker import procesar, procesar_proceso
+from worker import procesar, procesar_animacion, procesar_proceso
 
 app = FastAPI(title="RenuevAI — backend")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -169,6 +169,45 @@ async def crear_trabajo(
 
     background.add_task(procesar, tid)
     return {"id": tid, "status": "pending", "tipo": tipo}
+
+
+@app.post("/animar")
+def crear_animacion(
+    request: Request,
+    background: BackgroundTasks,
+    device_id: str = Form(...),
+    trabajo_id: str = Form(...),
+    lang: str = Form("es"),
+):
+    """Anima un resultado YA generado (Seedance). Cuesta lo mismo que un video
+    normal, así que consume la cuota de videos: es una llamada a Replicate."""
+    lang = i18n.normalizar_lang(lang)
+    if not config.VIDEO_ON and device_id not in config.ADMIN_DEVICES:
+        raise HTTPException(403, "La generación de video no está disponible por ahora.")
+    if config.PAYWALL_DURO and not db.es_premium(device_id):
+        raise HTTPException(402, i18n.cuota_msg("requiere_suscripcion", lang))
+
+    t = db.obtener(trabajo_id)
+    if not t or t["device_id"] != device_id or t["status"] != "done":
+        raise HTTPException(404, "No se encontró esa transformación.")
+    antes = t.get("antes")
+    despues = t.get("limpio") or t.get("despues")
+    if not antes or not despues:
+        raise HTTPException(400, "Esa transformación no tiene imagen para animar.")
+
+    ok, clave, params = db.puede_generar(device_id, "video")
+    if not ok:
+        raise HTTPException(429, i18n.cuota_msg(clave, lang, **params))
+    if device_id not in config.ADMIN_DEVICES:
+        ip = _ip_cliente(request)
+        if not db.puede_ip(ip, "videos"):
+            raise HTTPException(429, i18n.cuota_msg("limite_ip", lang))
+        db.registrar_ip(ip, "videos")
+
+    nuevo = db.crear_trabajo(device_id, "animar", "Video animado", "video",
+                             (t.get("proyecto") or "").strip()[:60], lang)
+    background.add_task(procesar_animacion, nuevo, antes, despues)
+    return {"id": nuevo, "status": "pending", "tipo": "video"}
 
 
 @app.post("/proceso")

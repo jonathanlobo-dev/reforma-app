@@ -215,6 +215,28 @@ export async function crearProceso(
   return r.json();
 }
 
+/** Anima un resultado YA generado (Seedance). Consume cuota de video porque es
+ *  una llamada real a Replicate, a diferencia del resumen en diapositivas. */
+export async function crearAnimacion(
+  deviceId: string, trabajoId: string
+): Promise<{ id: string; status: string; tipo: string }> {
+  if (MOCK) {
+    const id = "mock-" + crypto.randomUUID().slice(0, 8);
+    mockJobs.set(id, { creado: Date.now(), tipo: "video", categoria: "animar", detalle: "" });
+    return { id, status: "pending", tipo: "video" };
+  }
+  const fd = new FormData();
+  fd.append("device_id", deviceId);
+  fd.append("trabajo_id", trabajoId);
+  fd.append("lang", idioma());
+  const r = await fetchApi(`${API_BASE}/animar`, { method: "POST", body: fd });
+  if (!r.ok) {
+    const j = await r.json().catch(() => ({ detail: t("api.error_montar_video") }));
+    throw new Error(j.detail);
+  }
+  return r.json();
+}
+
 // ─── Config remota (GET /config) ─────────────────────────────────────────────
 // El backend decide el comportamiento (paywall/video/ads) según APP_MODE en
 // Render. Si la petición falla, defaults conservadores: sin paywall (no

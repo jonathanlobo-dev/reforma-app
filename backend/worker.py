@@ -199,6 +199,54 @@ def _bajar(url_o_ruta: str, destino) -> None:
         shutil.copy(config.DATA / rel, destino)
 
 
+# Movimiento genérico para animar un resultado ya generado. Seedance interpola
+# entre el antes y el después (dos fotogramas fijos), así que el prompt solo
+# matiza CÓMO ocurre la transición; no necesita describir el espacio.
+_MOTION_ANIMAR = (
+    "The space transforms smoothly from its original state into the redesigned "
+    "version: surfaces, materials and furniture morph gradually into place with "
+    "a natural, continuous flow. No cuts, no flashes."
+)
+
+
+def procesar_animacion(tid: str, url_antes: str, url_despues: str) -> None:
+    """Anima un resultado YA generado (Seedance): el usuario eligió una edición
+    que le gustó y pide verla en movimiento, sin volver a generar la imagen."""
+    carpeta = config.DATA / tid
+    carpeta.mkdir(parents=True, exist_ok=True)
+    trabajo = db.obtener(tid) or {}
+    lang = trabajo.get("lang") or "es"
+    try:
+        db.actualizar(tid, status="processing")
+        video = carpeta / "final.mp4"
+        # animar() necesita URLs accesibles por Replicate. Las de Supabase ya lo
+        # son; en local (/media) hay que subirlas primero.
+        def _url_publica(u: str, nombre: str) -> str:
+            if u.startswith("http"):
+                return u
+            local = carpeta / nombre
+            _bajar(u, local)
+            return pipeline.replicate_upload(local)
+
+        pipeline.animar(_url_publica(url_antes, "antes.png"),
+                        _url_publica(url_despues, "despues.png"),
+                        _MOTION_ANIMAR, video)
+
+        thumb = carpeta / "thumb.jpg"
+        ruta_thumb = carpeta / "despues.png"
+        if not ruta_thumb.exists():
+            _bajar(url_despues, ruta_thumb)
+        pipeline.miniatura(ruta_thumb, thumb)
+
+        db.actualizar(tid, status="done",
+                      antes=url_antes, despues=url_despues,
+                      video=storage.subir(video, tid, "final.mp4"),
+                      thumb=storage.subir(thumb, tid, "thumb.jpg"))
+    except Exception as e:
+        traceback.print_exc()
+        db.actualizar(tid, status="error", error=_error_usuario(e, lang))
+
+
 def procesar_proceso(tid: str, imagenes_urls: list) -> None:
     """Video del PROCESO (premium): crossfade de la foto original pasando por
     cada edición hasta el resultado final. Solo ffmpeg → costo $0."""

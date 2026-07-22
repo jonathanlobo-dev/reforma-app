@@ -46,7 +46,8 @@ export function pantallaHome() {
       }, [t(s.labelKey)])
     ));
 
-  const cards = claves.map((clave) => [clave, state.categorias[clave]] as const).map(([clave, cat]) => {
+  const cards = claves.map((clave) => [clave, state.categorias[clave]] as const).map(([clave, cat], i) => {
+    const compacto = i > 0; // la primera va destacada a lo ancho
     // Fondo: split antes|después propio de la categoría, o el genérico de /mock
     const fondo = PARES.includes(clave)
       ? el("div", { class: "mode-card-split" }, [
@@ -60,7 +61,7 @@ export function pantallaHome() {
           el("div", { class: "mode-card-divline" }),
         ]);
     return el("div", {
-      class: "mode-card",
+      class: "mode-card" + (compacto ? " compacto" : ""),
       "data-cat": clave,
       onClick: () => irA(() => pantallaForm(clave)),
     }, [
@@ -92,7 +93,10 @@ export function pantallaHome() {
         ]),
       ]),
       tabs,
-      el("div", { class: "modes-list" }, cards),
+      // Destacada + rejilla de dos columnas (con 15 modos, una sola columna
+      // hacía el scroll interminable).
+      el("div", { class: "modes-list" }, cards.slice(0, 1)),
+      cards.length > 1 ? el("div", { class: "modes-grid" }, cards.slice(1)) : el("div", {}, []),
     ])
   );
 }

@@ -71,6 +71,19 @@ img, video { display: block; }
 
 .modes-list { display: flex; flex-direction: column; gap: 16px; }
 
+/* Con 15 modos, una sola columna obligaba a un scroll larguísimo. La primera
+   card va grande (destacada) y el resto en rejilla de dos, más compactas. */
+.modes-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px;
+}
+.mode-card.compacto { height: 150px; border-radius: 18px; }
+.mode-card.compacto .mode-card-body { padding: 10px 12px 12px; display: block; }
+.mode-card.compacto .mode-card-titulo { font-size: 15px; font-weight: 700; }
+/* En compacto no cabe subtítulo ni botón sin apelmazar: la card entera es el
+   área táctil, así que se ocultan. */
+.mode-card.compacto .mode-card-sub,
+.mode-card.compacto .mode-card-probar { display: none; }
+
 .mode-card {
   border-radius: 24px; overflow: hidden; cursor: pointer;
   height: 210px; position: relative;

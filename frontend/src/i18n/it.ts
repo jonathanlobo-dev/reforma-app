@@ -64,7 +64,7 @@ export const it: Record<string, string> = {
   "form.proyecto.label": "Progetto",
   "form.proyecto.placeholder": "Progetto (opzionale) — es. Casa della mamma",
   "form.toggle.imagen": "Immagine · gratis",
-  "form.toggle.video": "Video · Premium",
+  "form.toggle.video": "Video animato · Premium",
   "form.transformar": "Trasforma",
   "form.extra.placeholder": "Altro che vorresti cambiare… (opzionale)",
   "form.extra.prefix": " Inoltre, l'utente richiede: {v}.",
@@ -199,7 +199,7 @@ export const it: Record<string, string> = {
   "result.seguir_editando": "Continua a modificare questo risultato",
   "result.otra_version": "Un'altra versione",
   "result.otra_version_confirm": "Verrà generata una nuova versione della stessa richiesta (usa 1 delle generazioni di oggi). Continuare?",
-  "result.video_proceso": "Video del processo ({n} passaggi)",
+  "result.video_proceso": "Riepilogo in slide ({n} passaggi)",
   "result.compartir": "Condividi",
   "result.preguntar_maestro": "Chiedi a {nombre}",
   "result.hacer_otra": "Fai un'altra",
@@ -222,7 +222,7 @@ export const it: Record<string, string> = {
   "result.toast.error_editar": "Impossibile caricare il risultato per modificarlo.",
   "result.toast.elige_modo": "Il tuo risultato ora è caricato come foto — scegli una modalità",
   "result.toast.error_relanzar": "Impossibile rigenerare.",
-  "result.toast.proceso_premium": "Il video del processo è una funzione Premium ✨",
+  "result.toast.proceso_premium": "Il riepilogo in slide è una funzione Premium ✨",
 
   // ─── Recenti ──────────────────────────────────────────────────────────
   "recientes.titulo": "Recenti",
@@ -402,5 +402,5 @@ export const it: Record<string, string> = {
   "onb.3.titulo": "Dalla planimetria 2D al render 3D",
   "onb.3.texto": "Carica la foto di una planimetria e la trasformiamo in un render 3D arredato. Poi tocca una stanza per vederla dall'interno.",
   "onb.4.titulo": "Video della tua trasformazione",
-  "onb.4.texto": "Trasforma il tuo prima e dopo in un video da condividere, o concatena più modifiche e genera il video dell'intero processo.",
+  "onb.4.texto": "Scegli “Video animato” prima di generare e l'IA anima la trasformazione del tuo spazio. E se concateni più modifiche, puoi creare un riepilogo in slide con tutti i passaggi.",
 };

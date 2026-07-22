@@ -64,7 +64,7 @@ export const pt: Record<string, string> = {
   "form.proyecto.label": "Projeto",
   "form.proyecto.placeholder": "Projeto (opcional) — ex. Casa da mãe",
   "form.toggle.imagen": "Imagem · grátis",
-  "form.toggle.video": "Vídeo · Premium",
+  "form.toggle.video": "Vídeo animado · Premium",
   "form.transformar": "Transformar",
   "form.extra.placeholder": "Mais alguma coisa que queira mudar… (opcional)",
   "form.extra.prefix": " Além disso, o usuário pede: {v}.",
@@ -199,7 +199,7 @@ export const pt: Record<string, string> = {
   "result.seguir_editando": "Continuar editando este resultado",
   "result.otra_version": "Outra versão",
   "result.otra_version_confirm": "Isso vai gerar uma nova versão do mesmo pedido (usa 1 das gerações de hoje). Continuar?",
-  "result.video_proceso": "Vídeo do processo ({n} etapas)",
+  "result.video_proceso": "Resumo em slides ({n} etapas)",
   "result.compartir": "Compartilhar",
   "result.preguntar_maestro": "Perguntar a {nombre}",
   "result.hacer_otra": "Fazer outra",
@@ -222,7 +222,7 @@ export const pt: Record<string, string> = {
   "result.toast.error_editar": "Não foi possível carregar o resultado para editar.",
   "result.toast.elige_modo": "Seu resultado agora está carregado como foto — escolha um modo",
   "result.toast.error_relanzar": "Não foi possível gerar novamente.",
-  "result.toast.proceso_premium": "O vídeo do processo é uma função Premium ✨",
+  "result.toast.proceso_premium": "O resumo em slides é uma função Premium ✨",
 
   // ─── Recentes ─────────────────────────────────────────────────────────
   "recientes.titulo": "Recentes",
@@ -402,5 +402,5 @@ export const pt: Record<string, string> = {
   "onb.3.titulo": "Da planta 2D ao render 3D",
   "onb.3.texto": "Envie a foto de uma planta e a transformamos em um render 3D mobiliado. Depois toque em um cômodo para vê-lo por dentro.",
   "onb.4.titulo": "Vídeos da sua transformação",
-  "onb.4.texto": "Transforme seu antes e depois em um vídeo para compartilhar, ou encadeie várias edições e gere o vídeo do processo completo.",
+  "onb.4.texto": "Escolha “Vídeo animado” antes de gerar e a IA anima a transformação do seu espaço. E se encadear várias edições, pode montar um resumo em slides com todas as etapas.",
 };

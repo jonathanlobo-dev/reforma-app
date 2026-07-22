@@ -64,7 +64,7 @@ export const en: Record<string, string> = {
   "form.proyecto.label": "Project",
   "form.proyecto.placeholder": "Project (optional) — e.g. Mom's house",
   "form.toggle.imagen": "Image · free",
-  "form.toggle.video": "Video · Premium",
+  "form.toggle.video": "Animated video · Premium",
   "form.transformar": "Transform",
   "form.extra.placeholder": "Anything else you'd like to change… (optional)",
   "form.extra.prefix": " Also, the user requests: {v}.",
@@ -199,7 +199,7 @@ export const en: Record<string, string> = {
   "result.seguir_editando": "Keep editing this result",
   "result.otra_version": "Another version",
   "result.otra_version_confirm": "This will generate a new version of the same request (uses 1 of today's generations). Continue?",
-  "result.video_proceso": "Process video ({n} steps)",
+  "result.video_proceso": "Slideshow recap ({n} steps)",
   "result.compartir": "Share",
   "result.preguntar_maestro": "Ask {nombre}",
   "result.hacer_otra": "Make another",
@@ -222,7 +222,7 @@ export const en: Record<string, string> = {
   "result.toast.error_editar": "Couldn't load the result for editing.",
   "result.toast.elige_modo": "Your result is now loaded as a photo — pick a mode",
   "result.toast.error_relanzar": "Couldn't relaunch the generation.",
-  "result.toast.proceso_premium": "The process video is a Premium feature ✨",
+  "result.toast.proceso_premium": "The slideshow recap is a Premium feature ✨",
 
   // ─── Recent ───────────────────────────────────────────────────────────
   "recientes.titulo": "Recent",
@@ -402,5 +402,5 @@ export const en: Record<string, string> = {
   "onb.3.titulo": "From 2D floor plan to 3D render",
   "onb.3.texto": "Upload a photo of a floor plan and we turn it into a furnished 3D render. Then tap a room to see it from inside.",
   "onb.4.titulo": "Videos of your transformation",
-  "onb.4.texto": "Turn your before & after into a shareable video, or chain several edits and generate the full process video.",
+  "onb.4.texto": "Pick “Animated video” before generating and the AI animates your space transforming. And if you chain several edits, you can build a slideshow recap of every step.",
 };

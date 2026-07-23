@@ -427,6 +427,11 @@ def admin_usuarios() -> list[dict]:
             u["premium"] = bool(f["hasta"] and f["hasta"] > ahora)
             u["premium_hasta"] = f["hasta"]
             u["premium_plan"] = f["plan"]
+        cur.execute(_q("SELECT device_id, imagenes, videos FROM creditos"))
+        for f in cur.fetchall():
+            u = usuarios.setdefault(f["device_id"], {"device_id": f["device_id"]})
+            u["creditos_img"] = f["imagenes"] or 0
+            u["creditos_vid"] = f["videos"] or 0
     out = list(usuarios.values())
     out.sort(key=lambda u: u.get("ultima_actividad") or "", reverse=True)
     return out

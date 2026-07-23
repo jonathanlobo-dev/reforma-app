@@ -30,14 +30,14 @@ export function mediaUrl(rel?: string): string | undefined {
 // ─── MOCK ─────────────────────────────────────────────────────────────────────
 const MOCK_CATEGORIAS: Categorias = {
   pintar: {
-    titulo: "Pintar / color", emoji: "🎨", tipo_default: "imagen", engine: "editar",
+    titulo: "Paredes y pintura", emoji: "🎨", tipo_default: "imagen", engine: "editar",
     campos: [
       { clave: "superficie", label: "Superficie", ejemplo: "pared del fondo" },
-      { clave: "color", label: "Color", ejemplo: "verde esmeralda mate" },
+      { clave: "color", label: "Color o acabado", ejemplo: "verde esmeralda mate, o ladrillo visto" },
     ],
   },
   interior: {
-    titulo: "Diseño interior", emoji: "🛋️", tipo_default: "imagen", engine: "editar",
+    titulo: "Diseñar / Remodelar", emoji: "🛋️", tipo_default: "imagen", engine: "editar",
     campos: [{ clave: "estilo", label: "Estilo", ejemplo: "moderno minimalista" }],
   },
   exterior: {
@@ -52,10 +52,6 @@ const MOCK_CATEGORIAS: Categorias = {
     titulo: "Suelo nuevo", emoji: "🪵", tipo_default: "imagen", engine: "editar",
     campos: [{ clave: "material", label: "Material", ejemplo: "porcelanato blanco" }],
   },
-  paredes: {
-    titulo: "Paredes nuevas", emoji: "🧱", tipo_default: "imagen", engine: "editar",
-    campos: [{ clave: "acabado", label: "Acabado", ejemplo: "ladrillo visto industrial" }],
-  },
   eliminar: {
     titulo: "Eliminar objetos", emoji: "🗑️", tipo_default: "imagen", engine: "editar",
     campos: [{ clave: "objeto", label: "¿Qué quitar?", ejemplo: "los muebles viejos" }],
@@ -66,10 +62,6 @@ const MOCK_CATEGORIAS: Categorias = {
       { clave: "objeto", label: "¿Qué restaurar?", ejemplo: "los sofás de cuero" },
       { clave: "estilo", label: "Resultado esperado", ejemplo: "como nuevos, cuero liso" },
     ],
-  },
-  remodelar: {
-    titulo: "Remodelar", emoji: "🏠", tipo_default: "video", engine: "editar",
-    campos: [{ clave: "estilo", label: "Estilo", ejemplo: "cocina moderna minimalista blanca" }],
   },
   pincel: {
     titulo: "Pincel mágico", emoji: "🖌️", tipo_default: "imagen", engine: "inpaint",
@@ -85,7 +77,7 @@ const MOCK_CATEGORIAS: Categorias = {
   },
   vaciar: {
     titulo: "Vaciar habitación", emoji: "📦", tipo_default: "imagen", engine: "vaciar",
-    campos: [],
+    campos: [], oculta: true,
   },
   iluminacion: {
     titulo: "Iluminación / ambiente", emoji: "💡", tipo_default: "imagen", engine: "editar",

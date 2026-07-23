@@ -69,6 +69,9 @@ export const pt: Record<string, string> = {
   "form.extra.placeholder": "Mais alguma coisa que queira mudar… (opcional)",
   "form.extra.prefix": " Além disso, o usuário pede: {v}.",
   "form.generico.placeholder": "O que você quer mudar?",
+  "elim.modo_objeto": "Remover um objeto",
+  "elim.modo_todo": "Esvaziar tudo",
+  "elim.ejemplo": "os móveis velhos do canto",
   "form.campo.material_suelo": "Material do piso",
   "form.campo.acabado_pared": "Acabamento da parede",
 

@@ -35,15 +35,6 @@ const MATERIALES_SUELO: OpcionDropdown[] = [
   { slug: "cemento", labelKey: "suelo_mat.cemento" },
   { slug: "ceramica", labelKey: "suelo_mat.ceramica" },
 ];
-const ACABADOS_PARED: OpcionDropdown[] = [
-  { slug: "pintura_lisa", labelKey: "pared_acab.pintura_lisa" },
-  { slug: "ladrillo_visto", labelKey: "pared_acab.ladrillo_visto" },
-  { slug: "piedra_natural", labelKey: "pared_acab.piedra_natural" },
-  { slug: "madera", labelKey: "pared_acab.madera" },
-  { slug: "estuco", labelKey: "pared_acab.estuco" },
-  { slug: "panel_decorativo", labelKey: "pared_acab.panel_decorativo" },
-];
-
 const MUESTRAS = ["/mock/antes.jpg", "/mock/despues.png"];
 
 const HINT_KEYS: Record<string, string> = {
@@ -247,8 +238,9 @@ export function pantallaForm(claveCat: string) {
     }
     const proyecto = proyInput.value.trim();
     guardarProyecto(proyecto);
+    const categoria = controles.getCategoria ? controles.getCategoria() : claveCat;
     irA(() => pantallaProcessing({
-      categoria: claveCat, detalle, tipo, foto: state.foto!.blob,
+      categoria, detalle, tipo, foto: state.foto!.blob,
       mask: state.mask, referencia: state.referencia?.blob,
       proyecto: proyecto || undefined,
     }));
@@ -306,7 +298,15 @@ function campoExtra() {
 }
 
 // ── Controles específicos por categoría ─────────────────────────────────────
-function buildControles(clave: string, engine: string): { node: HTMLElement; getDetalle: () => string } {
+interface Controles {
+  node: HTMLElement;
+  getDetalle: () => string;
+  // Opcional: permite que un modo del formulario envíe otra categoría (ej.
+  // "Eliminar" con el toggle "vaciar todo" envía categoria="vaciar").
+  getCategoria?: () => string;
+}
+
+function buildControles(clave: string, engine: string): Controles {
   switch (clave) {
     case "pintar": {
       const surf = superficieSelector("pared");
@@ -318,8 +318,7 @@ function buildControles(clave: string, engine: string): { node: HTMLElement; get
         getDetalle: () => `${t("ctrl.superficie_label")}: ${surf.getValue()}. ${t("ctrl.color_label")}: ${color.getValue()}. ${t("ctrl.intensidad_label")}: ${intens.getValue()}.${extra.getValue()}`,
       };
     }
-    case "interior":
-    case "remodelar": {
+    case "interior": {
       const estilo = estiloCarrusel("moderno");
       const hab = dropdown("ctrl.habitacion_label", HABITACIONES, "sala");
       const intens = dropdown("ctrl.intensidad_label", INTENSIDADES, "media");
@@ -354,12 +353,33 @@ function buildControles(clave: string, engine: string): { node: HTMLElement; get
         getDetalle: () => `${t("form.campo.material_suelo")}: ${mat.getValue()}.${extra.getValue()}`,
       };
     }
-    case "paredes": {
-      const acab = dropdown("ctrl.acabado_label", ACABADOS_PARED, "pintura_lisa");
-      const extra = campoExtra();
+    case "eliminar": {
+      // Dos modos: quitar un objeto puntual (categoria=eliminar) o vaciar todo
+      // el espacio (categoria=vaciar, motor distinto). Un toggle los alterna.
+      let modo: "objeto" | "todo" = "objeto";
+      const obj = el("input", { class: "field", type: "text",
+        placeholder: t("elim.ejemplo") }) as HTMLInputElement;
+      const campoObj = el("div", {}, [obj]);
+      const botones: HTMLButtonElement[] = [];
+      const setModo = (m: "objeto" | "todo") => {
+        modo = m;
+        botones.forEach((b) => b.classList.toggle("activo", b.dataset.modo === m));
+        campoObj.style.display = m === "objeto" ? "" : "none";
+      };
+      const toggle = el("div", { class: "toggle" },
+        (["objeto", "todo"] as const).map((m) => {
+          const b = el("button", { class: "toggle-op", "data-modo": m,
+            onClick: () => setModo(m) }, [t(m === "objeto" ? "elim.modo_objeto" : "elim.modo_todo")]) as HTMLButtonElement;
+          botones.push(b);
+          return b;
+        }));
+      setModo("objeto");
       return {
-        node: el("div", { class: "ctrl-stack" }, [acab.node, extra.node]),
-        getDetalle: () => `${t("form.campo.acabado_pared")}: ${acab.getValue()}.${extra.getValue()}`,
+        node: el("div", { class: "ctrl-stack" }, [toggle, campoObj]),
+        // En modo "todo" el motor vaciar usa un prompt fijo e ignora el detalle,
+        // pero mandamos un texto no vacío para pasar la validación del form.
+        getDetalle: () => modo === "todo" ? "vaciar todo el espacio" : obj.value.trim(),
+        getCategoria: () => modo === "todo" ? "vaciar" : "eliminar",
       };
     }
     default: {

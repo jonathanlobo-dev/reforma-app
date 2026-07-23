@@ -276,6 +276,24 @@ def admin_premium(
             "premium": dias > 0}
 
 
+@app.post("/admin/creditos")
+def admin_creditos(
+    device_id: str = Form(...),
+    imagenes: int = Form(0),
+    videos: int = Form(0),
+    x_admin_key: str = Header(""),
+):
+    """Regala créditos de generación (imágenes y/o videos) a un dispositivo, sin
+    hacerlo premium. Se consumen cuando el usuario agota su cuota diaria. Misma
+    protección que /admin/premium (ADMIN_KEY)."""
+    _check_admin(x_admin_key)
+    imagenes = max(0, min(imagenes, 500))   # topes de cordura
+    videos = max(0, min(videos, 100))
+    saldo = db.regalar_creditos(device_id, imagenes, videos)
+    return {"ok": True, "device_id": device_id, "regalado": {"imagenes": imagenes, "videos": videos},
+            "saldo": saldo}
+
+
 def _check_admin(x_admin_key: str) -> None:
     # compare_digest: comparación en tiempo constante (evita timing attacks
     # que adivinan la clave carácter a carácter midiendo latencias).

@@ -65,6 +65,11 @@ _TABLAS = [
     """CREATE TABLE IF NOT EXISTS premium (
         device_id TEXT PRIMARY KEY, hasta DOUBLE PRECISION, plan TEXT,
         actualizado DOUBLE PRECISION)""",
+    # Créditos de REGALO: bolsa de generaciones extra (no caduca cada día). Se
+    # consumen SOLO cuando ya se agotó la cuota diaria. Los reparte el admin.
+    """CREATE TABLE IF NOT EXISTS creditos (
+        device_id TEXT PRIMARY KEY, imagenes INTEGER DEFAULT 0,
+        videos INTEGER DEFAULT 0, actualizado DOUBLE PRECISION)""",
 ]
 
 # Columnas añadidas después del despliegue inicial: (tabla, columna, tipo)
@@ -175,6 +180,9 @@ def puede_generar(device_id: str, tipo: str) -> tuple[bool, str, dict]:
     premium = es_premium(device_id)
     lim_img = config.IMAGENES_PREMIUM_DIA if premium else config.IMAGENES_GRATIS_DIA
     lim_vid = config.VIDEOS_PREMIUM_DIA if premium else config.VIDEOS_GRATIS_DIA
+    # Créditos de regalo: bolsa extra que se consume al agotar la cuota diaria.
+    creditos = creditos_de(device_id)
+    credito = creditos["imagenes"] if tipo == "imagen" else creditos["videos"]
     with _con() as con:
         cur = con.cursor()
         cur.execute(_q(f"SELECT imagenes, videos FROM uso WHERE device_id={PH} AND fecha={PH}"),
@@ -182,31 +190,59 @@ def puede_generar(device_id: str, tipo: str) -> tuple[bool, str, dict]:
         fila = cur.fetchone()
         img = fila["imagenes"] if fila else 0
         vid = fila["videos"] if fila else 0
-        if tipo == "imagen" and img >= lim_img:
+        if tipo == "imagen" and img >= lim_img and credito <= 0:
             clave = "limite_imagenes_premium" if premium else "limite_imagenes_free"
             return False, clave, {"n": lim_img}
         if tipo == "video":
-            # Tope ACUMULADO del tier gratis: el video gratis es una muestra
-            # (1 por dispositivo en toda la vida de la instalación), no una
-            # cuota que se renueva cada día. En producción es 0.
-            if not premium:
-                cur.execute(_q(f"SELECT COALESCE(SUM(videos), 0) AS n FROM uso WHERE device_id={PH}"),
-                            (device_id,))
-                f = cur.fetchone()
-                usados = (f["n"] if f and f["n"] is not None else 0)
-                if usados >= config.VIDEOS_GRATIS_TOTAL:
-                    return False, "limite_videos_lock", {}
-            if vid >= lim_vid:
-                if premium:
-                    return False, "limite_videos_premium", {"n": lim_vid}
-                if lim_vid == 0:
-                    return False, "limite_videos_lock", {}
-                return False, "limite_videos_free", {"n": lim_vid}
+            # El crédito de regalo salta el tope diario y el candado del tier
+            # gratis (fue una concesión explícita del admin), pero NO el freno
+            # global del sistema, que es una salvaguarda contra picos.
+            if credito <= 0:
+                # Tope ACUMULADO del tier gratis: el video gratis es una muestra
+                # (1 por dispositivo en toda la vida de la instalación), no una
+                # cuota que se renueva cada día. En producción es 0.
+                if not premium:
+                    cur.execute(_q(f"SELECT COALESCE(SUM(videos), 0) AS n FROM uso WHERE device_id={PH}"),
+                                (device_id,))
+                    f = cur.fetchone()
+                    usados = (f["n"] if f and f["n"] is not None else 0)
+                    if usados >= config.VIDEOS_GRATIS_TOTAL:
+                        return False, "limite_videos_lock", {}
+                if vid >= lim_vid:
+                    if premium:
+                        return False, "limite_videos_premium", {"n": lim_vid}
+                    if lim_vid == 0:
+                        return False, "limite_videos_lock", {}
+                    return False, "limite_videos_free", {"n": lim_vid}
             cur.execute(_q(f"SELECT videos FROM uso_global WHERE fecha={PH}"), (hoy,))
             g = cur.fetchone()
             if g and g["videos"] >= config.VIDEOS_GLOBAL_DIA:
                 return False, "limite_global_videos", {}
     return True, "", {}
+
+
+def creditos_de(device_id: str) -> dict:
+    """Bolsa de créditos de regalo de un dispositivo (0 si no tiene)."""
+    with _con() as con:
+        cur = con.cursor()
+        cur.execute(_q(f"SELECT imagenes, videos FROM creditos WHERE device_id={PH}"), (device_id,))
+        f = cur.fetchone()
+    return {"imagenes": (f["imagenes"] if f else 0) or 0,
+            "videos": (f["videos"] if f else 0) or 0}
+
+
+def regalar_creditos(device_id: str, imagenes: int = 0, videos: int = 0) -> dict:
+    """Suma créditos a la bolsa (admin). Devuelve el saldo resultante."""
+    with _con() as con:
+        cur = con.cursor()
+        cur.execute(_q(
+            f"INSERT INTO creditos (device_id, imagenes, videos, actualizado) "
+            f"VALUES ({PH},{PH},{PH},{PH}) "
+            f"ON CONFLICT(device_id) DO UPDATE SET "
+            f"imagenes=creditos.imagenes+{PH}, videos=creditos.videos+{PH}, actualizado={PH}"),
+            (device_id, imagenes, videos, time.time(), imagenes, videos, time.time()))
+        con.commit()
+    return creditos_de(device_id)
 
 
 def puede_chatear(device_id: str) -> tuple[bool, str, dict]:
@@ -271,14 +307,34 @@ def registrar_chat(device_id: str) -> None:
 
 
 def registrar_uso(device_id: str, tipo: str) -> None:
+    if device_id in config.ADMIN_DEVICES:
+        return  # el dueño no consume cuota ni créditos
     hoy = date.today().isoformat()
     col = "imagenes" if tipo == "imagen" else "videos"
+    premium = es_premium(device_id)
+    if tipo == "imagen":
+        limite = config.IMAGENES_PREMIUM_DIA if premium else config.IMAGENES_GRATIS_DIA
+    else:
+        limite = config.VIDEOS_PREMIUM_DIA if premium else config.VIDEOS_GRATIS_DIA
     with _con() as con:
         cur = con.cursor()
-        cur.execute(_q(
-            f"INSERT INTO uso (device_id, fecha, {col}) VALUES ({PH},{PH},1) "
-            f"ON CONFLICT(device_id, fecha) DO UPDATE SET {col}=uso.{col}+1"),
-            (device_id, hoy))
+        cur.execute(_q(f"SELECT {col} AS n FROM uso WHERE device_id={PH} AND fecha={PH}"),
+                    (device_id, hoy))
+        f = cur.fetchone()
+        usados_hoy = (f["n"] if f and f["n"] is not None else 0)
+        # Si la cuota diaria ya está agotada, este uso salió de un crédito de
+        # regalo → descontar de la bolsa (nunca por debajo de 0).
+        if usados_hoy >= limite:
+            cur.execute(_q(
+                f"UPDATE creditos SET {col}={col}-1 WHERE device_id={PH} AND {col} > 0"),
+                (device_id,))
+        else:
+            cur.execute(_q(
+                f"INSERT INTO uso (device_id, fecha, {col}) VALUES ({PH},{PH},1) "
+                f"ON CONFLICT(device_id, fecha) DO UPDATE SET {col}=uso.{col}+1"),
+                (device_id, hoy))
+        # El video siempre cuenta en el global (freno de sistema), venga de cuota
+        # o de crédito, porque ese uso sí llamó a Replicate.
         if tipo == "video":
             cur.execute(_q(
                 f"INSERT INTO uso_global (fecha, videos) VALUES ({PH},1) "

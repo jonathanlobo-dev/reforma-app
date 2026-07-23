@@ -206,6 +206,7 @@ export const it: Record<string, string> = {
   "result.video.animado_sub": "L'IA anima il tuo spazio che si trasforma. Usa 1 video della tua quota.",
   "result.video.slides": "Riepilogo in slide ({n} passaggi)",
   "result.video.slides_sub": "Le tue modifiche concatenate con transizioni. Gratis, non usa quota.",
+  "result.video.reveal": "Prima → dopo · gratis",
   "result.compartir": "Condividi",
   "result.preguntar_maestro": "Chiedi a {nombre}",
   "result.hacer_otra": "Fai un'altra",

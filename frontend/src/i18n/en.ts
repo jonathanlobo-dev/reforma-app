@@ -206,6 +206,7 @@ export const en: Record<string, string> = {
   "result.video.animado_sub": "AI animates your space transforming. Uses 1 video from your quota.",
   "result.video.slides": "Slideshow recap ({n} steps)",
   "result.video.slides_sub": "Your edits chained with transitions. Free, uses no quota.",
+  "result.video.reveal": "Before → after · free",
   "result.compartir": "Share",
   "result.preguntar_maestro": "Ask {nombre}",
   "result.hacer_otra": "Make another",

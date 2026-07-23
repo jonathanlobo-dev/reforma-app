@@ -222,11 +222,13 @@ def crear_proceso(
     la cuota de videos."""
     if not config.VIDEO_ON and device_id not in config.ADMIN_DEVICES:
         raise HTTPException(403, "La generación de video no está disponible por ahora.")
-    if not db.es_premium(device_id):
+    # El resumen en diapositivas es solo ffmpeg (costo $0), así que no consume la
+    # cuota de videos. En producción se reserva a suscriptores; en pruebas es libre.
+    if config.PAYWALL_DURO and not db.es_premium(device_id):
         raise HTTPException(402, "El video del proceso es una función Premium.")
     ids = [t.strip() for t in trabajo_ids.split(",") if t.strip()][:8]
-    if len(ids) < 2:
-        raise HTTPException(400, "Se necesitan al menos 2 ediciones para el video del proceso.")
+    if not ids:
+        raise HTTPException(400, "Falta la transformación para montar el video.")
 
     imagenes: list[str] = []
     for i, tid in enumerate(ids):

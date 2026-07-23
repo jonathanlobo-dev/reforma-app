@@ -206,6 +206,7 @@ export const es: Record<string, string> = {
   "result.video.animado_sub": "La IA anima tu espacio transformándose. Consume 1 video de tu cuota.",
   "result.video.slides": "Resumen en diapositivas ({n} pasos)",
   "result.video.slides_sub": "Tus ediciones encadenadas con transiciones. Gratis, no consume cuota.",
+  "result.video.reveal": "Antes → después · gratis",
   "result.compartir": "Compartir",
   "result.preguntar_maestro": "Preguntar a {nombre}",
   "result.hacer_otra": "Hacer otra",

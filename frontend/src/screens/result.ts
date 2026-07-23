@@ -5,7 +5,6 @@ import { raiz, irA, desdeRaiz, setNavVisible } from "../nav";
 import { pantallaHome } from "./home";
 import { pantallaForm } from "./form";
 import { pantallaAsesor } from "./asesor";
-import { pantallaPaywall } from "./paywall";
 import { baSlider } from "../ui/controls";
 import { state, setFoto } from "../state";
 import { icon } from "../ui/icons";
@@ -202,21 +201,19 @@ export async function pantallaResult(t: Trabajo) {
   // ── Video, con DOS opciones muy distintas ───────────────────────────────────
   //  · Animado: Seedance interpola el antes→después. Es el que se ve vivo, y
   //    cuesta una llamada a Replicate (consume cuota de video).
-  //  · Diapositivas: ffmpeg encadena la cadena de ediciones con fundidos.
-  //    Costo $0, pero necesita 2+ ediciones de la misma foto.
-  const puedeProceso = state.config.video && t.tipo === "imagen" && state.cadena.length >= 2;
+  //  · Diapositivas: ffmpeg funde imágenes con transiciones (costo $0). Con 2+
+  //    ediciones encadenadas recorre toda la cadena; con un solo resultado hace
+  //    el antes→después de esa transformación. Siempre disponible en imagen.
   const puedeAnimar = state.config.video && t.tipo === "imagen";
+  const puedeProceso = t.tipo === "imagen";  // el resumen no depende de VIDEO_ON (es gratis)
   const puedeVideo = puedeAnimar || puedeProceso;
+  // Ids que alimentan el resumen: la cadena si hay varias ediciones, o solo esta.
+  const idsProceso = state.cadena.length >= 2 ? state.cadena : [t.id];
 
   const videoProceso = async () => {
-    if (!state.premium) {
-      toast(tr("result.toast.proceso_premium"));
-      irA(() => pantallaPaywall());
-      return;
-    }
     try {
       const deviceId = await getDeviceId();
-      const { id } = await crearProceso(deviceId, state.cadena);
+      const { id } = await crearProceso(deviceId, idsProceso);
       irA(() => pantallaEsperarTrabajo(id, "video", pasosProceso()));
     } catch (e) {
       toast((e as Error).message);
@@ -247,7 +244,9 @@ export async function pantallaResult(t: Trabajo) {
       el("div", { class: "sheet-tit" }, [tr("result.video.elegir")]),
       ...(puedeAnimar ? [opcion(tr("result.video.animado"), tr("result.video.animado_sub"), videoAnimado)] : []),
       ...(puedeProceso
-        ? [opcion(tr("result.video.slides", { n: state.cadena.length }), tr("result.video.slides_sub"), videoProceso)]
+        ? [opcion(
+            state.cadena.length >= 2 ? tr("result.video.slides", { n: state.cadena.length }) : tr("result.video.reveal"),
+            tr("result.video.slides_sub"), videoProceso)]
         : []),
     ]);
     overlay.append(sheet);

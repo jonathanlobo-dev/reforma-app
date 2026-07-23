@@ -206,6 +206,7 @@ export const pt: Record<string, string> = {
   "result.video.animado_sub": "A IA anima seu espaço se transformando. Usa 1 vídeo da sua cota.",
   "result.video.slides": "Resumo em slides ({n} etapas)",
   "result.video.slides_sub": "Suas edições encadeadas com transições. Grátis, não usa cota.",
+  "result.video.reveal": "Antes → depois · grátis",
   "result.compartir": "Compartilhar",
   "result.preguntar_maestro": "Perguntar a {nombre}",
   "result.hacer_otra": "Fazer outra",

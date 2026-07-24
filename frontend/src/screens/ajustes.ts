@@ -3,7 +3,7 @@ import { el, render, toast } from "../ui";
 import { atras, setNavVisible } from "../nav";
 import { getDeviceId } from "../device";
 import { state } from "../state";
-import { API_BASE } from "../config";
+const PRIVACIDAD_URL = "https://jonathanlobo-dev.github.io/reforma-app/";
 import { t, idioma, setIdioma, IDIOMAS, type Idioma } from "../i18n";
 
 const VERSION = "2.0";
@@ -111,7 +111,7 @@ export function pantallaAjustes() {
         p(t("ajustes.sec.acerca.hecho")),
         el("a", {
           class: "aj-link", href: "#",
-          onClick: (e: Event) => { e.preventDefault(); window.open(`${API_BASE}/privacidad`, "_blank"); },
+          onClick: (e: Event) => { e.preventDefault(); window.open(PRIVACIDAD_URL, "_blank"); },
         }, [t("ajustes.sec.acerca.privacidad")]),
       ]),
     ])

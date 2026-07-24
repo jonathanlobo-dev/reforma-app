@@ -3,7 +3,7 @@
 import { el, render, toast } from "../ui";
 import { atras, setNavVisible } from "../nav";
 import { icon } from "../ui/icons";
-import { API_BASE } from "../config";
+const PRIVACIDAD_URL = "https://jonathanlobo-dev.github.io/reforma-app/";
 import { t } from "../i18n";
 
 interface Plan {
@@ -89,7 +89,7 @@ export function pantallaPaywall(opciones: { alCerrar?: () => void } = {}) {
         el("span", {}, ["·"]),
         el("a", {
           href: "#",
-          onClick: (e: Event) => { e.preventDefault(); window.open(`${API_BASE}/privacidad`, "_blank"); },
+          onClick: (e: Event) => { e.preventDefault(); window.open(PRIVACIDAD_URL, "_blank"); },
         }, [t("paywall.privacidad")]),
       ]),
     ])

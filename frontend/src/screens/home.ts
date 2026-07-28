@@ -4,7 +4,6 @@ import { irA, setNavVisible, setNavTab } from "../nav";
 import { pantallaForm } from "./form";
 import { pantallaAjustes } from "./ajustes";
 import { pantallaPaywall } from "./paywall";
-import { pantallaMedir } from "./medir";
 import { icon } from "../ui/icons";
 import { t } from "../i18n";
 
@@ -76,25 +75,6 @@ export function pantallaHome() {
       ]),
     ]);
   });
-
-  // "Medir espacio" no viene del backend: no genera nada, es una utilidad local
-  // que calcula distancias reales sobre la foto. Se muestra en Todos y en
-  // Herramientas, con un aspecto distinto al de las cards de transformación.
-  if (!seccion.filtro || seccion.clave === "herramientas") {
-    cards.push(el("div", {
-      class: "mode-card compacto utilidad",
-      onClick: () => irA(pantallaMedir),
-    }, [
-      el("div", { class: "mode-card-fondo" }, [icon("layout", 46)]),
-      el("div", { class: "mode-card-grad" }),
-      el("div", { class: "mode-card-body" }, [
-        el("div", { class: "mode-card-txt" }, [
-          el("div", { class: "mode-card-titulo" }, [t("home.medir.titulo")]),
-          el("div", { class: "mode-card-sub" }, [t("home.medir.sub")]),
-        ]),
-      ]),
-    ]));
-  }
 
   render(
     el("div", { class: "screen" }, [

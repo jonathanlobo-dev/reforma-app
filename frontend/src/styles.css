@@ -93,22 +93,64 @@ img, video { display: block; }
 .mode-card:active { transform: scale(0.98); }
 
 /* Fondo dividido antes | después */
-.mode-card-split { position: absolute; inset: 0; display: flex; }
-.mode-card-half { flex: 1; background-size: cover; background-position: center; }
-.mode-card-half.antes   { background-image: url("/mock/antes.jpg"); }
-.mode-card-half.despues { background-image: url("/mock/despues.png"); }
+/* Antes/después superpuestos a tamaño completo (no dos mitades): así el
+   barrido revela la MISMA escena transformada, que es lo que hace que el
+   efecto se lea. La capa "después" se recorta y la máscara se anima. */
+.mode-card-split { position: absolute; inset: 0; }
+.mode-card-img {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+}
+.mode-card-img.despues { clip-path: inset(0 50% 0 0); }
+.mode-card-img.antes.generico   { background-image: url("/mock/antes.jpg"); }
+.mode-card-img.despues.generico { background-image: url("/mock/despues.png"); }
 .mode-card-divline {
   position: absolute; top: 0; bottom: 0; left: 50%; width: 2px;
-  background: rgba(255,255,255,.85); transform: translateX(-50%);
+  background: rgba(255,255,255,.9); transform: translateX(-50%);
+  box-shadow: 0 0 10px 1px rgba(255,255,255,.55);
 }
+
+/* Barrido automático: la capa "después" se descubre de izquierda a derecha y
+   la línea viaja con el borde. Solo corre en las cards visibles (ver home.ts),
+   para no animar 11 a la vez ni gastar batería fuera de pantalla. */
+@keyframes barrido-img {
+  0%, 10%   { clip-path: inset(0 100% 0 0); }
+  50%, 86%  { clip-path: inset(0 0 0 0); }
+  100%      { clip-path: inset(0 100% 0 0); }
+}
+@keyframes barrido-linea {
+  0%       { left: 0%;   opacity: 0; }
+  10%      { left: 0%;   opacity: 1; }
+  50%      { left: 100%; opacity: 1; }
+  58%,100% { left: 100%; opacity: 0; }
+}
+.mode-card.animar .mode-card-img.despues {
+  animation: barrido-img 4.2s ease-in-out infinite;
+}
+.mode-card.animar .mode-card-divline {
+  animation: barrido-linea 4.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mode-card.animar .mode-card-img.despues,
+  .mode-card.animar .mode-card-divline { animation: none; }
+}
+
 /* Variar el encuadre por categoría para que no se vean 9 cards idénticas */
-.mode-card[data-cat="interior"] .mode-card-half,
-.mode-card[data-cat="suelo"] .mode-card-half     { background-position: left center; }
-.mode-card[data-cat="muebles"] .mode-card-half,
-.mode-card[data-cat="paredes"] .mode-card-half   { background-position: right center; }
-.mode-card[data-cat="exterior"] .mode-card-half,
-.mode-card[data-cat="eliminar"] .mode-card-half  { background-position: center top; }
-.mode-card[data-cat="restaurar"] .mode-card-half { background-position: center bottom; }
+.mode-card[data-cat="interior"] .mode-card-img,
+.mode-card[data-cat="suelo"] .mode-card-img     { background-position: left center; }
+.mode-card[data-cat="muebles"] .mode-card-img   { background-position: right center; }
+.mode-card[data-cat="exterior"] .mode-card-img,
+.mode-card[data-cat="eliminar"] .mode-card-img  { background-position: center top; }
+.mode-card[data-cat="restaurar"] .mode-card-img { background-position: center bottom; }
+
+/* Tarjeta de utilidad (Medir): no es una transformación, así que en vez de
+   antes/después lleva un fondo propio con el icono centrado. */
+.mode-card.utilidad .mode-card-fondo {
+  position: absolute; inset: 0;
+  background: linear-gradient(140deg, #2a2350 0%, #3b2f6e 55%, #1d1a33 100%);
+  display: flex; align-items: center; justify-content: center;
+}
+.mode-card.utilidad .mode-card-fondo svg { opacity: .5; }
 
 .mode-card-grad {
   position: absolute; inset: 0;
@@ -814,3 +856,37 @@ textarea.field { resize: vertical; min-height: 80px; }
 .sheet-opt.opt-video { align-items: flex-start; padding: 13px 12px; }
 .opt-video-tit { font-weight: 700; margin-bottom: 3px; }
 .opt-video-sub { font-size: 12.5px; color: var(--sub); line-height: 1.35; white-space: normal; }
+
+/* ─── Medir espacio ──────────────────────────────────────── */
+.medir-instr {
+  font-size: 13.5px; color: var(--acento); font-weight: 600;
+  background: rgba(109,94,252,.12); border-radius: 10px; padding: 9px 12px;
+  margin: 0;
+}
+.medir-instr:empty { display: none; }
+.medir-medidas { display: flex; gap: 10px; }
+.medir-medidas label {
+  flex: 1; display: flex; flex-direction: column; gap: 5px;
+  font-size: 12px; color: var(--sub); font-weight: 600;
+}
+.medir-panel { display: flex; gap: 10px; }
+.medir-panel:empty { display: none; }
+.medir-dato {
+  flex: 1; background: var(--surface2); border: 1px solid var(--borde);
+  border-radius: 14px; padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.medir-dato b { font-size: 22px; font-weight: 800; letter-spacing: -.5px; }
+.medir-dato span { font-size: 11.5px; color: var(--sub); text-transform: uppercase; letter-spacing: .06em; }
+.medir-dato.sec b { font-size: 17px; color: var(--sub); }
+.medir-acciones { display: flex; flex-wrap: wrap; gap: 8px; }
+.medir-acciones button { flex: 1; min-width: 130px; }
+.medir-aviso {
+  font-size: 12px; color: var(--sub); line-height: 1.45; margin: 0;
+  border-left: 2px solid var(--borde); padding-left: 10px;
+}
+/* Con la foto ya cargada, la zona de elegir se reduce a un botón discreto. */
+.foto-zone.compacta {
+  min-height: 0; padding: 10px; gap: 8px; flex-direction: row;
+  font-size: 13.5px; color: var(--sub); border-style: solid;
+}

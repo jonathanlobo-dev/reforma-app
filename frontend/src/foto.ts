@@ -1,7 +1,12 @@
 // Selección de foto: Capacitor Camera en móvil, <input file> en web.
 export async function elegirFoto(): Promise<{ blob: Blob; url: string } | null> {
-  // Intento nativo (móvil)
+  // Intento nativo (móvil). Se comprueba la plataforma ANTES de cargar el
+  // plugin: en navegador su implementación web abre un menú propio
+  // (Foto/Cámara) que sobra, porque abajo ya está el <input type=file>.
+  // Mismo criterio que device.ts.
   try {
+    const { Capacitor } = await import("@capacitor/core");
+    if (!Capacitor.isNativePlatform()) throw new Error("web");
     const { Camera, CameraResultType, CameraSource } = await import("@capacitor/camera");
     const photo = await Camera.getPhoto({
       resultType: CameraResultType.Uri,

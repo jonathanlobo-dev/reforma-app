@@ -66,7 +66,7 @@ export const en: Record<string, string> = {
   "form.toggle.imagen": "Image · free",
   "form.toggle.video": "Animated video · Premium",
   "form.transformar": "Transform",
-  "form.extra.placeholder": "Anything else you'd like to change… (optional)",
+  "form.extra.placeholder": "Optional — ask for specific changes: wood floor, white ceiling, remove the curtain…",
   "form.extra.prefix": " Also, the user requests: {v}.",
   "form.generico.placeholder": "What do you want to change?",
   "elim.modo_objeto": "Remove an object",

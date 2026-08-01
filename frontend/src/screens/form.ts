@@ -405,7 +405,11 @@ function buildControles(clave: string, engine: string): Controles {
           { tituloKey: "paso.paleta", node: paleta.node },
           { tituloKey: "paso.modo", node: el("div", { class: "ctrl-stack" }, [modo.node, extra.node]) },
         ],
-        node: el("div", { class: "ctrl-stack" }, [hab.node, estilo.node, paleta.node, modo.node, extra.node]),
+        // El asistente de esta categoría siempre tiene pasos, así que este
+        // `node` plano nunca se pinta — pero debe existir para el tipo, y NO
+        // puede reusar los mismos elementos de arriba (un nodo del DOM solo
+        // tiene un padre: reusarlos aquí los saca de su paso).
+        node: el("span", {}),
         getDetalle: () => `${fraseEstilo()}${t("ctrl.habitacion_label")}: ${hab.getValue()}. ${frasePaleta()}${t("ctrl.modo_label")}: ${modo.getValue()}.${extra.getValue()}`,
       };
     }

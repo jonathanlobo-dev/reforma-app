@@ -180,12 +180,25 @@ def generar_plan(titulo_cat: str, guia: str, detalle: str, lang: str = "es") -> 
     return plan
 
 
+def _entradas_edicion(modelo: str, edit_prompt: str, url_imagen: str) -> dict:
+    """Cada familia de modelos nombra distinto sus entradas, así que cambiar
+    EDIT_MODEL en Render rompería la llamada sin este adaptador:
+      · flux-kontext  → input_image (una URL en texto)
+      · nano-banana   → image_input (LISTA de URLs)
+    Ambos aceptan prompt y output_format, y por defecto respetan la proporción
+    de la foto original (aspect_ratio=match_input_image), así que no hay que
+    forzarla."""
+    base = {"prompt": edit_prompt, "output_format": "png"}
+    if "nano-banana" in modelo or "gemini" in modelo:
+        return {**base, "image_input": [url_imagen]}
+    return {**base, "input_image": url_imagen}
+
+
 def editar(foto: Path, edit_prompt: str, out: Path) -> tuple[str, str]:
     """Devuelve (url_antes, url_despues); guarda la imagen editada en `out`."""
     url_antes = replicate_upload(foto)
-    url_despues = replicate_run(config.EDIT_MODEL, {
-        "prompt": edit_prompt, "input_image": url_antes, "output_format": "png",
-    })
+    url_despues = replicate_run(
+        config.EDIT_MODEL, _entradas_edicion(config.EDIT_MODEL, edit_prompt, url_antes))
     descargar(url_despues, out)
     return url_antes, url_despues
 

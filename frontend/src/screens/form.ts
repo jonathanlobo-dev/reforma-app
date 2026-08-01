@@ -4,7 +4,7 @@ import { elegirFoto } from "../foto";
 import { irA, atras, setNavVisible } from "../nav";
 import { pantallaProcessing } from "./processing";
 import { pantallaMask } from "./mask";
-import { estiloCarrusel, colorSelector, superficieSelector, dropdown, type OpcionDropdown } from "../ui/controls";
+import { estiloCarrusel, colorSelector, superficieSelector, dropdown, paletaSelector, type OpcionDropdown } from "../ui/controls";
 import { icon } from "../ui/icons";
 import { abrirConsejos, consejosVistos } from "../ui/consejos";
 import { t } from "../i18n";
@@ -26,6 +26,12 @@ const INTENSIDADES: OpcionDropdown[] = [
   { slug: "sutil", labelKey: "intensidad.sutil" },
   { slug: "media", labelKey: "intensidad.media" },
   { slug: "fuerte", labelKey: "intensidad.fuerte" },
+];
+// "Intensidad" era abstracta (¿qué es media?). El modo dice lo que de verdad
+// decide el usuario: si la IA respeta la distribución actual o puede rehacerla.
+const MODOS: OpcionDropdown[] = [
+  { slug: "respetar", labelKey: "modo.respetar" },
+  { slug: "libertad", labelKey: "modo.libertad" },
 ];
 const MATERIALES_SUELO: OpcionDropdown[] = [
   { slug: "porcelanato_blanco", labelKey: "suelo_mat.porcelanato_blanco" },
@@ -267,10 +273,64 @@ export function pantallaForm(claveCat: string) {
     ]));
   }
   if (engine === "estilo") hijos.push(refZone);
-  hijos.push(muestrasWrap, controles.node, proyNode, toggleNode,
-    el("button", { class: "btn-primario btn-ico", onClick: enviar }, [icon("sparkles", 18), t("form.transformar")]));
 
-  render(el("div", { class: "screen" }, hijos));
+  const botonGenerar = el("button", { class: "btn-primario btn-ico", onClick: enviar },
+    [icon("sparkles", 18), t("form.transformar")]);
+
+  if (controles.pasos && controles.pasos.length > 1) {
+    // ── Asistente por pasos ──────────────────────────────────────────────
+    // La foto es el paso 1 y los controles vienen después, uno por pantalla:
+    // así cada decisión se toma sola y el usuario no se enfrenta a un muro de
+    // opciones ni escribe cinco peticiones de golpe.
+    const pasos = controles.pasos;
+    const total = pasos.length + 1;          // +1 = la foto
+    let paso = 0;                            // 0 = foto
+    const etiqueta = el("span", { class: "paso-chip" });
+    const barras = el("div", { class: "paso-barras" },
+      Array.from({ length: total }, () => el("i")));
+    const titulo = el("h2", { class: "paso-titulo" });
+    const cuerpo = el("div", { class: "paso-cuerpo" });
+    const btnAtras = el("button", { class: "btn-secundario", onClick: () => ir(paso - 1) },
+      [t("form.paso.atras")]);
+    const btnSig = el("button", { class: "btn-primario", onClick: () => ir(paso + 1) },
+      [t("form.paso.siguiente")]);
+    const pie = el("div", { class: "paso-pie" }, [btnAtras, btnSig]);
+
+    function ir(n: number) {
+      if (n < 0) { atras(); return; }
+      // Para avanzar del paso de la foto hace falta tener foto.
+      if (paso === 0 && n > 0 && !state.foto) {
+        toast(t(engine === "plano" ? "toast.sube_plano" : "toast.elige_foto"));
+        return;
+      }
+      paso = Math.min(n, total - 1);
+      pintar();
+    }
+
+    function pintar() {
+      etiqueta.textContent = t("form.paso.n", { n: paso + 1, total });
+      barras.querySelectorAll("i").forEach((b, i) => b.classList.toggle("ok", i <= paso));
+      cuerpo.replaceChildren();
+      if (paso === 0) {
+        titulo.textContent = t("form.paso.foto");
+        cuerpo.append(fotoZone, muestrasWrap);
+      } else {
+        const p = pasos[paso - 1];
+        titulo.textContent = t(p.tituloKey);
+        cuerpo.append(p.node);
+        // El último paso lleva además proyecto, imagen/video y el botón final.
+        if (paso === total - 1) cuerpo.append(proyNode, toggleNode);
+      }
+      pie.replaceChildren(btnAtras, paso === total - 1 ? botonGenerar : btnSig);
+    }
+
+    hijos.push(el("div", { class: "paso-cab" }, [etiqueta, barras]), titulo, cuerpo, pie);
+    render(el("div", { class: "screen" }, hijos));
+    pintar();
+  } else {
+    hijos.push(muestrasWrap, controles.node, proyNode, toggleNode, botonGenerar);
+    render(el("div", { class: "screen" }, hijos));
+  }
   refrescarFoto();
   refrescarRef();
 }
@@ -304,6 +364,10 @@ interface Controles {
   // Opcional: permite que un modo del formulario envíe otra categoría (ej.
   // "Eliminar" con el toggle "vaciar todo" envía categoria="vaciar").
   getCategoria?: () => string;
+  // Opcional: divide los controles en pasos (asistente 1/4, 2/4…). Las
+  // categorías con varias decisiones se guían así para que el usuario elija
+  // en vez de escribir un párrafo con cinco peticiones a la vez.
+  pasos?: { tituloKey: string; node: HTMLElement }[];
 }
 
 function buildControles(clave: string, engine: string): Controles {
@@ -319,18 +383,30 @@ function buildControles(clave: string, engine: string): Controles {
       };
     }
     case "interior": {
-      const estilo = estiloCarrusel("moderno");
       const hab = dropdown("ctrl.habitacion_label", HABITACIONES, "sala");
-      const intens = dropdown("ctrl.intensidad_label", INTENSIDADES, "media");
+      const estilo = estiloCarrusel("moderno");
+      const paleta = paletaSelector("sorprendeme");
+      const modo = dropdown("ctrl.modo_label", MODOS, "respetar");
       const extra = campoExtra();
       // "ninguno"/"personalizado": no se impone ningún estilo del catálogo —
       // manda solo lo que el usuario escribió en el campo de texto.
       const fraseEstilo = () =>
         ["ninguno", "personalizado"].includes(estilo.getSlug())
           ? "" : `${t("ctrl.estilo_label")}: ${estilo.getValue()}. `;
+      const frasePaleta = () => {
+        const v = paleta.getValue();
+        if (paleta.getSlug() === "actual") return `${t("ctrl.paleta_label")}: ${t("paleta.frase_actual")}. `;
+        return v ? `${t("ctrl.paleta_label")}: ${v}. ` : "";
+      };
       return {
-        node: el("div", { class: "ctrl-stack" }, [estilo.node, hab.node, intens.node, extra.node]),
-        getDetalle: () => `${fraseEstilo()}${t("ctrl.habitacion_label")}: ${hab.getValue()}. ${t("ctrl.intensidad_label")}: ${intens.getValue()}.${extra.getValue()}`,
+        pasos: [
+          { tituloKey: "paso.espacio", node: hab.node },
+          { tituloKey: "paso.estilo", node: estilo.node },
+          { tituloKey: "paso.paleta", node: paleta.node },
+          { tituloKey: "paso.modo", node: el("div", { class: "ctrl-stack" }, [modo.node, extra.node]) },
+        ],
+        node: el("div", { class: "ctrl-stack" }, [hab.node, estilo.node, paleta.node, modo.node, extra.node]),
+        getDetalle: () => `${fraseEstilo()}${t("ctrl.habitacion_label")}: ${hab.getValue()}. ${frasePaleta()}${t("ctrl.modo_label")}: ${modo.getValue()}.${extra.getValue()}`,
       };
     }
     case "exterior": {

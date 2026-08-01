@@ -274,3 +274,58 @@ export function baSlider(urlAntes: string, urlDespues: string): HTMLElement {
 
   return wrap;
 }
+
+// ─── Paleta de colores ───────────────────────────────────────────────────────
+// Elegir una paleta en vez de describirla por escrito. Nació de ver que los
+// usuarios pedían 5 cosas en un párrafo y el modelo solo ejecutaba 2-3: cuanto
+// más se elige y menos se escribe, más fiable es el resultado.
+// "sorprendeme" deja que la IA decida; "actual" conserva los colores del
+// espacio (útil cuando solo se quiere cambiar muebles o distribución).
+export const PALETAS = [
+  { slug: "sorprendeme", hexes: [] as string[] },
+  { slug: "actual", hexes: [] as string[] },
+  { slug: "neutros", hexes: ["#ffffff", "#e7e2da", "#c3b5a1", "#1c1a17"] },
+  { slug: "calidos", hexes: ["#e8c4a0", "#c8814b", "#a85a4a", "#2e2420"] },
+  { slug: "azules", hexes: ["#d9d3c7", "#a9b4c0", "#6f7f92", "#2f5070"] },
+  { slug: "verdes", hexes: ["#e6e4d5", "#b6c2a5", "#7d9471", "#37452f"] },
+  { slug: "tierra", hexes: ["#e5d3bd", "#b98b62", "#7d5b46", "#3b2f2a"] },
+  { slug: "pastel", hexes: ["#f6e0e4", "#e9dff2", "#d8e8ef", "#f3ead6"] },
+  { slug: "monocromo", hexes: ["#ffffff", "#b9b9b9", "#5e5e5e", "#141414"] },
+];
+
+export function paletaSelector(inicialSlug = "sorprendeme") {
+  let sel = inicialSlug;
+  let cards: HTMLElement[] = [];
+
+  const row = el("div", { class: "paleta-row" });
+
+  function actualizar() {
+    cards.forEach((c) => c.classList.toggle("sel", c.dataset.slug === sel));
+  }
+
+  cards = PALETAS.map(({ slug, hexes }) => {
+    const muestras = hexes.length
+      ? el("div", { class: "paleta-puntos" },
+          hexes.map((h) => el("span", { class: "paleta-punto", style: `background:${h}` })))
+      : el("div", { class: "paleta-puntos ico" },
+          [slug === "sorprendeme" ? "🎲" : "🎨"]);
+    const card = el("button", {
+      class: "paleta-card", "data-slug": slug,
+      onClick: () => { sel = slug; actualizar(); },
+    }, [muestras, el("span", { class: "paleta-nom" }, [t(`paleta.${slug}`)])]) as HTMLElement;
+    return card;
+  });
+  row.append(...cards);
+  actualizar();
+
+  return {
+    node: el("div", { class: "ctrl-wrap" }, [
+      el("div", { class: "ctrl-label" }, [t("ctrl.paleta_label")]),
+      row,
+    ]),
+    getSlug: () => sel,
+    /** Frase para el prompt; vacía cuando el usuario no impone colores. */
+    getValue: () => (sel === "sorprendeme" || sel === "actual")
+      ? "" : t(`paleta.${sel}`),
+  };
+}

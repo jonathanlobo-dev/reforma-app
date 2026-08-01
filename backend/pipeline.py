@@ -47,9 +47,16 @@ def groq_json(system: str, user: str, max_tokens: int = 1200) -> dict:
         if r.status_code == 429 and intento < 3:
             time.sleep(min(float(r.headers.get("retry-after", 10)), 60))
             continue
+        # Groq a veces devuelve 400 'json_validate_failed' (el modelo emitió JSON
+        # roto). Es intermitente: reintentar con otra semilla suele salir bien.
+        # Sin esto, una generación normal se cae del todo por un fallo del LLM.
+        if r.status_code == 400 and intento < 3 and \
+                "json_validate_failed" in r.text:
+            time.sleep(1)
+            continue
         r.raise_for_status()
         return json.loads(r.json()["choices"][0]["message"]["content"])
-    raise RuntimeError("Groq en rate limit tras 4 intentos")
+    raise RuntimeError("Groq falló tras 4 intentos (rate limit o JSON inválido)")
 
 
 # Prompts del producto: viven en prompts_privados.py (no versionado).

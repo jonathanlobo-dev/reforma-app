@@ -113,6 +113,12 @@ CUOTAS = {
         "pt": "O sistema atingiu seu limite diário de vídeos. Tente amanhã.",
         "it": "Il sistema ha raggiunto il limite giornaliero di video. Riprova domani.",
     },
+    "limite_global_imagenes": {
+        "es": "El sistema alcanzó su límite diario de imágenes. Intenta mañana.",
+        "en": "The system reached its daily image limit. Try again tomorrow.",
+        "pt": "O sistema atingiu seu limite diário de imagens. Tente amanhã.",
+        "it": "Il sistema ha raggiunto il limite giornaliero di immagini. Riprova domani.",
+    },
     "limite_chats": {
         "es": "El Maestro descansa: llegaste a los {n} mensajes de hoy. Vuelve mañana.",
         "en": "The Foreman is resting: you've reached {n} messages today. Come back tomorrow.",

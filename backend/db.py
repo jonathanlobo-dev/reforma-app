@@ -80,6 +80,7 @@ _MIGRACIONES = [
     ("trabajos", "limpio", "TEXT"),  # resultado SIN marca de agua (para encadenar)
     ("trabajos", "lang", "TEXT"),    # idioma del usuario al crear el trabajo (es/en/pt/it)
     ("trabajos", "thumb", "TEXT"),   # miniatura liviana para la grilla de Recientes
+    ("uso_global", "imagenes", "INTEGER DEFAULT 0"),  # freno global de imágenes (espejo de videos)
 ]
 
 
@@ -193,6 +194,13 @@ def puede_generar(device_id: str, tipo: str) -> tuple[bool, str, dict]:
         if tipo == "imagen" and img >= lim_img and credito <= 0:
             clave = "limite_imagenes_premium" if premium else "limite_imagenes_free"
             return False, clave, {"n": lim_img}
+        if tipo == "imagen":
+            # Freno global de imágenes (espejo del freno de videos): protege
+            # contra un pico de abuso coordinado que rota device_id + IP.
+            cur.execute(_q(f"SELECT imagenes FROM uso_global WHERE fecha={PH}"), (hoy,))
+            g = cur.fetchone()
+            if g and (g["imagenes"] or 0) >= config.IMAGENES_GLOBAL_DIA:
+                return False, "limite_global_imagenes", {}
         if tipo == "video":
             # El crédito de regalo salta el tope diario y el candado del tier
             # gratis (fue una concesión explícita del admin), pero NO el freno
@@ -266,15 +274,37 @@ _TOPES_IP = {"imagenes": ("IMAGENES_IP_DIA",), "videos": ("VIDEOS_IP_DIA",),
              "chats": ("CHATS_IP_DIA",)}
 
 
+def _agrupar_ip(ip: str) -> str:
+    """Agrupa la IP por subred /24 (IPv4) o /64 (IPv6) para que rotar el
+    último octeto/segmento no sirva para esquivar el tope: quien controla una
+    /24 entera puede seguir generando IPs "distintas" indefinidamente contra
+    un tope por IP exacta. Se guarda la subred como clave en uso_ip, no la IP
+    real, así el tope se comparte entre todas las IPs de esa red.
+    Una IP mal formada (o vacía) se deja tal cual — mejor no romper el flujo
+    por un formato inesperado."""
+    if not ip:
+        return ip
+    if ":" in ip:  # IPv6: agrupar por los primeros 4 bloques (/64)
+        bloques = ip.split(":")
+        if len(bloques) >= 4:
+            return ":".join(bloques[:4]) + "::/64"
+        return ip
+    partes = ip.split(".")
+    if len(partes) == 4 and all(p.isdigit() for p in partes):
+        return f"{partes[0]}.{partes[1]}.{partes[2]}.0/24"
+    return ip
+
+
 def puede_ip(ip: str, col: str) -> bool:
-    """col: 'imagenes' | 'videos' | 'chats'."""
+    """col: 'imagenes' | 'videos' | 'chats'. Agrupa por subred (ver _agrupar_ip)."""
     if not ip:
         return True
+    red = _agrupar_ip(ip)
     tope = getattr(config, _TOPES_IP[col][0])
     hoy = date.today().isoformat()
     with _con() as con:
         cur = con.cursor()
-        cur.execute(_q(f"SELECT {col} FROM uso_ip WHERE ip={PH} AND fecha={PH}"), (ip, hoy))
+        cur.execute(_q(f"SELECT {col} FROM uso_ip WHERE ip={PH} AND fecha={PH}"), (red, hoy))
         fila = cur.fetchone()
         usado = (fila[col] if fila and fila[col] is not None else 0)
         return usado < tope
@@ -285,13 +315,14 @@ def registrar_ip(ip: str, col: str) -> None:
         raise ValueError(f"columna inválida: {col}")
     if not ip:
         return
+    red = _agrupar_ip(ip)
     hoy = date.today().isoformat()
     with _con() as con:
         cur = con.cursor()
         cur.execute(_q(
             f"INSERT INTO uso_ip (ip, fecha, {col}) VALUES ({PH},{PH},1) "
             f"ON CONFLICT(ip, fecha) DO UPDATE SET {col}=COALESCE(uso_ip.{col},0)+1"),
-            (ip, hoy))
+            (red, hoy))
         con.commit()
 
 
@@ -333,12 +364,17 @@ def registrar_uso(device_id: str, tipo: str) -> None:
                 f"INSERT INTO uso (device_id, fecha, {col}) VALUES ({PH},{PH},1) "
                 f"ON CONFLICT(device_id, fecha) DO UPDATE SET {col}=uso.{col}+1"),
                 (device_id, hoy))
-        # El video siempre cuenta en el global (freno de sistema), venga de cuota
-        # o de crédito, porque ese uso sí llamó a Replicate.
+        # El video (y ahora la imagen) siempre cuenta en el global (freno de
+        # sistema), venga de cuota o de crédito, porque ese uso sí llamó a
+        # Replicate.
         if tipo == "video":
             cur.execute(_q(
                 f"INSERT INTO uso_global (fecha, videos) VALUES ({PH},1) "
                 f"ON CONFLICT(fecha) DO UPDATE SET videos=uso_global.videos+1"), (hoy,))
+        else:
+            cur.execute(_q(
+                f"INSERT INTO uso_global (fecha, imagenes) VALUES ({PH},1) "
+                f"ON CONFLICT(fecha) DO UPDATE SET imagenes=COALESCE(uso_global.imagenes,0)+1"), (hoy,))
         con.commit()
 
 

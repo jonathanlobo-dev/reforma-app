@@ -1,11 +1,11 @@
 // Ajustes: idioma, cómo usar, límites/créditos, descargo de responsabilidad, cuenta.
 import { el, render, toast } from "../ui";
-import { atras, setNavVisible } from "../nav";
+import { atras, irA, setNavVisible } from "../nav";
 import { getDeviceId } from "../device";
 import { state } from "../state";
-const PRIVACIDAD_URL = "https://jonathanlobo-dev.github.io/reforma-app/";
 import { t, idioma, setIdioma, IDIOMAS, type Idioma } from "../i18n";
 import { aplicarTema, temaActual, type Tema } from "../ui/tema";
+import { pantallaPrivacidad } from "./legal";
 
 const VERSION = "2.0";
 
@@ -149,7 +149,7 @@ export function pantallaAjustes() {
         p(t("ajustes.sec.acerca.hecho")),
         el("a", {
           class: "aj-link", href: "#",
-          onClick: (e: Event) => { e.preventDefault(); window.open(PRIVACIDAD_URL, "_blank"); },
+          onClick: (e: Event) => { e.preventDefault(); irA(pantallaPrivacidad); },
         }, [t("ajustes.sec.acerca.privacidad")]),
       ]),
     ])

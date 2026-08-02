@@ -1,10 +1,10 @@
 // Pantalla de suscripción (paywall). Visual completo; el COBRO real se conecta
 // después con RevenueCat + Google Play Billing (ver TODO abajo).
 import { el, render, toast } from "../ui";
-import { atras, setNavVisible } from "../nav";
+import { atras, irA, setNavVisible } from "../nav";
 import { icon } from "../ui/icons";
-const PRIVACIDAD_URL = "https://jonathanlobo-dev.github.io/reforma-app/";
 import { t } from "../i18n";
+import { pantallaPrivacidad } from "./legal";
 
 interface Plan {
   id: string; etiquetaKey: string; tituloKey: string; subKey: string; precio: string;
@@ -89,7 +89,7 @@ export function pantallaPaywall(opciones: { alCerrar?: () => void } = {}) {
         el("span", {}, ["·"]),
         el("a", {
           href: "#",
-          onClick: (e: Event) => { e.preventDefault(); window.open(PRIVACIDAD_URL, "_blank"); },
+          onClick: (e: Event) => { e.preventDefault(); irA(pantallaPrivacidad); },
         }, [t("paywall.privacidad")]),
       ]),
     ])

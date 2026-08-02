@@ -207,8 +207,15 @@ export async function pantallaResult(t: Trabajo) {
   const puedeAnimar = state.config.video && t.tipo === "imagen";
   const puedeProceso = t.tipo === "imagen";  // el resumen no depende de VIDEO_ON (es gratis)
   const puedeVideo = puedeAnimar || puedeProceso;
-  // Ids que alimentan el resumen: la cadena si hay varias ediciones, o solo esta.
-  const idsProceso = state.cadena.length >= 2 ? state.cadena : [t.id];
+  // Ids que alimentan el resumen: la cadena COMPLETA (desde la foto original)
+  // solo si termina en este resultado; si no, este solo. Así el video siempre
+  // arranca en la primera foto que subió el usuario.
+  const cadenaValida = state.cadena.length >= 2 &&
+    state.cadena[state.cadena.length - 1] === t.id;
+  const idsProceso = cadenaValida ? state.cadena : [t.id];
+  // Origen del animado: la foto original (primer eslabón), para animar desde el
+  // principio y no solo desde el último paso "seguir editando".
+  const origenAnimado = cadenaValida ? state.cadena[0] : undefined;
 
   const videoProceso = async () => {
     try {
@@ -223,7 +230,7 @@ export async function pantallaResult(t: Trabajo) {
   const videoAnimado = async () => {
     try {
       const deviceId = await getDeviceId();
-      const { id } = await crearAnimacion(deviceId, t.id);
+      const { id } = await crearAnimacion(deviceId, t.id, origenAnimado);
       irA(() => pantallaEsperarTrabajo(id, "video"));
     } catch (e) {
       toast((e as Error).message);

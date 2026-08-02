@@ -210,7 +210,7 @@ export async function crearProceso(
 /** Anima un resultado YA generado (Seedance). Consume cuota de video porque es
  *  una llamada real a Replicate, a diferencia del resumen en diapositivas. */
 export async function crearAnimacion(
-  deviceId: string, trabajoId: string
+  deviceId: string, trabajoId: string, origenId?: string
 ): Promise<{ id: string; status: string; tipo: string }> {
   if (MOCK) {
     const id = "mock-" + crypto.randomUUID().slice(0, 8);
@@ -220,6 +220,10 @@ export async function crearAnimacion(
   const fd = new FormData();
   fd.append("device_id", deviceId);
   fd.append("trabajo_id", trabajoId);
+  // Si viene de una cadena de ediciones, el origen es la foto ORIGINAL (primer
+  // eslabón): el animado va de esa foto al resultado actual, no solo del último
+  // paso editado.
+  if (origenId) fd.append("origen_id", origenId);
   fd.append("lang", idioma());
   const r = await fetchApi(`${API_BASE}/animar`, { method: "POST", body: fd });
   if (!r.ok) {

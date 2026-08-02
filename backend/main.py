@@ -177,6 +177,7 @@ def crear_animacion(
     background: BackgroundTasks,
     device_id: str = Form(...),
     trabajo_id: str = Form(...),
+    origen_id: str = Form(""),  # primer eslabón de la cadena (foto original)
     lang: str = Form("es"),
 ):
     """Anima un resultado YA generado (Seedance). Cuesta lo mismo que un video
@@ -190,8 +191,14 @@ def crear_animacion(
     t = db.obtener(trabajo_id)
     if not t or t["device_id"] != device_id or t["status"] != "done":
         raise HTTPException(404, "No se encontró esa transformación.")
-    antes = t.get("antes")
     despues = t.get("limpio") or t.get("despues")
+    antes = t.get("antes")
+    # Cadena de ediciones: animar desde la foto ORIGINAL (el "antes" del primer
+    # eslabón) hasta este resultado, no solo desde el último paso editado.
+    if origen_id and origen_id != trabajo_id:
+        origen = db.obtener(origen_id)
+        if origen and origen["device_id"] == device_id and origen.get("antes"):
+            antes = origen["antes"]
     if not antes or not despues:
         raise HTTPException(400, "Esa transformación no tiene imagen para animar.")
 

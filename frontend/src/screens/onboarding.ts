@@ -10,6 +10,12 @@ export function onboardingPendiente(): boolean {
   return !localStorage.getItem(FLAG);
 }
 
+/** Borra el flag de "ya visto" para que el tutorial se muestre de nuevo.
+ * Usado por el botón "Ver tutorial otra vez" en Ajustes. */
+export function reiniciarOnboarding(): void {
+  localStorage.removeItem(FLAG);
+}
+
 interface Tarjeta { media: () => HTMLElement; tituloKey: string; textoKey: string; }
 
 const TARJETAS: Tarjeta[] = [

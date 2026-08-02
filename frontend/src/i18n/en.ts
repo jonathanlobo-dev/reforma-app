@@ -312,13 +312,14 @@ export const en: Record<string, string> = {
   "foto.nativo.cancelar": "Cancel",
 
   "ajustes.sec.uso.titulo": "How to use the app",
-  "ajustes.sec.uso.p1": "1. Pick a mode on Home (paint, remodel, magic brush…).",
+  "ajustes.sec.uso.p1": "1. Pick one of the available modes on Home based on what you want to do with your space.",
   "ajustes.sec.uso.p2": "2. Upload a clear, well-lit photo of your space. The better the photo, the better the result.",
   "ajustes.sec.uso.p3": "3. Be specific: say WHAT to change and WHAT to keep. The AI doesn't guess.",
   "ajustes.sec.uso.li1": "✅ \"Concrete block perimeter wall where the wire fence is, remove the brush, add grass and a pool. Don't touch the neighboring houses.\"",
   "ajustes.sec.uso.li2": "❌ \"a pool\" (the AI will make up everything else)",
-  "ajustes.sec.uso.p4": "4. With the Magic Brush, paint with your finger ONLY the area you want to change.",
+  "ajustes.sec.uso.p4": "4. Some modes let you mark with your finger ONLY the exact area you want to change, instead of describing it in words.",
   "ajustes.sec.uso.p5": "5. Unsure about materials or colors? Ask {nombre} in the center tab.",
+  "ajustes.sec.uso.tutorial_btn": "Watch the tutorial again",
 
   "ajustes.sec.limites.titulo": "Daily limits (free)",
   "ajustes.sec.limites.p1": "Every generation uses AI models that have a real cost. The free plan includes per day:",

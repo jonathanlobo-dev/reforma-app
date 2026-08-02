@@ -1,11 +1,13 @@
 // Ajustes: idioma, cómo usar, límites/créditos, descargo de responsabilidad, cuenta.
 import { el, render, toast } from "../ui";
-import { atras, irA, setNavVisible } from "../nav";
+import { atras, irA, raiz, setNavVisible } from "../nav";
 import { getDeviceId } from "../device";
 import { state } from "../state";
 import { t, idioma, setIdioma, IDIOMAS, type Idioma } from "../i18n";
 import { aplicarTema, temaActual, type Tema } from "../ui/tema";
 import { pantallaPrivacidad } from "./legal";
+import { pantallaOnboarding, reiniciarOnboarding } from "./onboarding";
+import { pantallaHome } from "./home";
 
 const VERSION = "2.0";
 
@@ -118,6 +120,13 @@ export function pantallaAjustes() {
         li([t("ajustes.sec.uso.li1"), t("ajustes.sec.uso.li2")]),
         p(t("ajustes.sec.uso.p4")),
         p(t("ajustes.sec.uso.p5", { nombre: t("asesor.nombre") })),
+        el("button", {
+          class: "btn-secundario",
+          onClick: () => {
+            reiniciarOnboarding();
+            raiz(() => pantallaOnboarding(() => raiz(pantallaHome)));
+          },
+        }, [t("ajustes.sec.uso.tutorial_btn")]),
       ]),
 
       seccion(t("ajustes.sec.limites.titulo"), [

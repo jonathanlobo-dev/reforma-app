@@ -312,13 +312,14 @@ export const it: Record<string, string> = {
   "foto.nativo.cancelar": "Annulla",
 
   "ajustes.sec.uso.titulo": "Come usare l'app",
-  "ajustes.sec.uso.p1": "1. Scegli una modalità in Home (dipingi, ristruttura, pennello magico…).",
+  "ajustes.sec.uso.p1": "1. Scegli una delle modalità disponibili in Home in base a cosa vuoi fare con il tuo spazio.",
   "ajustes.sec.uso.p2": "2. Carica una foto chiara e ben illuminata del tuo spazio. Migliore è la foto, migliore sarà il risultato.",
   "ajustes.sec.uso.p3": "3. Sii specifico: dì COSA cambiare e COSA mantenere. L'IA non indovina.",
   "ajustes.sec.uso.li1": "✅ \"Muro perimetrale in blocchi dove c'è la recinzione in filo, rimuovere la vegetazione, aggiungere erba e una piscina. Non toccare le case vicine.\"",
   "ajustes.sec.uso.li2": "❌ \"una piscina\" (l'IA inventerà tutto il resto)",
-  "ajustes.sec.uso.p4": "4. Con il Pennello magico, dipingi con il dito SOLO l'area che vuoi cambiare.",
+  "ajustes.sec.uso.p4": "4. Alcune modalità ti permettono di segnare col dito SOLO l'area esatta che vuoi cambiare, invece di descriverla a parole.",
   "ajustes.sec.uso.p5": "5. Dubbi su materiali o colori? Chiedi a {nombre} nella scheda centrale.",
+  "ajustes.sec.uso.tutorial_btn": "Rivedi il tutorial",
 
   "ajustes.sec.limites.titulo": "Limiti giornalieri (gratis)",
   "ajustes.sec.limites.p1": "Ogni generazione usa modelli IA che hanno un costo reale. Il piano gratuito include al giorno:",

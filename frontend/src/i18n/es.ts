@@ -312,13 +312,14 @@ export const es: Record<string, string> = {
   "foto.nativo.cancelar": "Cancelar",
 
   "ajustes.sec.uso.titulo": "Cómo usar la app",
-  "ajustes.sec.uso.p1": "1. Elige un modo en Inicio (pintar, remodelar, pincel mágico…).",
+  "ajustes.sec.uso.p1": "1. Elige uno de los modos disponibles en Inicio según lo que quieras hacer con tu espacio.",
   "ajustes.sec.uso.p2": "2. Sube una foto clara y bien iluminada de tu espacio. Mientras mejor la foto, mejor el resultado.",
   "ajustes.sec.uso.p3": "3. Sé específico: di QUÉ cambiar y QUÉ conservar. La IA no adivina.",
   "ajustes.sec.uso.li1": "✅ \"Pared perimetral de bloques donde está la cerca de alambre, quitar el monte, poner grama y una piscina. No tocar las casas vecinas.\"",
   "ajustes.sec.uso.li2": "❌ \"una piscina\" (la IA inventará todo lo demás)",
-  "ajustes.sec.uso.p4": "4. Con el Pincel mágico, pinta con el dedo SOLO la zona que quieres cambiar.",
+  "ajustes.sec.uso.p4": "4. Algunos modos te dejan marcar con el dedo SOLO la zona exacta que quieres cambiar, en vez de describirla con palabras.",
   "ajustes.sec.uso.p5": "5. ¿Dudas de materiales o colores? Pregúntale a {nombre} en la pestaña central.",
+  "ajustes.sec.uso.tutorial_btn": "Ver tutorial otra vez",
 
   "ajustes.sec.limites.titulo": "Límites diarios (gratis)",
   "ajustes.sec.limites.p1": "Cada generación usa modelos de IA que tienen costo real. El plan gratuito incluye por día:",

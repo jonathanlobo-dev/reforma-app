@@ -107,7 +107,7 @@ def _urls(trabajo: dict) -> dict:
     Supabase → https absoluta; local → /media/<id>/<archivo> (el frontend le
     antepone API_BASE)."""
     claves = ("antes", "despues", "comparacion", "video", "limpio", "thumb",
-              "video_vertical", "video_cuadrado", "video_horizontal")
+              "master", "video_vertical", "video_cuadrado", "video_horizontal")
     return {k: trabajo[k] for k in claves if trabajo.get(k)}
 
 

@@ -14,6 +14,7 @@ export interface Resultados {
   antes?: string; despues?: string; comparacion?: string; video?: string;
   limpio?: string; // resultado sin marca de agua (para encadenar ediciones)
   thumb?: string;  // miniatura liviana (~25 KB) para la grilla de Recientes
+  master?: string; // fuente sin recortar; si falta, el video no admite formatos
   // Formatos alternativos ya re-encuadrados (cache del servidor); pueden no
   // venir si todavía no se pidieron.
   video_vertical?: string; video_cuadrado?: string; video_horizontal?: string;

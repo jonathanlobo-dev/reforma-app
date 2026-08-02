@@ -83,14 +83,21 @@ export async function pantallaResult(t: Trabajo) {
       class: "resultado-media", src: video,
       controls: true, autoplay: true, loop: true, muted: true, playsinline: true,
     }) as HTMLVideoElement;
-    chipsFormato = el("div", { class: "chips-formato" },
-      FORMATOS.map((f) => el("button", {
-        class: "chip-formato" + (f.slug === formatoActual ? " sel" : ""),
-        "data-slug": f.slug,
-        onClick: () => elegirFormato(f.slug),
-      }, [f.label]))
-    );
-    media.push(videoEl, chipsFormato);
+    media.push(videoEl);
+    // Los chips de formato solo tienen sentido si el video tiene "master" (los
+    // formatos se derivan de él con ffmpeg). Videos viejos, generados antes de
+    // esta función, no lo tienen: mostrar los chips solo llevaría al error
+    // "no tiene master". Sin master → sin chips.
+    if (t.resultados.master) {
+      chipsFormato = el("div", { class: "chips-formato" },
+        FORMATOS.map((f) => el("button", {
+          class: "chip-formato" + (f.slug === formatoActual ? " sel" : ""),
+          "data-slug": f.slug,
+          onClick: () => elegirFormato(f.slug),
+        }, [f.label]))
+      );
+      media.push(chipsFormato);
+    }
   } else if (antes && despues) {
     const slider = baSlider(antes, despues);
     media.push(

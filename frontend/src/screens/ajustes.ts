@@ -5,6 +5,7 @@ import { getDeviceId } from "../device";
 import { state } from "../state";
 const PRIVACIDAD_URL = "https://jonathanlobo-dev.github.io/reforma-app/";
 import { t, idioma, setIdioma, IDIOMAS, type Idioma } from "../i18n";
+import { aplicarTema, temaActual, type Tema } from "../ui/tema";
 
 const VERSION = "2.0";
 
@@ -55,6 +56,41 @@ function selectorIdioma(): HTMLElement {
   return list;
 }
 
+const OPCIONES_TEMA: { val: Tema; labelKey: string }[] = [
+  { val: "sistema", labelKey: "ajustes.tema.sistema" },
+  { val: "claro", labelKey: "ajustes.tema.claro" },
+  { val: "oscuro", labelKey: "ajustes.tema.oscuro" },
+];
+
+function selectorTema(): HTMLElement {
+  const items: HTMLElement[] = [];
+  const list = el("div", { class: "radio-list" });
+
+  function actualizar() {
+    items.forEach((i) => i.classList.toggle("sel", i.dataset.val === temaActual()));
+  }
+
+  OPCIONES_TEMA.forEach((op) => {
+    const item = el("div", {
+      class: "radio-item",
+      "data-val": op.val,
+      onClick: () => {
+        if (op.val === temaActual()) return;
+        aplicarTema(op.val);
+        actualizar();
+      },
+    }, [
+      el("span", { class: "radio-dot" }),
+      el("span", { class: "radio-txt" }, [t(op.labelKey)]),
+    ]);
+    list.append(item);
+    items.push(item);
+  });
+
+  actualizar();
+  return list;
+}
+
 export function pantallaAjustes() {
   setNavVisible(false);
 
@@ -72,6 +108,8 @@ export function pantallaAjustes() {
       ]),
 
       seccion(t("ajustes.idioma.titulo"), [selectorIdioma()]),
+
+      seccion(t("ajustes.tema.titulo"), [selectorTema()]),
 
       seccion(t("ajustes.sec.uso.titulo"), [
         p(t("ajustes.sec.uso.p1")),

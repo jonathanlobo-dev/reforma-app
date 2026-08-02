@@ -15,6 +15,10 @@ import { pantallaResult } from "./screens/result";
 import { pantallaPaywall } from "./screens/paywall";
 import { initIdioma, t } from "./i18n";
 import { onboardingPendiente, pantallaOnboarding } from "./screens/onboarding";
+import { aplicarTema, temaActual } from "./ui/tema";
+
+// Aplicar el tema guardado ANTES del primer render, para no parpadear.
+aplicarTema(temaActual());
 
 (window as any).__reforma = { state, pantallaHome };
 

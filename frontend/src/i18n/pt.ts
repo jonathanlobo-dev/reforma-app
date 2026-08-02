@@ -298,6 +298,10 @@ export const pt: Record<string, string> = {
   "ajustes.titulo": "Ajustes",
   "ajustes.idioma.titulo": "Idioma / Language",
   "ajustes.idioma.cambiado": "Idioma alterado",
+  "ajustes.tema.titulo": "Aparência",
+  "ajustes.tema.sistema": "Sistema",
+  "ajustes.tema.claro": "Claro",
+  "ajustes.tema.oscuro": "Escuro",
 
   "ajustes.sec.uso.titulo": "Como usar o app",
   "ajustes.sec.uso.p1": "1. Escolha um modo em Início (pintar, reformar, pincel mágico…).",

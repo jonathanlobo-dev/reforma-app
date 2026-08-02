@@ -1,5 +1,10 @@
-/* ─── Design tokens ─────────────────────────────────────── */
-:root {
+/* ─── Design tokens ──────────────────────────────────────────
+   Dos temas: oscuro (default histórico de la app) y claro. El
+   data-theme en <html> (puesto por frontend/src/ui/tema.ts) manda
+   sobre la preferencia del sistema (@media); sin data-theme, sigue
+   al sistema. ────────────────────────────────────────────── */
+:root,
+:root[data-theme="dark"] {
   --bg: #0c0c10;
   --surface: #17181f;
   --surface2: #1f2029;
@@ -12,6 +17,36 @@
   --error: #ff5c6c;
   --radio: 20px;
   --nav-h: 64px;
+}
+
+:root[data-theme="light"] {
+  --bg: #f4f3f7;
+  --surface: #ffffff;
+  --surface2: #ece9f5;
+  --borde: #e0dcec;
+  --acento: #6d5efc;
+  --acento-press: #5a4be0;
+  --texto: #1b1826;
+  --sub: #6a6780;
+  --exito: #37d67a;
+  --error: #ff5c6c;
+  --radio: 20px;
+  --nav-h: 64px;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --bg: #f4f3f7;
+    --surface: #ffffff;
+    --surface2: #ece9f5;
+    --borde: #e0dcec;
+    --acento: #6d5efc;
+    --acento-press: #5a4be0;
+    --texto: #1b1826;
+    --sub: #6a6780;
+    --exito: #37d67a;
+    --error: #ff5c6c;
+  }
 }
 
 /* ─── Reset ──────────────────────────────────────────────── */

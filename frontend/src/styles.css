@@ -412,9 +412,20 @@ textarea.field { resize: vertical; min-height: 80px; }
 .ba-slider {
   position: relative; border-radius: var(--radio); overflow: hidden;
   user-select: none; touch-action: none; cursor: col-resize;
+  /* Tope de alto: con fotos verticales, sin esto el slider empuja los
+     botones de acción fuera de pantalla. El aspect-ratio (fijado por JS al
+     cargar la imagen) hace que, al recortar por max-height, ambas mitades
+     (antes/después) se recorten igual — object-fit: cover en las dos. */
+  max-height: 56vh;
 }
 .ba-slider img {
   display: block; width: 100%; height: auto; pointer-events: none;
+}
+/* La imagen de fondo ("después") ya no depende del alto natural: cubre
+   exactamente la caja del wrap (fijada por aspect-ratio + max-height), igual
+   que la imagen del clip, para que el corte quede alineado entre ambas. */
+.ba-slider > img.ba-fondo {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
 }
 .ba-clip {
   position: absolute; top: 0; bottom: 0; left: 0; overflow: hidden;
@@ -452,7 +463,10 @@ textarea.field { resize: vertical; min-height: 80px; }
 .ba-item-tag.dep { background: var(--acento); color: #fff; }
 .ba-item img { width: 100%; border-radius: var(--radio); }
 
-.resultado-media { width: 100%; display: block; border-radius: var(--radio); }
+.resultado-media {
+  width: 100%; display: block; border-radius: var(--radio);
+  max-height: 60vh; object-fit: contain;
+}
 .acciones { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
 
 /* ─── Recientes (historial) ─────────────────────────────── */

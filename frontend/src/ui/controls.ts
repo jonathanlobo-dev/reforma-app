@@ -265,7 +265,7 @@ export function baSlider(urlAntes: string, urlDespues: string): HTMLElement {
   const wrap = el("div", { class: "ba-slider" }) as HTMLElement;
 
   // Fondo = después; clip (izquierda) = antes → convencion: izq=antes, der=después
-  const imgDespues = el("img", { src: urlDespues, draggable: false }) as HTMLImageElement;
+  const imgDespues = el("img", { class: "ba-fondo", src: urlDespues, draggable: false }) as HTMLImageElement;
   const clip = el("div", { class: "ba-clip", style: "width: 50%" }) as HTMLElement;
   const imgAntes = el("img", { src: urlAntes, draggable: false }) as HTMLImageElement;
   const divider = el("div", { class: "ba-divider", style: "left: 50%" }) as HTMLElement;
@@ -275,12 +275,24 @@ export function baSlider(urlAntes: string, urlDespues: string): HTMLElement {
   divider.append(handle);
   wrap.append(imgDespues, clip, divider);
 
-  // La imagen dentro del clip debe tener el ancho del wrapper, no del clip.
-  // ResizeObserver observa al propio wrap: muere con el nodo (sin fugas).
+  // El alto del wrap ya no lo define el alto natural de la imagen (eso
+  // rompía el layout con fotos verticales): se fija un aspect-ratio según la
+  // imagen y un tope (`max-height` en CSS) la recorta cuando hace falta.
+  // Ambas mitades usan object-fit: cover sobre esa misma caja, así el corte
+  // queda alineado entre antes y después.
+  function syncAspectRatio() {
+    const w = imgDespues.naturalWidth, h = imgDespues.naturalHeight;
+    if (w && h) wrap.style.aspectRatio = `${w} / ${h}`;
+  }
+  // La imagen dentro del clip debe tener el ancho del wrapper (no el del
+  // clip, que cambia con el arrastre) para que se vea la misma foto completa
+  // recortada por la ventana del clip. ResizeObserver observa al propio
+  // wrap: muere con el nodo (sin fugas).
   function syncClipImgWidth() {
     imgAntes.style.width = wrap.offsetWidth + "px";
   }
-  imgDespues.addEventListener("load", syncClipImgWidth);
+  imgDespues.addEventListener("load", () => { syncAspectRatio(); syncClipImgWidth(); });
+  if (imgDespues.complete) { syncAspectRatio(); syncClipImgWidth(); }
   new ResizeObserver(syncClipImgWidth).observe(wrap);
 
   // Pointer Events con captura: el drag sigue fuera del elemento sin

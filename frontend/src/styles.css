@@ -255,14 +255,16 @@ img, video { display: block; }
 .ctrl-label { font-size: 13px; color: var(--sub); font-weight: 600; margin-bottom: 6px; }
 .ctrl-wrap { display: flex; flex-direction: column; gap: 4px; }
 
-/* Carrusel de estilos — cards con foto de preview */
+/* Selector de estilo — grilla de 3 columnas (antes era un carrusel con
+   scroll horizontal, poco descubrible: no se notaba que había más opciones
+   fuera de pantalla). Cada tarjeta ocupa su celda y mantiene proporción
+   cuadrada con aspect-ratio en vez de un ancho fijo. */
 .estilo-row {
-  display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 6px;
-  scrollbar-width: none;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  padding: 2px 2px 6px;
 }
-.estilo-row::-webkit-scrollbar { display: none; }
 .estilo-card {
-  position: relative; width: 104px; height: 104px; flex-shrink: 0;
+  position: relative; width: 100%; aspect-ratio: 1 / 1;
   border-radius: 16px; overflow: hidden; cursor: pointer;
   border: 2.5px solid transparent; padding: 0; background: var(--surface2);
   transition: border-color .12s, transform .12s;
@@ -930,3 +932,17 @@ textarea.field { resize: vertical; min-height: 80px; }
 }
 .paleta-puntos.ico { font-size: 24px; line-height: 26px; }
 .paleta-nom { font-size: 13px; font-weight: 600; text-align: left; }
+
+/* ─── Chips seleccionables (grilla de botones) ────────────── */
+/* Reemplaza al dropdown de bottom-sheet en pasos donde conviene elegir con
+   un toque directo (espacio, modo): mismo patrón visual que .paleta-card. */
+.chips-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.chip-opcion {
+  background: var(--surface2); border: 2px solid var(--borde); border-radius: 16px;
+  padding: 14px 12px; cursor: pointer; color: var(--texto); font-size: 14px;
+  font-weight: 600; text-align: center; font-family: inherit;
+  transition: border-color .15s, background .15s;
+}
+.chip-opcion.sel { border-color: var(--acento); background: rgba(109,94,252,.12); color: var(--acento); }

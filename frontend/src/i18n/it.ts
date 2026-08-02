@@ -302,6 +302,10 @@ export const it: Record<string, string> = {
   "ajustes.tema.sistema": "Sistema",
   "ajustes.tema.claro": "Chiaro",
   "ajustes.tema.oscuro": "Scuro",
+  "foto.nativo.header": "Aggiungi foto",
+  "foto.nativo.galeria": "Scegli dalla galleria",
+  "foto.nativo.camara": "Scatta foto",
+  "foto.nativo.cancelar": "Annulla",
 
   "ajustes.sec.uso.titulo": "Come usare l'app",
   "ajustes.sec.uso.p1": "1. Scegli una modalità in Home (dipingi, ristruttura, pennello magico…).",

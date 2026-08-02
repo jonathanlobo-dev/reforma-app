@@ -709,9 +709,12 @@ textarea.field { resize: vertical; min-height: 80px; }
   padding: 3px 8px; border-radius: 10px; white-space: nowrap;
 }
 .plan-etiqueta { font-size: 9px; font-weight: 700; color: var(--sub); letter-spacing: .5px; }
-.plan-titulo { font-size: 16px; font-weight: 800; margin-top: 6px; }
+/* Color explícito de token: antes dependían de heredar `color` del body, y
+   con el force-dark de Android (o cualquier contexto que reescriba la
+   herencia) el texto se volvía negro sobre fondo oscuro, ilegible. */
+.plan-titulo { font-size: 16px; font-weight: 800; margin-top: 6px; color: var(--texto); }
 .plan-sub { font-size: 10.5px; color: var(--sub); margin-top: 2px; min-height: 26px; }
-.plan-precio { font-size: 15px; font-weight: 800; margin-top: 8px; }
+.plan-precio { font-size: 15px; font-weight: 800; margin-top: 8px; color: var(--texto); }
 
 .paywall-cta { margin: 6px 16px 0; }
 .paywall-fine { text-align: center; color: var(--sub); font-size: 11.5px; margin-top: 10px; }
@@ -869,13 +872,17 @@ textarea.field { resize: vertical; min-height: 80px; }
 }
 
 /* ─── Toast ──────────────────────────────────────────────── */
+/* Antes forzaba una sola línea (nowrap) y los mensajes largos (ej. el aviso
+   de pagos del paywall) quedaban cortados fuera de la pantalla. Ahora envuelve
+   hasta 2-3 líneas con un ancho máximo cómodo de leer. */
 .toast {
   position: fixed; bottom: calc(var(--nav-h) + 12px); left: 50%;
   transform: translateX(-50%);
   background: var(--surface2); color: var(--texto);
-  padding: 12px 20px; border-radius: 30px; font-size: 14px;
+  padding: 12px 20px; border-radius: 20px; font-size: 14px; line-height: 1.4;
   z-index: 2000; box-shadow: 0 6px 24px rgba(0,0,0,.5);
-  white-space: nowrap; border: 1px solid var(--borde);
+  white-space: normal; text-align: center; border: 1px solid var(--borde);
+  max-width: min(92vw, 360px);
 }
 
 /* Opciones de la hoja "Generar video": dos filas con título y explicación, para

@@ -221,7 +221,7 @@ img, video { display: block; }
 /* ─── Foto (miniatura + zona drop) ──────────────────────── */
 .foto-zone {
   border: 2px dashed var(--borde); border-radius: var(--radio);
-  min-height: 200px; display: flex; align-items: center; justify-content: center;
+  min-height: 200px; max-height: 44vh; display: flex; align-items: center; justify-content: center;
   background: var(--surface); overflow: hidden; position: relative; cursor: pointer;
 }
 .foto-zone:active { border-color: var(--acento); }

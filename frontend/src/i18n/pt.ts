@@ -255,7 +255,7 @@ export const pt: Record<string, string> = {
   "recientes.fecha.dias": "Há {n} dias",
 
   // ─── O Mestre (chat) ──────────────────────────────────────────────────
-  "asesor.nombre": "O Mestre",
+  "asesor.nombre": "Maestro",
   "asesor.subtitulo": "Obra · Decoração · Materiais",
   "asesor.saludo": "E aí! Sou {nombre} — mestre de obras, decorador e calculista de materiais, tudo em um só. Pergunte quanta tinta ou cerâmica você precisa, quais cores combinam, como organizar seu espaço, ou o que fazer primeiro em uma reforma.",
   "asesor.sugerencia.1": "Quanta tinta para uma parede de 3×4 m?",

@@ -255,7 +255,7 @@ export const es: Record<string, string> = {
   "recientes.fecha.dias": "Hace {n} días",
 
   // ─── El Maestro ───────────────────────────────────────────────────────
-  "asesor.nombre": "El Maestro",
+  "asesor.nombre": "Maestro",
   "asesor.subtitulo": "Obra · Decoración · Materiales",
   "asesor.saludo": "¡Épale! Soy {nombre} — maestro de obras, decorador y calculista, todo en uno. Pregúntame cuánta pintura o cerámica necesitas, qué colores pegan, cómo distribuir tu espacio, o qué hacer primero en una reforma.",
   "asesor.sugerencia.1": "¿Cuánta pintura para una pared de 3×4 m?",

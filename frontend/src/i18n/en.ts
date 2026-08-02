@@ -255,7 +255,7 @@ export const en: Record<string, string> = {
   "recientes.fecha.dias": "{n} days ago",
 
   // ─── The Foreman (chat) ───────────────────────────────────────────────
-  "asesor.nombre": "The Foreman",
+  "asesor.nombre": "Maestro",
   "asesor.subtitulo": "Construction · Design · Materials",
   "asesor.saludo": "Hey there! I'm {nombre} — foreman, decorator and materials calculator, all in one. Ask me how much paint or tile you need, what colors work together, how to lay out your space, or what to do first in a renovation.",
   "asesor.sugerencia.1": "How much paint for a 3×4 m wall?",

@@ -505,6 +505,38 @@ textarea.field { resize: vertical; min-height: 80px; }
 .loader-sub { color: var(--sub); margin-top: 6px; font-size: 13px; }
 .error-msg { color: var(--error); font-size: 15px; margin-bottom: 12px; }
 
+/* ─── Escaneo sobre la foto del usuario (espera "premium") ── */
+.scan-wrap {
+  position: relative; width: 100%; max-width: 320px; border-radius: 20px;
+  overflow: hidden; background: var(--surface2);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .28);
+}
+.scan-foto {
+  width: 100%; max-height: 46vh; object-fit: cover; display: block;
+}
+.scan-linea {
+  position: absolute; left: 0; right: 0; height: 46%;
+  background: linear-gradient(
+    to bottom,
+    rgba(109, 94, 252, 0) 0%,
+    rgba(109, 94, 252, .16) 45%,
+    rgba(109, 94, 252, .42) 50%,
+    rgba(109, 94, 252, .16) 55%,
+    rgba(109, 94, 252, 0) 100%
+  );
+  animation: scan-mover 2.2s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes scan-mover {
+  0%   { top: -46%; }
+  100% { top: 100%; }
+}
+.scan-borde {
+  position: absolute; inset: 0; border-radius: 20px;
+  box-shadow: inset 0 0 0 1.5px rgba(109, 94, 252, .35);
+  pointer-events: none;
+}
+
 /* ─── Pantalla de pincel / máscara ──────────────────────── */
 .mask-canvas {
   width: 100%; border-radius: var(--radio); background: var(--surface);

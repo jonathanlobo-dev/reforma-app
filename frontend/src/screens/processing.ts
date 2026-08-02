@@ -43,9 +43,21 @@ export function pantallaEsperarTrabajo(
     t(tipo === "video" ? "processing.sub.video" : "processing.sub.imagen"),
   ]);
 
+  // Si tenemos la foto que el usuario está transformando, mostrarla con un
+  // efecto de escaneo en vez del spinner genérico: se siente más personal y
+  // "premium" en el momento de mayor ansiedad de la espera.
+  const fotoUrl = state.foto?.url;
+  const visual = fotoUrl
+    ? el("div", { class: "scan-wrap" }, [
+        el("img", { class: "scan-foto", src: fotoUrl, alt: "" }),
+        el("div", { class: "scan-linea" }),
+        el("div", { class: "scan-borde" }),
+      ])
+    : el("div", { class: "spinner" });
+
   render(
     el("div", { class: "screen centro proc-screen" }, [
-      el("div", { class: "spinner" }),
+      visual,
       msg, sub,
     ])
   );

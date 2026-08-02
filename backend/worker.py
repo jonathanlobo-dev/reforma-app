@@ -189,6 +189,7 @@ def procesar(tid: str) -> None:
             campos["video"] = storage.subir(video, tid, "final.mp4")
         if master:
             campos["master"] = storage.subir(master, tid, "master.mp4")
+            campos.update(_formatos_extra(carpeta, master, tid, not premium))
 
         db.registrar_uso(trabajo["device_id"], trabajo["tipo"])
         db.actualizar(tid, status="done", **campos)
@@ -205,6 +206,28 @@ def _bajar(url_o_ruta: str, destino) -> None:
         # "/media/<tid>/<archivo>" → archivo en disco local (solo dev)
         rel = url_o_ruta.replace("/media/", "", 1)
         shutil.copy(config.DATA / rel, destino)
+
+
+def _formatos_extra(carpeta, master, tid: str, watermark: bool) -> dict:
+    """Genera los formatos NO-default (cuadrado/horizontal) desde el master YA
+    LOCAL, aquí en la generación. Hacerlo bajo demanda desde /formato-video
+    tardaba ~60s (bajaba el master de storage + ffmpeg + subida) y el teléfono
+    se rendía con 'sin conexión'. Con el master en disco, re-encuadrar es rápido
+    y al abrir el resultado los 3 formatos ya están listos (cambio instantáneo).
+    Devuelve {video_cuadrado: url, video_horizontal: url}."""
+    urls = {}
+    for formato in pipeline.FORMATOS_VIDEO:
+        if formato == pipeline.FORMATO_DEFECTO:
+            continue
+        salida = carpeta / f"formato_{formato}.mp4"
+        try:
+            pipeline.reencuadrar(master, salida, formato)
+            if watermark:
+                pipeline._watermark(salida)
+            urls[f"video_{formato}"] = storage.subir(salida, tid, f"formato_{formato}.mp4")
+        except Exception:
+            traceback.print_exc()  # un formato que falle no debe tumbar el video
+    return urls
 
 
 # Movimiento genérico para animar un resultado ya generado. Seedance interpola
@@ -248,11 +271,14 @@ def procesar_animacion(tid: str, url_antes: str, url_despues: str) -> None:
             _bajar(url_despues, ruta_thumb)
         pipeline.miniatura(ruta_thumb, thumb)
 
-        db.actualizar(tid, status="done",
-                      antes=url_antes, despues=url_despues,
-                      video=storage.subir(video, tid, "final.mp4"),
-                      master=storage.subir(master, tid, "master.mp4"),
-                      thumb=storage.subir(thumb, tid, "thumb.jpg"))
+        campos = dict(
+            antes=url_antes, despues=url_despues,
+            video=storage.subir(video, tid, "final.mp4"),
+            master=storage.subir(master, tid, "master.mp4"),
+            thumb=storage.subir(thumb, tid, "thumb.jpg"))
+        # El animado no lleva marca de agua (igual que su formato por defecto).
+        campos.update(_formatos_extra(carpeta, master, tid, watermark=False))
+        db.actualizar(tid, status="done", **campos)
     except Exception as e:
         traceback.print_exc()
         db.actualizar(tid, status="error", error=_error_usuario(e, lang))
@@ -289,6 +315,8 @@ def procesar_proceso(tid: str, imagenes_urls: list) -> None:
             "master": storage.subir(master, tid, "master.mp4"),
             "thumb": storage.subir(thumb, tid, "thumb.jpg"),
         }
+        # Función premium: sin marca de agua en ningún formato.
+        campos.update(_formatos_extra(carpeta, master, tid, watermark=False))
         db.actualizar(tid, status="done", **campos)
     except Exception as e:
         traceback.print_exc()

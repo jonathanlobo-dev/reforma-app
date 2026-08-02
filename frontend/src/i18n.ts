@@ -86,6 +86,13 @@ export async function setIdioma(l: Idioma): Promise<void> {
     localStorage.setItem(KEY, l);
   }
   aplicarIdiomaNav();
+  // Los títulos de las herramientas se traducen en el backend según ?lang=; sin
+  // volver a pedirlas, se quedan en el idioma con que arrancó la app.
+  try {
+    const { getCategorias } = await import("./api");
+    const { state } = await import("./state");
+    state.categorias = await getCategorias();
+  } catch { /* si la red falla, se conservan las categorías actuales */ }
   const { raiz } = await import("./nav");
   const { pantallaHome } = await import("./screens/home");
   raiz(pantallaHome);

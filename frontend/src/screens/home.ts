@@ -79,7 +79,9 @@ export function pantallaHome() {
   render(
     el("div", { class: "screen" }, [
       el("div", { class: "home-header" }, [
-        el("h1", {}, [t("home.titulo")]),
+        // Marca (constante en todos los idiomas), no "Inicio": es lo primero que
+        // ve el usuario al abrir y las apps del rubro muestran aquí su nombre.
+        el("h1", { class: "home-marca" }, ["Renuev", el("span", { class: "marca-ai" }, ["AI"])]),
         el("div", { class: "home-acciones" }, [
           state.premium
             ? el("span", { class: "pro-activo" }, [icon("crown", 14), t("home.pro")])

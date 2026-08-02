@@ -22,8 +22,9 @@ import config
 import db
 import i18n
 import pipeline
+import storage
 from categorias import categorias_traducidas, resolver
-from worker import procesar, procesar_animacion, procesar_proceso
+from worker import procesar, procesar_animacion, procesar_proceso, _bajar
 
 app = FastAPI(title="RenuevAI — backend")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -105,8 +106,9 @@ def _urls(trabajo: dict) -> dict:
     """Devuelve las URLs de resultados. Ya están completas en la DB:
     Supabase → https absoluta; local → /media/<id>/<archivo> (el frontend le
     antepone API_BASE)."""
-    return {k: trabajo[k] for k in ("antes", "despues", "comparacion", "video", "limpio", "thumb")
-            if trabajo.get(k)}
+    claves = ("antes", "despues", "comparacion", "video", "limpio", "thumb",
+              "video_vertical", "video_cuadrado", "video_horizontal")
+    return {k: trabajo[k] for k in claves if trabajo.get(k)}
 
 
 @app.post("/trabajos")
@@ -215,6 +217,40 @@ def crear_animacion(
                              (t.get("proyecto") or "").strip()[:60], lang)
     background.add_task(procesar_animacion, nuevo, antes, despues)
     return {"id": nuevo, "status": "pending", "tipo": "video"}
+
+
+@app.post("/formato-video")
+def formato_video(
+    device_id: str = Form(...),
+    trabajo_id: str = Form(...),
+    formato: str = Form(...),  # vertical | cuadrado | horizontal
+):
+    """Re-encuadra el MASTER de un video ya generado a otro formato (ffmpeg,
+    costo $0): NO vuelve a llamar a Replicate ni consume cuota de video, por
+    eso este endpoint no pasa por puede_generar/puede_ip. Resultado cacheado
+    por trabajo+formato en la columna video_<formato> (se calcula una vez)."""
+    if formato not in pipeline.FORMATOS_VIDEO:
+        raise HTTPException(400, "Formato inválido")
+    t = db.obtener(trabajo_id)
+    if not t or t["device_id"] != device_id or t["status"] != "done":
+        raise HTTPException(404, "No se encontró ese video.")
+    if not t.get("master"):
+        raise HTTPException(400, "Ese video no tiene master para re-encuadrar.")
+    col = f"video_{formato}"
+    if t.get(col):
+        return {"video": t[col]}
+    carpeta = config.DATA / trabajo_id
+    carpeta.mkdir(parents=True, exist_ok=True)
+    master_local = carpeta / "master_dl.mp4"
+    if not master_local.exists():
+        _bajar(t["master"], master_local)
+    salida = carpeta / f"formato_{formato}.mp4"
+    pipeline.reencuadrar(master_local, salida, formato)
+    if not db.es_premium(device_id):
+        pipeline._watermark(salida)
+    url = storage.subir(salida, trabajo_id, f"formato_{formato}.mp4")
+    db.actualizar(trabajo_id, **{col: url})
+    return {"video": url}
 
 
 @app.post("/proceso")

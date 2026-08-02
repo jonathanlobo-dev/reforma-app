@@ -144,9 +144,15 @@ def procesar(tid: str) -> None:
 
         # Video según tipo (solo engines con motion plan; estilo/plano = imagen)
         video = None
+        master = None
         if trabajo["tipo"] == "video" and engine in ("editar", "inpaint"):
+            # Master: una sola llamada a Replicate. El formato que se entrega
+            # de entrada sale de reencuadrar() (ffmpeg, $0); los otros 2
+            # formatos se generan bajo demanda desde este mismo master.
+            master = carpeta / "master.mp4"
+            pipeline.animar(url_antes, url_despues, plan.get("motion_prompt", ""), master)
             video = carpeta / "final.mp4"
-            pipeline.animar(url_antes, url_despues, plan.get("motion_prompt", ""), video)
+            pipeline.reencuadrar(master, video, pipeline.FORMATO_DEFECTO)
 
         premium = db.es_premium(trabajo["device_id"])
 
@@ -181,6 +187,8 @@ def procesar(tid: str) -> None:
         campos["limpio"] = campos["despues"] if premium else storage.subir(limpio, tid, "limpio.png")
         if video:
             campos["video"] = storage.subir(video, tid, "final.mp4")
+        if master:
+            campos["master"] = storage.subir(master, tid, "master.mp4")
 
         db.registrar_uso(trabajo["device_id"], trabajo["tipo"])
         db.actualizar(tid, status="done", **campos)
@@ -218,7 +226,7 @@ def procesar_animacion(tid: str, url_antes: str, url_despues: str) -> None:
     lang = trabajo.get("lang") or "es"
     try:
         db.actualizar(tid, status="processing")
-        video = carpeta / "final.mp4"
+        master = carpeta / "master.mp4"
         # animar() necesita URLs accesibles por Replicate. Las de Supabase ya lo
         # son; en local (/media) hay que subirlas primero.
         def _url_publica(u: str, nombre: str) -> str:
@@ -230,7 +238,9 @@ def procesar_animacion(tid: str, url_antes: str, url_despues: str) -> None:
 
         pipeline.animar(_url_publica(url_antes, "antes.png"),
                         _url_publica(url_despues, "despues.png"),
-                        _MOTION_ANIMAR, video)
+                        _MOTION_ANIMAR, master)
+        video = carpeta / "final.mp4"
+        pipeline.reencuadrar(master, video, pipeline.FORMATO_DEFECTO)
 
         thumb = carpeta / "thumb.jpg"
         ruta_thumb = carpeta / "despues.png"
@@ -241,6 +251,7 @@ def procesar_animacion(tid: str, url_antes: str, url_despues: str) -> None:
         db.actualizar(tid, status="done",
                       antes=url_antes, despues=url_despues,
                       video=storage.subir(video, tid, "final.mp4"),
+                      master=storage.subir(master, tid, "master.mp4"),
                       thumb=storage.subir(thumb, tid, "thumb.jpg"))
     except Exception as e:
         traceback.print_exc()
@@ -262,8 +273,10 @@ def procesar_proceso(tid: str, imagenes_urls: list) -> None:
             _bajar(url, destino)
             rutas.append(destino)
 
+        master = carpeta / "master.mp4"
+        pipeline.crossfade_multi(rutas, master)
         video = carpeta / "final.mp4"
-        pipeline.crossfade_multi(rutas, video)
+        pipeline.reencuadrar(master, video, pipeline.FORMATO_DEFECTO)
         # Es una función premium: sin marca de agua.
 
         thumb = carpeta / "thumb.jpg"
@@ -273,6 +286,7 @@ def procesar_proceso(tid: str, imagenes_urls: list) -> None:
             "antes": storage.subir(rutas[0], tid, "antes.png"),
             "despues": storage.subir(rutas[-1], tid, "despues.png"),
             "video": storage.subir(video, tid, "final.mp4"),
+            "master": storage.subir(master, tid, "master.mp4"),
             "thumb": storage.subir(thumb, tid, "thumb.jpg"),
         }
         db.actualizar(tid, status="done", **campos)

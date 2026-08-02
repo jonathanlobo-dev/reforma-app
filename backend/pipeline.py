@@ -270,9 +270,11 @@ def comparacion(antes: Path, despues: Path, out: Path) -> None:
 
 
 def crossfade(antes: Path, despues: Path, et_a: str, et_d: str, out: Path) -> None:
+    """`out` es el MASTER (canvas cuadrado neutro): reencuadrar() lo recorta
+    después al formato pedido (vertical/cuadrado/horizontal), costo $0."""
     filtro = (
-        f"[0:v]scale=1080:810,setsar=1,fps=30,{_label(et_a)}[a];"
-        f"[1:v]scale=1080:810,setsar=1,fps=30,{_label(et_d)}[b];"
+        f"[0:v]scale=1080:1080,setsar=1,fps=30,{_label(et_a)}[a];"
+        f"[1:v]scale=1080:1080,setsar=1,fps=30,{_label(et_d)}[b];"
         f"[a][b]xfade=transition=fade:duration=1.5:offset=1[v]"
     )
     _ff(["-loop", "1", "-t", "3", "-i", antes, "-loop", "1", "-t", "3", "-i", despues,
@@ -288,7 +290,11 @@ def crossfade_multi(imagenes: list, out: Path) -> None:
     (nunca hay más de 2 fotos decodificadas a la vez) y al final se concatena
     con el demuxer concat sin re-encodar. La versión anterior metía las N
     imágenes en un solo filtro xfade encadenado y con cadenas largas reventaba
-    los 512 MB de la instancia de Render (OOM + reinicio)."""
+    los 512 MB de la instancia de Render (OOM + reinicio).
+
+    `out` es el MASTER (canvas cuadrado neutro): reencuadrar() lo recorta
+    después al formato pedido, sin volver a tocar Replicate (aquí ni
+    siquiera hay Replicate de por medio, es puro ffmpeg)."""
     n = len(imagenes)
     if n < 2:
         raise ValueError("Se necesitan al menos 2 imágenes")
@@ -301,8 +307,8 @@ def crossfade_multi(imagenes: list, out: Path) -> None:
         for k in range(n - 1):
             seg = out.with_suffix(f".seg{k}.mp4")
             filtro = (
-                f"[0:v]scale=1080:810,setsar=1,fps=30[a];"
-                f"[1:v]scale=1080:810,setsar=1,fps=30[b];"
+                f"[0:v]scale=1080:1080,setsar=1,fps=30[a];"
+                f"[1:v]scale=1080:1080,setsar=1,fps=30[b];"
                 f"[a][b]xfade=transition=fade:duration={FADE}:offset={round(DUR - FADE, 3)},"
                 f"trim=duration={DUR},setpts=PTS-STARTPTS[v]"
             )
@@ -314,7 +320,7 @@ def crossfade_multi(imagenes: list, out: Path) -> None:
         # Cola: la imagen final quieta un momento para cerrar el video
         cola = out.with_suffix(".segfin.mp4")
         _ff(["-loop", "1", "-t", str(round(DUR - FADE, 3)), "-i", imagenes[-1],
-             "-vf", "scale=1080:810,setsar=1,fps=30", *X264, cola])
+             "-vf", "scale=1080:1080,setsar=1,fps=30", *X264, cola])
         segmentos.append(cola)
 
         # Concat sin re-encodar (mismos parámetros de codec en cada segmento)
@@ -328,7 +334,35 @@ def crossfade_multi(imagenes: list, out: Path) -> None:
             Path(s).unlink(missing_ok=True)
 
 
+# ─── Formatos de video (reels/stories) ───────────────────────────────────────
+# El animado (Seedance) y los resúmenes en diapositivas (ffmpeg) generan un
+# MASTER una sola vez. Cada formato se produce RE-ENCUADRANDO ese master con
+# ffmpeg (crop al centro) — costo $0, no vuelve a llamar a Replicate ni
+# consume otra cuota de video. Ver reencuadrar().
+FORMATOS_VIDEO = {
+    "vertical":   (1080, 1920),  # 9:16 — reels / stories
+    "cuadrado":   (1080, 1080),  # 1:1
+    "horizontal": (1920, 1080),  # 16:9
+}
+FORMATO_DEFECTO = "vertical"
+
+
+def reencuadrar(master: Path, out: Path, formato: str) -> None:
+    """Recorta al centro el MASTER ya generado al formato pedido. Puro
+    ffmpeg, costo $0. Reutilizable por animar(), crossfade() y
+    crossfade_multi(): las tres funciones guardan un master del que se
+    derivan los 3 formatos sin volver a llamar a Replicate."""
+    w, h = FORMATOS_VIDEO.get(formato, FORMATOS_VIDEO[FORMATO_DEFECTO])
+    _ff(["-i", master, "-vf",
+         f"scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},fps=30",
+         "-an", "-c:v", "libx264", "-preset", "fast", "-crf", "20",
+         "-x264-params", "threads=2", out])
+
+
 def animar(url_antes: str, url_despues: str, motion_prompt: str, out: Path) -> None:
+    """Genera el MASTER animado (una sola llamada a Replicate) en `out`. NO lo
+    recorta a un formato fijo: eso lo hace reencuadrar() después, tantas
+    veces como formatos se pidan, sin volver a tocar Replicate."""
     input_data = {
         "prompt": (motion_prompt or "smooth transformation") +
                   " Camera completely static and locked, no zoom, no pan. Room stays the same.",
@@ -341,9 +375,7 @@ def animar(url_antes: str, url_despues: str, motion_prompt: str, out: Path) -> N
     url = replicate_run(config.VIDEO_MODEL, input_data)
     tmp = out.with_suffix(".raw.mp4")
     descargar(url, tmp)
-    # normalizar a 1080x810
-    _ff(["-i", tmp, "-vf",
-         "scale=1080:810:force_original_aspect_ratio=increase,crop=1080:810,fps=30",
-         "-an", "-c:v", "libx264", "-preset", "fast", "-crf", "20",
-         "-x264-params", "threads=2", out])
+    # Master: solo normaliza fps/codec, sin forzar una proporción fija.
+    _ff(["-i", tmp, "-vf", "fps=30", "-an", "-c:v", "libx264", "-preset", "fast",
+         "-crf", "20", "-x264-params", "threads=2", out])
     tmp.unlink(missing_ok=True)

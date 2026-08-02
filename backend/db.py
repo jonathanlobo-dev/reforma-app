@@ -81,6 +81,13 @@ _MIGRACIONES = [
     ("trabajos", "lang", "TEXT"),    # idioma del usuario al crear el trabajo (es/en/pt/it)
     ("trabajos", "thumb", "TEXT"),   # miniatura liviana para la grilla de Recientes
     ("uso_global", "imagenes", "INTEGER DEFAULT 0"),  # freno global de imágenes (espejo de videos)
+    # Formatos de video (reels/stories): master = fuente sin recortar de la que
+    # se derivan los 3 formatos con ffmpeg; video_* = cache por formato ya
+    # re-encuadrado (se llenan bajo demanda, nunca vuelven a llamar a Replicate).
+    ("trabajos", "master", "TEXT"),
+    ("trabajos", "video_vertical", "TEXT"),
+    ("trabajos", "video_cuadrado", "TEXT"),
+    ("trabajos", "video_horizontal", "TEXT"),
 ]
 
 

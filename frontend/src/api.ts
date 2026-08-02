@@ -14,6 +14,9 @@ export interface Resultados {
   antes?: string; despues?: string; comparacion?: string; video?: string;
   limpio?: string; // resultado sin marca de agua (para encadenar ediciones)
   thumb?: string;  // miniatura liviana (~25 KB) para la grilla de Recientes
+  // Formatos alternativos ya re-encuadrados (cache del servidor); pueden no
+  // venir si todavía no se pidieron.
+  video_vertical?: string; video_cuadrado?: string; video_horizontal?: string;
 }
 export interface Trabajo {
   id: string; status: "pending" | "processing" | "done" | "error";
@@ -228,6 +231,27 @@ export async function crearAnimacion(
   const r = await fetchApi(`${API_BASE}/animar`, { method: "POST", body: fd });
   if (!r.ok) {
     const j = await r.json().catch(() => ({ detail: t("api.error_montar_video") }));
+    throw new Error(j.detail);
+  }
+  return r.json();
+}
+
+export type FormatoVideo = "vertical" | "cuadrado" | "horizontal";
+
+/** Re-encuadra un video YA generado a otro formato (ffmpeg del lado del
+ *  servidor, costo $0): NO llama de nuevo a Replicate ni consume cuota de
+ *  video, así que no hay chequeo de cuota aquí. */
+export async function pedirFormatoVideo(
+  deviceId: string, trabajoId: string, formato: FormatoVideo
+): Promise<{ video: string }> {
+  if (MOCK) return { video: "" };
+  const fd = new FormData();
+  fd.append("device_id", deviceId);
+  fd.append("trabajo_id", trabajoId);
+  fd.append("formato", formato);
+  const r = await fetchApi(`${API_BASE}/formato-video`, { method: "POST", body: fd });
+  if (!r.ok) {
+    const j = await r.json().catch(() => ({ detail: t("api.error_formato_video") }));
     throw new Error(j.detail);
   }
   return r.json();

@@ -210,6 +210,10 @@ export const pt: Record<string, string> = {
   "result.video.slides": "Resumo em slides ({n} etapas)",
   "result.video.slides_sub": "Suas edições encadeadas com transições. Grátis, não usa cota.",
   "result.video.reveal": "Antes → depois · grátis",
+  "result.video.formato.vertical": "Vertical",
+  "result.video.formato.cuadrado": "Quadrado",
+  "result.video.formato.horizontal": "Horizontal",
+  "result.video.formato.generando": "Preparando esse formato...",
   "result.compartir": "Compartilhar",
   "result.preguntar_maestro": "Perguntar a {nombre}",
   "result.hacer_otra": "Fazer outra",
@@ -408,6 +412,7 @@ export const pt: Record<string, string> = {
   "api.error_consultar_trabajo": "Não foi possível consultar o trabalho",
   "api.proceso_premium": "O vídeo do processo é uma função Premium.",
   "api.error_montar_video": "Não foi possível montar o vídeo.",
+  "api.error_formato_video": "Não foi possível preparar esse formato de vídeo.",
 
   // ─── Onboarding ───
   "onb.saltar": "Pular",

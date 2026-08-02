@@ -210,6 +210,10 @@ export const it: Record<string, string> = {
   "result.video.slides": "Riepilogo in slide ({n} passaggi)",
   "result.video.slides_sub": "Le tue modifiche concatenate con transizioni. Gratis, non usa quota.",
   "result.video.reveal": "Prima → dopo · gratis",
+  "result.video.formato.vertical": "Verticale",
+  "result.video.formato.cuadrado": "Quadrato",
+  "result.video.formato.horizontal": "Orizzontale",
+  "result.video.formato.generando": "Preparazione del formato...",
   "result.compartir": "Condividi",
   "result.preguntar_maestro": "Chiedi a {nombre}",
   "result.hacer_otra": "Fai un'altra",
@@ -408,6 +412,7 @@ export const it: Record<string, string> = {
   "api.error_consultar_trabajo": "Impossibile verificare lo stato del lavoro",
   "api.proceso_premium": "Il video del processo è una funzione Premium.",
   "api.error_montar_video": "Impossibile montare il video.",
+  "api.error_formato_video": "Impossibile preparare quel formato video.",
 
   // ─── Onboarding ───
   "onb.saltar": "Salta",

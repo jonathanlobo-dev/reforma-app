@@ -1,5 +1,5 @@
 import { el, render, toast } from "../ui";
-import { resolverMedia, votarTrabajo, crearProceso, crearAnimacion, type Trabajo } from "../api";
+import { resolverMedia, votarTrabajo, crearProceso, crearAnimacion, pedirFormatoVideo, type Trabajo, type FormatoVideo } from "../api";
 import { mostrarIntersticial } from "../ads";
 import { raiz, irA, desdeRaiz, setNavVisible } from "../nav";
 import { pantallaHome } from "./home";
@@ -30,14 +30,67 @@ export async function pantallaResult(t: Trabajo) {
   const comp = resolverMedia(t.resultados.comparacion);
   const video = resolverMedia(t.resultados.video);
 
+  // Formatos de video: el servidor genera el MASTER una sola vez (llamada a
+  // Replicate o crossfade ffmpeg) y re-encuadra cada formato bajo demanda
+  // ($0, sin volver a llamar a Replicate). "vertical" es el que llega listo
+  // de entrada; cuadrado/horizontal se piden aquí y quedan cacheados por
+  // trabajo en el servidor (y en memoria local, para no repetir el pedido).
+  const cacheFormatos: Partial<Record<FormatoVideo, string>> = {};
+  if (video) cacheFormatos.vertical = video;
+  if (t.resultados.video_cuadrado) cacheFormatos.cuadrado = t.resultados.video_cuadrado;
+  if (t.resultados.video_horizontal) cacheFormatos.horizontal = t.resultados.video_horizontal;
+  let formatoActual: FormatoVideo = "vertical";
+  let videoEl: HTMLVideoElement | null = null;
+  let chipsFormato: HTMLElement | null = null;
+
+  const objetivoActual = () => cacheFormatos[formatoActual] || video;
+
+  const FORMATOS: { slug: FormatoVideo; label: string }[] = [
+    { slug: "vertical", label: tr("result.video.formato.vertical") },
+    { slug: "cuadrado", label: tr("result.video.formato.cuadrado") },
+    { slug: "horizontal", label: tr("result.video.formato.horizontal") },
+  ];
+
+  async function elegirFormato(slug: FormatoVideo) {
+    if (formatoActual === slug) return;
+    formatoActual = slug;
+    actualizarChips();
+    const cacheado = cacheFormatos[slug];
+    if (cacheado) {
+      if (videoEl) videoEl.src = cacheado;
+      return;
+    }
+    try {
+      const deviceId = await getDeviceId();
+      toast(tr("result.video.formato.generando"));
+      const { video: url } = await pedirFormatoVideo(deviceId, t.id, slug);
+      cacheFormatos[slug] = url;
+      if (formatoActual === slug && videoEl) videoEl.src = url;
+    } catch (e) {
+      toast((e as Error).message);
+    }
+  }
+
+  function actualizarChips() {
+    chipsFormato?.querySelectorAll(".chip-formato").forEach((b) => {
+      b.classList.toggle("sel", (b as HTMLElement).dataset.slug === formatoActual);
+    });
+  }
+
   const media: Node[] = [];
   if (video) {
-    media.push(
-      el("video", {
-        class: "resultado-media", src: video,
-        controls: true, autoplay: true, loop: true, muted: true, playsinline: true,
-      })
+    videoEl = el("video", {
+      class: "resultado-media", src: video,
+      controls: true, autoplay: true, loop: true, muted: true, playsinline: true,
+    }) as HTMLVideoElement;
+    chipsFormato = el("div", { class: "chips-formato" },
+      FORMATOS.map((f) => el("button", {
+        class: "chip-formato" + (f.slug === formatoActual ? " sel" : ""),
+        "data-slug": f.slug,
+        onClick: () => elegirFormato(f.slug),
+      }, [f.label]))
     );
+    media.push(videoEl, chipsFormato);
   } else if (antes && despues) {
     const slider = baSlider(antes, despues);
     media.push(
@@ -52,9 +105,10 @@ export async function pantallaResult(t: Trabajo) {
   }
 
   // Compartir manda el ARCHIVO (la comparación antes|después con watermark, o
-  // el video) — no un link de Supabase, que en WhatsApp se veía como texto.
-  const objetivoCompartir = video || comp || despues;
+  // el video, en el formato que esté elegido) — no un link de Supabase, que
+  // en WhatsApp se veía como texto.
   const compartir = async () => {
+    const objetivoCompartir = (video ? objetivoActual() : null) || comp || despues;
     if (!objetivoCompartir) return;
     const nombre = video ? `renovai_${t.id}.mp4` : `renovai_${t.id}.png`;
     const texto = tr("result.compartir_texto");
@@ -89,9 +143,10 @@ export async function pantallaResult(t: Trabajo) {
     }
   };
 
-  // Se guarda el RESULTADO (video o foto transformada), no la comparación.
-  const objetivoGuardar = video || despues || comp;
+  // Se guarda el RESULTADO (video, en el formato elegido, o foto
+  // transformada), no la comparación.
   const guardar = async () => {
+    const objetivoGuardar = (video ? objetivoActual() : null) || despues || comp;
     if (!objetivoGuardar) return;
     const nombre = video ? `renovai_${t.id}.mp4` : `renovai_${t.id}.png`;
 

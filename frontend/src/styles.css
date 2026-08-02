@@ -467,6 +467,17 @@ textarea.field { resize: vertical; min-height: 80px; }
   width: 100%; display: block; border-radius: var(--radio);
   max-height: 60vh; object-fit: contain;
 }
+
+/* Selector de formato del video (vertical/cuadrado/horizontal) */
+.chips-formato { display: flex; gap: 8px; margin-top: -6px; }
+.chip-formato {
+  flex: 1; padding: 8px 0; border-radius: 999px; border: 1px solid var(--borde);
+  background: var(--surface); color: var(--sub); font-size: 12.5px; font-weight: 700;
+  cursor: pointer; transition: background .15s, color .15s, border-color .15s;
+}
+.chip-formato.sel {
+  background: var(--acento); color: #fff; border-color: var(--acento);
+}
 .acciones { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
 
 /* ─── Recientes (historial) ─────────────────────────────── */

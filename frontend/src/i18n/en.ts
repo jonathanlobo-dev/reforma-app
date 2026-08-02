@@ -210,6 +210,10 @@ export const en: Record<string, string> = {
   "result.video.slides": "Slideshow recap ({n} steps)",
   "result.video.slides_sub": "Your edits chained with transitions. Free, uses no quota.",
   "result.video.reveal": "Before → after · free",
+  "result.video.formato.vertical": "Vertical",
+  "result.video.formato.cuadrado": "Square",
+  "result.video.formato.horizontal": "Horizontal",
+  "result.video.formato.generando": "Preparing that format...",
   "result.compartir": "Share",
   "result.preguntar_maestro": "Ask {nombre}",
   "result.hacer_otra": "Make another",
@@ -403,6 +407,7 @@ export const en: Record<string, string> = {
   "api.error_consultar_trabajo": "Couldn't check the job status",
   "api.proceso_premium": "The process video is a Premium feature.",
   "api.error_montar_video": "Couldn't assemble the video.",
+  "api.error_formato_video": "Couldn't prepare that video format.",
 
   // ─── Notifications ────────────────────────────────────────────────────
   "notif.titulo": "RenuevAI",

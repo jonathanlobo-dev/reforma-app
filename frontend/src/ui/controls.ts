@@ -225,6 +225,41 @@ export function dropdown(tituloKey: string, opciones: OpcionDropdown[], inicialS
   };
 }
 
+// ─── Chips seleccionables (grilla de botones) ──────────────────────────────
+// Alternativa al `dropdown` de bottom-sheet: toque directo, sin abrir hoja.
+// Acepta las mismas `OpcionDropdown[]` (slug + labelKey) para poder sustituir
+// un dropdown por chips sin tocar el resto del formulario.
+export function chipsSelector(labelKey: string, opciones: OpcionDropdown[], inicialSlug: string) {
+  let sel = inicialSlug;
+  let botones: HTMLElement[] = [];
+
+  const grid = el("div", { class: "chips-grid" });
+
+  function actualizar() {
+    botones.forEach((b) => b.classList.toggle("sel", b.dataset.slug === sel));
+  }
+
+  botones = opciones.map((o) => {
+    const b = el("button", {
+      class: "chip-opcion",
+      "data-slug": o.slug,
+      onClick: () => { sel = o.slug; actualizar(); },
+    }, [t(o.labelKey)]) as HTMLElement;
+    grid.append(b);
+    return b;
+  });
+
+  actualizar();
+  return {
+    node: el("div", { class: "ctrl-wrap" }, [
+      el("div", { class: "ctrl-label" }, [t(labelKey)]),
+      grid,
+    ]),
+    getValue: () => t(opciones.find((o) => o.slug === sel)?.labelKey ?? ""),
+    getSlug: () => sel,
+  };
+}
+
 // ─── Slider antes/después ──────────────────────────────────────────────────
 export function baSlider(urlAntes: string, urlDespues: string): HTMLElement {
   const wrap = el("div", { class: "ba-slider" }) as HTMLElement;

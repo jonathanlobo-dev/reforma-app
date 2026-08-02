@@ -4,7 +4,7 @@ import { elegirFoto } from "../foto";
 import { irA, atras, setNavVisible } from "../nav";
 import { pantallaProcessing } from "./processing";
 import { pantallaMask } from "./mask";
-import { estiloCarrusel, colorSelector, superficieSelector, dropdown, paletaSelector, type OpcionDropdown } from "../ui/controls";
+import { estiloCarrusel, colorSelector, superficieSelector, dropdown, paletaSelector, chipsSelector, type OpcionDropdown } from "../ui/controls";
 import { icon } from "../ui/icons";
 import { abrirConsejos, consejosVistos } from "../ui/consejos";
 import { t } from "../i18n";
@@ -383,10 +383,13 @@ function buildControles(clave: string, engine: string): Controles {
       };
     }
     case "interior": {
-      const hab = dropdown("ctrl.habitacion_label", HABITACIONES, "sala");
+      // Espacio y modo: chips de toque directo en vez de bottom-sheet (más
+      // intuitivo con solo 8 y 2 opciones respectivamente — no hace falta
+      // esconderlas en una hoja).
+      const hab = chipsSelector("ctrl.habitacion_label", HABITACIONES, "sala");
       const estilo = estiloCarrusel("moderno");
       const paleta = paletaSelector("sorprendeme");
-      const modo = dropdown("ctrl.modo_label", MODOS, "respetar");
+      const modo = chipsSelector("ctrl.modo_label", MODOS, "respetar");
       const extra = campoExtra();
       // "ninguno"/"personalizado": no se impone ningún estilo del catálogo —
       // manda solo lo que el usuario escribió en el campo de texto.

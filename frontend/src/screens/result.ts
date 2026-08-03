@@ -224,8 +224,11 @@ export async function pantallaResult(t: Trabajo) {
       const blob = await r.blob();
       setFoto({ blob, url: URL.createObjectURL(blob) });
       state.mask = undefined;
-      if (t.categoria && state.categorias[t.categoria]) {
-        desdeRaiz(() => pantallaForm(t.categoria));
+      // Tras "Vaciar", seguir editando debe llevar a Diseñar/Remodelar (amueblar
+      // el cuarto ya vacío), no reabrir Vaciar, que no tendría sentido.
+      const destino = t.categoria === "vaciar" ? "interior" : t.categoria;
+      if (destino && state.categorias[destino]) {
+        desdeRaiz(() => pantallaForm(destino));
       } else {
         raiz(pantallaHome);
         toast(tr("result.toast.elige_modo"));

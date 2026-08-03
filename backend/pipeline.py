@@ -339,10 +339,14 @@ def crossfade_multi(imagenes: list, out: Path) -> None:
 # MASTER una sola vez. Cada formato se produce RE-ENCUADRANDO ese master con
 # ffmpeg (crop al centro) — costo $0, no vuelve a llamar a Replicate ni
 # consume otra cuota de video. Ver reencuadrar().
+# Resoluciones 720 (la fuente de Seedance ya es 720p): re-encuadrar a 1080p era
+# un upscale que NO añade calidad y sí gasta más memoria/tiempo de ffmpeg — con
+# 512 MB en Render, ese upscale bastaba para tumbar la instancia (OOM) hasta con
+# un solo video. 720 es la resolución nativa y va perfecta para reels/teléfono.
 FORMATOS_VIDEO = {
-    "vertical":   (1080, 1920),  # 9:16 — reels / stories
-    "cuadrado":   (1080, 1080),  # 1:1
-    "horizontal": (1920, 1080),  # 16:9
+    "vertical":   (720, 1280),   # 9:16 — reels / stories
+    "cuadrado":   (720, 720),    # 1:1
+    "horizontal": (1280, 720),   # 16:9
 }
 FORMATO_DEFECTO = "vertical"
 

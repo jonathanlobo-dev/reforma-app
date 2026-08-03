@@ -10,7 +10,10 @@ Engines:
   plano   → flux-kontext (prompt fijo especializado, sin texto del usuario)
   explorar→ flux-kontext (recorte del render del plano → vista interior, prompt fijo)
 """
+import functools
+import gc
 import shutil
+import threading
 import traceback
 
 import requests
@@ -22,6 +25,25 @@ import i18n
 import pipeline
 import storage
 from categorias import CATEGORIAS
+
+# Serializa la generación de VIDEO: el video (Seedance + varios pases de ffmpeg)
+# es lo que más memoria consume, y con 512 MB en Render dos videos a la vez
+# revientan la instancia (OOM). Este lock hace que corran de uno en uno. Las
+# imágenes NO se serializan (son más ligeras y frecuentes).
+_VIDEO_LOCK = threading.Lock()
+
+
+def _serializar_video(fn):
+    """Decorador: corre la función con el lock de video tomado y libera memoria
+    al terminar (gc), para que la RSS no se acumule entre generaciones."""
+    @functools.wraps(fn)
+    def envoltura(*args, **kwargs):
+        with _VIDEO_LOCK:
+            try:
+                return fn(*args, **kwargs)
+            finally:
+                gc.collect()
+    return envoltura
 
 
 def _error_usuario(e: Exception, lang: str = "es") -> str:
@@ -240,6 +262,7 @@ _MOTION_ANIMAR = (
 )
 
 
+@_serializar_video
 def procesar_animacion(tid: str, url_antes: str, url_despues: str) -> None:
     """Anima un resultado YA generado (Seedance): el usuario eligió una edición
     que le gustó y pide verla en movimiento, sin volver a generar la imagen."""
@@ -284,6 +307,7 @@ def procesar_animacion(tid: str, url_antes: str, url_despues: str) -> None:
         db.actualizar(tid, status="error", error=_error_usuario(e, lang))
 
 
+@_serializar_video
 def procesar_proceso(tid: str, imagenes_urls: list) -> None:
     """Video del PROCESO (premium): crossfade de la foto original pasando por
     cada edición hasta el resultado final. Solo ffmpeg → costo $0."""

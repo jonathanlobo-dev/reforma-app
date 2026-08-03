@@ -8,6 +8,7 @@ export const pt: Record<string, string> = {
 
   // ─── Comuns ───────────────────────────────────────────────────────────
   "common.reintentar": "Tentar novamente",
+  "common.volver": "Voltar",
   "common.error_conexion": "Não foi possível conectar ao servidor.",
   "common.entendido": "Entendi",
   "common.copiar": "Copiar",

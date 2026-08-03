@@ -286,7 +286,7 @@ export async function pantallaResult(t: Trabajo) {
     try {
       const deviceId = await getDeviceId();
       const { id } = await crearProceso(deviceId, idsProceso);
-      irA(() => pantallaEsperarTrabajo(id, "video", pasosProceso()));
+      irA(() => pantallaEsperarTrabajo(id, "video", { pasos: pasosProceso(), reintentar: videoProceso }));
     } catch (e) {
       toast((e as Error).message);
     }
@@ -296,7 +296,7 @@ export async function pantallaResult(t: Trabajo) {
     try {
       const deviceId = await getDeviceId();
       const { id } = await crearAnimacion(deviceId, t.id, origenAnimado);
-      irA(() => pantallaEsperarTrabajo(id, "video"));
+      irA(() => pantallaEsperarTrabajo(id, "video", { reintentar: videoAnimado }));
     } catch (e) {
       toast((e as Error).message);
     }

@@ -1,7 +1,7 @@
 import { el, render, toast } from "../ui";
 import { crearTrabajo, getTrabajo } from "../api";
 import { getDeviceId } from "../device";
-import { reemplazar } from "../nav";
+import { reemplazar, atras } from "../nav";
 import { pantallaResult } from "./result";
 import { pantallaForm } from "./form";
 import { state } from "../state";
@@ -32,8 +32,12 @@ let generacionActual = 0;
 export function pantallaEsperarTrabajo(
   id: string,
   tipo: "imagen" | "video",
-  pasos: string[] = tipo === "video" ? pasosVideo() : pasosImagen(),
+  // `reintentar`: si se pasa, el error/timeout ofrece "Reintentar" que re-lanza
+  // la MISMA generación (sin volver a elegir foto/estilo). Sin esto, el error
+  // dejaba al usuario en el inicio del formulario, perdiendo lo ya seleccionado.
+  opts: { pasos?: string[]; reintentar?: () => void } = {},
 ) {
+  const pasos = opts.pasos ?? (tipo === "video" ? pasosVideo() : pasosImagen());
   const miGeneracion = ++generacionActual;
   const sigoActivo = () => generacionActual === miGeneracion && !!document.querySelector(".proc-screen");
 
@@ -74,13 +78,21 @@ export function pantallaEsperarTrabajo(
   const mostrarError = (texto: string) => {
     terminar();
     if (!sigoActivo()) { toast(texto); return; }
+    const acciones: Node[] = [];
+    if (opts.reintentar) {
+      acciones.push(el("button", { class: "btn-primario", onClick: opts.reintentar },
+        [t("common.reintentar")]));
+    }
+    // "Volver" regresa a la pantalla anterior (el resultado, en el caso del
+    // video; el formulario, en una imagen), NO al inicio del carrusel.
+    acciones.push(el("button", {
+      class: opts.reintentar ? "btn-secundario" : "btn-primario",
+      onClick: () => atras(),
+    }, [t("common.volver")]));
     render(
       el("div", { class: "screen centro proc-screen" }, [
         el("p", { class: "error-msg" }, [texto]),
-        el("button", {
-          class: "btn-primario",
-          onClick: () => reemplazar(() => pantallaForm(state.categoriaSel || "interior")),
-        }, [t("common.reintentar")]),
+        ...acciones,
       ])
     );
   };
@@ -142,15 +154,19 @@ export async function pantallaProcessing(args: Args) {
   try {
     const deviceId = await getDeviceId();
     const { id } = await crearTrabajo({ deviceId, ...args });
-    pantallaEsperarTrabajo(id, args.tipo);
+    pantallaEsperarTrabajo(id, args.tipo, { reintentar: () => pantallaProcessing(args) });
   } catch (e) {
     render(
       el("div", { class: "screen centro proc-screen" }, [
         el("p", { class: "error-msg" }, [(e as Error).message]),
         el("button", {
           class: "btn-primario",
-          onClick: () => reemplazar(() => pantallaForm(state.categoriaSel || "interior")),
+          onClick: () => pantallaProcessing(args),
         }, [t("common.reintentar")]),
+        el("button", {
+          class: "btn-secundario",
+          onClick: () => reemplazar(() => pantallaForm(state.categoriaSel || "interior")),
+        }, [t("common.volver")]),
       ])
     );
   }

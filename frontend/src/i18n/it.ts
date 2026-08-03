@@ -8,6 +8,7 @@ export const it: Record<string, string> = {
 
   // ─── Comuni ───────────────────────────────────────────────────────────
   "common.reintentar": "Riprova",
+  "common.volver": "Indietro",
   "common.error_conexion": "Impossibile connettersi al server.",
   "common.entendido": "Capito",
   "common.copiar": "Copia",

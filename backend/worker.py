@@ -68,8 +68,8 @@ def _error_usuario(e: Exception, lang: str = "es") -> str:
     # Cualquier otra cosa (errores técnicos en inglés incluidos): genérico.
     return i18n.error_msg("generico", lang)
 
-_PROMPT_PLANO = (
-    "Convert this 2D architectural floor plan into a realistic 3D furnished "
+_PROMPT_PLANO_BASE = (
+    "Convert this 2D architectural floor plan into a realistic 3D "
     "top-down isometric render. CRITICAL: reproduce the plan faithfully — keep "
     "the exact same wall layout and proportions, the same number of rooms, and "
     "every DOOR OPENING and window in its exact position from the plan. Do not "
@@ -77,10 +77,31 @@ _PROMPT_PLANO = (
     "must connect the same rooms as in the plan. IMPORTANT: the render must "
     "contain NO text at all — remove every room label, dimension line, "
     "measurement, annotation and title block from the plan; use them only to "
-    "decide which furniture belongs in each room. Modern tasteful furniture "
-    "matching what the plan suggests, soft daylight, architectural "
-    "visualization quality."
+    "decide which furniture belongs in each room."
 )
+
+# Estilo del render 3D elegido en el asistente de Planos. Llega en el `detalle`
+# como slugs estables (independientes del idioma): "render_modo:amueblado
+# render_estilo:moderno". Se traduce a un cierre del prompt en inglés.
+_ESTILO_PLANO_EN = {"moderno": "modern", "rustico": "rustic", "minimalista": "minimalist"}
+
+
+def _prompt_plano(detalle: str) -> str:
+    d = detalle or ""
+    if "render_modo:vacio" in d:
+        cierre = ("Show every room EMPTY, with finished floors and walls but "
+                  "WITHOUT any furniture. Soft daylight, architectural "
+                  "visualization quality.")
+    else:
+        estilo_en = "modern"
+        for slug, en in _ESTILO_PLANO_EN.items():
+            if f"render_estilo:{slug}" in d:
+                estilo_en = en
+                break
+        cierre = (f"Furnish each room appropriately in a {estilo_en} style, "
+                  "tasteful furniture matching what the plan suggests, soft "
+                  "daylight, architectural visualization quality.")
+    return f"{_PROMPT_PLANO_BASE} {cierre}"
 
 # "Vaciar habitación" (virtual staging inverso, B2B inmobiliaria): quita TODO
 # el mobiliario y desorden dejando el espacio vacío y limpio. Prompt fijo.
@@ -132,7 +153,8 @@ def procesar(tid: str) -> None:
             url_antes, url_despues = pipeline.transferir_estilo(antes, referencia, despues)
 
         elif engine == "plano":
-            url_antes, url_despues = pipeline.editar(antes, _PROMPT_PLANO, despues)
+            url_antes, url_despues = pipeline.editar(
+                antes, _prompt_plano(trabajo.get("detalle") or ""), despues)
 
         elif engine == "explorar":
             url_antes, url_despues = pipeline.editar(antes, _PROMPT_EXPLORAR, despues)

@@ -509,7 +509,9 @@ function buildControles(clave: string, engine: string): Controles {
           { tituloKey: "paso.render", node: el("div", { class: "ctrl-stack" }, [modo.node, estiloRender.node]) },
         ],
         node: el("span", {}),
-        getDetalle: () => t("plano.render_frase", { modo: modo.getValue(), estilo: estiloRender.getValue() }),
+        // Slugs estables (no texto traducido): el motor plano del backend los
+        // parsea para armar el prompt del render, igual en cualquier idioma.
+        getDetalle: () => `render_modo:${modo.getSlug()} render_estilo:${estiloRender.getSlug()}`,
       };
     }
     default: {

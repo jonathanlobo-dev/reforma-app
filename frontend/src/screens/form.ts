@@ -192,6 +192,12 @@ export function pantallaForm(claveCat: string) {
 
   // ── Controles por categoría ───────────────────────────────────────────────
   const controles = buildControles(claveCat, engine);
+  // El motor "estilo" no tiene controles de texto: su única decisión es la
+  // foto de referencia, así que se agrega como paso propio del asistente en
+  // vez de dejarla fija encima de todos los pasos.
+  if (engine === "estilo") {
+    controles.pasos = [{ tituloKey: "paso.referencia", node: refZone }];
+  }
 
   // ── Toggle imagen/video (solo engines que animan) ─────────────────────────
   // El flag remoto (fase test) puede apagar el video para todos; el backend
@@ -272,12 +278,14 @@ export function pantallaForm(claveCat: string) {
       t(state.mask ? "form.pincel.editar" : "form.pincel.pintar"),
     ]));
   }
-  if (engine === "estilo") hijos.push(refZone);
+  // Si "estilo" quedó sin pasos por alguna razón (no debería), refZone igual
+  // debe estar visible en algún lado: fallback al render plano.
+  if (engine === "estilo" && !(controles.pasos && controles.pasos.length)) hijos.push(refZone);
 
   const botonGenerar = el("button", { class: "btn-primario btn-ico", onClick: enviar },
     [icon("sparkles", 18), t("form.transformar")]);
 
-  if (controles.pasos && controles.pasos.length > 1) {
+  if (controles.pasos && controles.pasos.length >= 1) {
     // ── Asistente por pasos ──────────────────────────────────────────────
     // La foto es el paso 1 y los controles vienen después, uno por pantalla:
     // así cada decisión se toma sola y el usuario no se enfrenta a un muro de
@@ -378,7 +386,12 @@ function buildControles(clave: string, engine: string): Controles {
       const intens = dropdown("ctrl.intensidad_label", INTENSIDADES, "media");
       const extra = campoExtra();
       return {
-        node: el("div", { class: "ctrl-stack" }, [surf.node, color.node, intens.node, extra.node]),
+        pasos: [
+          { tituloKey: "paso.superficie", node: surf.node },
+          { tituloKey: "paso.color", node: color.node },
+          { tituloKey: "paso.intensidad", node: el("div", { class: "ctrl-stack" }, [intens.node, extra.node]) },
+        ],
+        node: el("span", {}),
         getDetalle: () => `${t("ctrl.superficie_label")}: ${surf.getValue()}. ${t("ctrl.color_label")}: ${color.getValue()}. ${t("ctrl.intensidad_label")}: ${intens.getValue()}.${extra.getValue()}`,
       };
     }
@@ -424,7 +437,11 @@ function buildControles(clave: string, engine: string): Controles {
         ["ninguno", "personalizado"].includes(estilo.getSlug())
           ? "" : `${t("ctrl.estilo_label")}: ${estilo.getValue()}. `;
       return {
-        node: el("div", { class: "ctrl-stack" }, [estilo.node, intens.node, extra.node]),
+        pasos: [
+          { tituloKey: "paso.estilo", node: estilo.node },
+          { tituloKey: "paso.intensidad", node: el("div", { class: "ctrl-stack" }, [intens.node, extra.node]) },
+        ],
+        node: el("span", {}),
         getDetalle: () => `${fraseEstilo()}${t("ctrl.intensidad_label")}: ${intens.getValue()}.${extra.getValue()}`,
       };
     }
@@ -432,7 +449,10 @@ function buildControles(clave: string, engine: string): Controles {
       const mat = dropdown("ctrl.material_label", MATERIALES_SUELO, "porcelanato_blanco");
       const extra = campoExtra();
       return {
-        node: el("div", { class: "ctrl-stack" }, [mat.node, extra.node]),
+        pasos: [
+          { tituloKey: "paso.material", node: el("div", { class: "ctrl-stack" }, [mat.node, extra.node]) },
+        ],
+        node: el("span", {}),
         getDetalle: () => `${t("form.campo.material_suelo")}: ${mat.getValue()}.${extra.getValue()}`,
       };
     }
@@ -458,28 +478,64 @@ function buildControles(clave: string, engine: string): Controles {
         }));
       setModo("objeto");
       return {
-        node: el("div", { class: "ctrl-stack" }, [toggle, campoObj]),
+        pasos: [
+          { tituloKey: "paso.eliminar", node: el("div", { class: "ctrl-stack" }, [toggle, campoObj]) },
+        ],
+        node: el("span", {}),
         // En modo "todo" el motor vaciar usa un prompt fijo e ignora el detalle,
         // pero mandamos un texto no vacío para pasar la validación del form.
         getDetalle: () => modo === "todo" ? "vaciar todo el espacio" : obj.value.trim(),
         getCategoria: () => modo === "todo" ? "vaciar" : "eliminar",
       };
     }
+    case "plano": {
+      // El plano no tiene foto de referencia ni texto libre: la única
+      // decisión de valor es cómo se ve el render 3D (vacío/amueblado y en
+      // qué estilo). Se manda como `detalle` porque el motor plano hoy no
+      // usa ningún otro campo.
+      const RENDER_MODOS: OpcionDropdown[] = [
+        { slug: "vacio", labelKey: "render.vacio" },
+        { slug: "amueblado", labelKey: "render.amueblado" },
+      ];
+      const RENDER_ESTILOS: OpcionDropdown[] = [
+        { slug: "moderno", labelKey: "estilo.moderno" },
+        { slug: "rustico", labelKey: "estilo.rustico" },
+        { slug: "minimalista", labelKey: "estilo.minimalista" },
+      ];
+      const modo = chipsSelector("render.modo_label", RENDER_MODOS, "amueblado");
+      const estiloRender = chipsSelector("ctrl.estilo_label", RENDER_ESTILOS, "moderno");
+      return {
+        pasos: [
+          { tituloKey: "paso.render", node: el("div", { class: "ctrl-stack" }, [modo.node, estiloRender.node]) },
+        ],
+        node: el("span", {}),
+        getDetalle: () => t("plano.render_frase", { modo: modo.getValue(), estilo: estiloRender.getValue() }),
+      };
+    }
     default: {
       const campos = (state.categorias[clave]?.campos ?? []) as Array<{ label: string; ejemplo: string }>;
       if (!campos.length) {
-        // estilo / plano: sin texto
-        if (engine === "estilo" || engine === "plano") {
+        // estilo: sin texto (la referencia se maneja aparte, en pantallaForm)
+        if (engine === "estilo") {
           return { node: el("span", {}), getDetalle: () => "" };
         }
+        // pincel (inpaint): se deja plano a propósito, ver pantallaForm.
         const ta = el("textarea", { class: "field", placeholder: t("form.generico.placeholder"), rows: 3 }) as HTMLTextAreaElement;
-        return { node: ta, getDetalle: () => ta.value.trim() };
+        if (engine === "inpaint") {
+          return { node: ta, getDetalle: () => ta.value.trim() };
+        }
+        return {
+          pasos: [{ tituloKey: "paso.detalle", node: ta }],
+          node: el("span", {}),
+          getDetalle: () => ta.value.trim(),
+        };
       }
       const inputs = campos.map((c) =>
         el("input", { class: "field", placeholder: c.ejemplo, type: "text" }) as HTMLInputElement
       );
       return {
-        node: el("div", { class: "ctrl-stack" }, inputs),
+        pasos: [{ tituloKey: "paso.detalle", node: el("div", { class: "ctrl-stack" }, inputs) }],
+        node: el("span", {}),
         getDetalle: () =>
           campos.map((c, i) => ({ label: c.label, val: inputs[i].value.trim() }))
             .filter((p) => p.val).map((p) => `${p.label}: ${p.val}.`).join(" "),

@@ -279,8 +279,12 @@ export async function pantallaResult(t: Trabajo) {
     state.cadena[state.cadena.length - 1] === t.id;
   const idsProceso = cadenaValida ? state.cadena : [t.id];
   // Origen del animado: la foto original (primer eslabón), para animar desde el
-  // principio y no solo desde el último paso "seguir editando".
-  const origenAnimado = cadenaValida ? state.cadena[0] : undefined;
+  // principio y no solo desde el último paso "seguir editando". SOLO para
+  // ediciones de un mismo cuarto (editar/inpaint): en el flujo del plano, el
+  // primer eslabón es un plano 2D, y animar 2D→interior sería un salto
+  // incoherente — ahí el animado usa el propio paso (ej. recorte → interior).
+  const origenAnimado = (cadenaValida && (engine === "editar" || engine === "inpaint"))
+    ? state.cadena[0] : undefined;
 
   const videoProceso = async () => {
     try {

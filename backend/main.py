@@ -280,6 +280,12 @@ def crear_proceso(
             raise HTTPException(404, f"Edición {i + 1} no encontrada.")
         if i == 0 and t.get("antes"):
             imagenes.append(t["antes"])          # la foto original arranca el video
+        # "Explorar" (vista de un cuarto del render 3D): su "antes" es el RECORTE
+        # que el usuario encuadró sobre el render — un zoom a esa zona. Mostrarlo
+        # como paso intermedio le da al espectador la pista "hacia aquí vamos"
+        # antes de la vista interior, que si no aparece de la nada.
+        if i > 0 and t.get("categoria") == "explorar" and t.get("antes"):
+            imagenes.append(t["antes"])
         resultado = t.get("limpio") or t.get("despues")
         if resultado:
             imagenes.append(resultado)

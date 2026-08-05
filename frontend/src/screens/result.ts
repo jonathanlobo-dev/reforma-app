@@ -315,32 +315,48 @@ export async function pantallaResult(t: Trabajo) {
   const elegirOrigenAnimado = async () => {
     if (!hayCadenaEdicion) { videoAnimado(origenAnimado); return; }
 
-    type Opcion = { origenId?: string; src: string; label: string };
-    const opciones: Opcion[] = [];
+    const loading = el("div", { class: "sheet-overlay" }, [
+      el("div", { class: "sheet", style: "text-align:center;padding:28px" }, [
+        el("div", { class: "spinner", style: "margin:0 auto 10px" }),
+        el("p", { class: "loader-msg" }, [tr("result.video.elegir_origen")]),
+      ]),
+    ]);
+    document.body.append(loading);
 
-    if (cadenaValida) {
-      const jobs = await Promise.all(state.cadena.map((id) => getTrabajo(id)));
-      for (let i = 0; i < jobs.length; i++) {
-        const url = resolverMedia(jobs[i].resultados.thumb || jobs[i].resultados.antes);
-        if (!url) continue;
-        const esUltimo = i === jobs.length - 1;
-        opciones.push({
-          origenId: esUltimo ? undefined : jobs[i].id,
-          src: url,
-          label: i === 0 ? tr("result.video.foto_original")
-            : esUltimo ? tr("result.video.este_paso")
-            : tr("result.video.paso_n", { n: i + 1 }),
-        });
+    type Opcion = { origenId?: string; src: string; label: string };
+    let opciones: Opcion[] = [];
+
+    try {
+      if (cadenaValida) {
+        const jobs = await Promise.all(state.cadena.map((id) => getTrabajo(id)));
+        for (let i = 0; i < jobs.length; i++) {
+          const url = resolverMedia(jobs[i].resultados.thumb || jobs[i].resultados.antes);
+          if (!url) continue;
+          const esUltimo = i === jobs.length - 1;
+          opciones.push({
+            origenId: esUltimo ? undefined : jobs[i].id,
+            src: url,
+            label: i === 0 ? tr("result.video.foto_original")
+              : esUltimo ? tr("result.video.este_paso")
+              : tr("result.video.paso_n", { n: i + 1 }),
+          });
+        }
+      } else if (t.origen_id) {
+        try {
+          const origen = await getTrabajo(t.origen_id);
+          const url = resolverMedia(origen.resultados.thumb || origen.resultados.antes);
+          if (url) opciones.push({ origenId: t.origen_id, src: url, label: tr("result.video.foto_original") });
+        } catch { /* origen borrado */ }
+        const propioUrl = resolverMedia(t.resultados.thumb || t.resultados.antes);
+        if (propioUrl) opciones.push({ origenId: undefined, src: propioUrl, label: tr("result.video.este_paso") });
       }
-    } else if (t.origen_id) {
-      try {
-        const origen = await getTrabajo(t.origen_id);
-        const url = resolverMedia(origen.resultados.thumb || origen.resultados.antes);
-        if (url) opciones.push({ origenId: t.origen_id, src: url, label: tr("result.video.foto_original") });
-      } catch { /* origen borrado, skip */ }
-      const propioUrl = resolverMedia(t.resultados.thumb || t.resultados.antes);
-      if (propioUrl) opciones.push({ origenId: undefined, src: propioUrl, label: tr("result.video.este_paso") });
+    } catch {
+      loading.remove();
+      videoAnimado(origenAnimado);
+      return;
     }
+
+    loading.remove();
 
     if (opciones.length <= 1) { videoAnimado(origenAnimado); return; }
 

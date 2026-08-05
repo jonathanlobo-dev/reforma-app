@@ -1,5 +1,5 @@
 import { el, render, toast } from "../ui";
-import { resolverMedia, votarTrabajo, crearProceso, crearAnimacion, pedirFormatoVideo, type Trabajo, type FormatoVideo } from "../api";
+import { resolverMedia, votarTrabajo, crearProceso, crearAnimacion, pedirFormatoVideo, getTrabajo, type Trabajo, type FormatoVideo } from "../api";
 import { mostrarIntersticial } from "../ads";
 import { raiz, irA, desdeRaiz, setNavVisible } from "../nav";
 import { pantallaHome } from "./home";
@@ -299,14 +299,64 @@ export async function pantallaResult(t: Trabajo) {
     }
   };
 
-  const videoAnimado = async () => {
+  const videoAnimado = async (origen?: string) => {
     try {
       const deviceId = await getDeviceId();
-      const { id } = await crearAnimacion(deviceId, t.id, origenAnimado);
-      irA(() => pantallaEsperarTrabajo(id, "video", { reintentar: videoAnimado }));
+      const { id } = await crearAnimacion(deviceId, t.id, origen);
+      irA(() => pantallaEsperarTrabajo(id, "video", { reintentar: () => videoAnimado(origen) }));
     } catch (e) {
       toast((e as Error).message);
     }
+  };
+
+  const hayCadenaEdicion = (engine === "editar" || engine === "inpaint") &&
+    (cadenaValida || !!t.origen_id);
+
+  const elegirOrigenAnimado = async () => {
+    if (!hayCadenaEdicion) { videoAnimado(origenAnimado); return; }
+
+    type Opcion = { origenId?: string; src: string; label: string };
+    const opciones: Opcion[] = [];
+
+    if (cadenaValida) {
+      const jobs = await Promise.all(state.cadena.map((id) => getTrabajo(id)));
+      for (let i = 0; i < jobs.length; i++) {
+        const url = resolverMedia(jobs[i].resultados.thumb || jobs[i].resultados.antes);
+        if (!url) continue;
+        const esUltimo = i === jobs.length - 1;
+        opciones.push({
+          origenId: esUltimo ? undefined : jobs[i].id,
+          src: url,
+          label: i === 0 ? tr("result.video.foto_original")
+            : esUltimo ? tr("result.video.este_paso")
+            : tr("result.video.paso_n", { n: i + 1 }),
+        });
+      }
+    } else if (t.origen_id) {
+      try {
+        const origen = await getTrabajo(t.origen_id);
+        const url = resolverMedia(origen.resultados.thumb || origen.resultados.antes);
+        if (url) opciones.push({ origenId: t.origen_id, src: url, label: tr("result.video.foto_original") });
+      } catch { /* origen borrado, skip */ }
+      const propioUrl = resolverMedia(t.resultados.thumb || t.resultados.antes);
+      if (propioUrl) opciones.push({ origenId: undefined, src: propioUrl, label: tr("result.video.este_paso") });
+    }
+
+    if (opciones.length <= 1) { videoAnimado(origenAnimado); return; }
+
+    const overlay = el("div", { class: "sheet-overlay", onClick: () => overlay.remove() });
+    const thumbs = opciones.map((op) =>
+      el("div", { class: "origen-opt", onClick: () => { overlay.remove(); videoAnimado(op.origenId); } }, [
+        el("img", { class: "origen-thumb", src: op.src }),
+        el("span", { class: "origen-label" }, [op.label]),
+      ])
+    );
+    const sheet = el("div", { class: "sheet", onClick: (e: Event) => e.stopPropagation() }, [
+      el("div", { class: "sheet-tit" }, [tr("result.video.elegir_origen")]),
+      el("div", { class: "origen-strip" }, thumbs),
+    ]);
+    overlay.append(sheet);
+    document.body.append(overlay);
   };
 
   /** Hoja de selección: deja claro cuál anima de verdad y cuál es un resumen. */
@@ -321,7 +371,7 @@ export async function pantallaResult(t: Trabajo) {
       ]);
     const sheet = el("div", { class: "sheet", onClick: (e: Event) => e.stopPropagation() }, [
       el("div", { class: "sheet-tit" }, [tr("result.video.elegir")]),
-      ...(puedeAnimar ? [opcion(tr("result.video.animado"), tr("result.video.animado_sub"), videoAnimado)] : []),
+      ...(puedeAnimar ? [opcion(tr("result.video.animado"), tr("result.video.animado_sub"), elegirOrigenAnimado)] : []),
       ...(puedeProceso
         ? [opcion(
             state.cadena.length >= 2 ? tr("result.video.slides", { n: state.cadena.length }) : tr("result.video.reveal"),

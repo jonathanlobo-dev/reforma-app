@@ -124,6 +124,7 @@ async def crear_trabajo(
     foto: UploadFile = File(...),
     mask: UploadFile | None = File(None),        # engine=inpaint (PNG b/n del pincel)
     referencia: UploadFile | None = File(None),  # engine=estilo (foto de inspiración)
+    origen_id: str = Form(""),                   # primer eslabón de la cadena (seguir editando)
 ):
     lang = i18n.normalizar_lang(lang)
     cat = resolver(categoria)
@@ -160,7 +161,8 @@ async def crear_trabajo(
             raise HTTPException(429, i18n.cuota_msg("limite_ip", lang))
         db.registrar_ip(ip, "imagenes" if tipo == "imagen" else "videos")
 
-    tid = db.crear_trabajo(device_id, categoria, detalle, tipo, proyecto.strip()[:60], lang)
+    tid = db.crear_trabajo(device_id, categoria, detalle, tipo, proyecto.strip()[:60], lang,
+                           origen_id=origen_id.strip() if origen_id else "")
     carpeta = config.DATA / tid
     carpeta.mkdir(parents=True, exist_ok=True)
     _guardar_upload(foto, carpeta / f"antes{EXT_OK[foto.content_type]}")
@@ -197,8 +199,10 @@ def crear_animacion(
     antes = t.get("antes")
     # Cadena de ediciones: animar desde la foto ORIGINAL (el "antes" del primer
     # eslabón) hasta este resultado, no solo desde el último paso editado.
-    if origen_id and origen_id != trabajo_id:
-        origen = db.obtener(origen_id)
+    # Si el cliente no mandó origen_id, usar el que tiene guardado el trabajo.
+    oid = origen_id or t.get("origen_id") or ""
+    if oid and oid != trabajo_id:
+        origen = db.obtener(oid)
         if origen and origen["device_id"] == device_id and origen.get("antes"):
             antes = origen["antes"]
     if not antes or not despues:
@@ -385,6 +389,7 @@ def historial(device_id: str, limit: int = 30):
             "id": t["id"], "status": t["status"], "tipo": t["tipo"],
             "categoria": t["categoria"], "detalle": (t.get("detalle") or "")[:120],
             "proyecto": t.get("proyecto"), "creado": t.get("creado"),
+            "origen_id": t.get("origen_id"),
             "error": t["error"], "resultados": _urls(t),
         }
         for t in trabajos
@@ -419,7 +424,7 @@ def estado_trabajo(tid: str):
     return {
         "id": trabajo["id"], "status": trabajo["status"], "tipo": trabajo["tipo"],
         "categoria": trabajo.get("categoria"), "creado": trabajo.get("creado"),
-        "detalle": trabajo.get("detalle"),
+        "detalle": trabajo.get("detalle"), "origen_id": trabajo.get("origen_id"),
         "error": trabajo["error"], "resultados": _urls(trabajo),
     }
 

@@ -88,6 +88,7 @@ _MIGRACIONES = [
     ("trabajos", "video_vertical", "TEXT"),
     ("trabajos", "video_cuadrado", "TEXT"),
     ("trabajos", "video_horizontal", "TEXT"),
+    ("trabajos", "origen_id", "TEXT"),
 ]
 
 
@@ -388,15 +389,16 @@ def registrar_uso(device_id: str, tipo: str) -> None:
 # ─── Trabajos ────────────────────────────────────────────────────────────────
 
 def crear_trabajo(device_id: str, categoria: str, detalle: str, tipo: str,
-                  proyecto: str = "", lang: str = "es") -> str:
+                  proyecto: str = "", lang: str = "es",
+                  origen_id: str = "") -> str:
     tid = uuid.uuid4().hex
     ahora = time.time()
     with _con() as con:
         cur = con.cursor()
         cur.execute(_q(
-            "INSERT INTO trabajos (id, device_id, categoria, detalle, tipo, status, proyecto, lang, creado, actualizado)"
-            f" VALUES ({PH},{PH},{PH},{PH},{PH},'pending',{PH},{PH},{PH},{PH})"),
-            (tid, device_id, categoria, detalle, tipo, proyecto or None, lang or "es", ahora, ahora))
+            "INSERT INTO trabajos (id, device_id, categoria, detalle, tipo, status, proyecto, lang, origen_id, creado, actualizado)"
+            f" VALUES ({PH},{PH},{PH},{PH},{PH},'pending',{PH},{PH},{PH},{PH},{PH})"),
+            (tid, device_id, categoria, detalle, tipo, proyecto or None, lang or "es", origen_id or None, ahora, ahora))
         con.commit()
     return tid
 

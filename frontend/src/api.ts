@@ -22,7 +22,7 @@ export interface Resultados {
 export interface Trabajo {
   id: string; status: "pending" | "processing" | "done" | "error";
   tipo: "imagen" | "video"; categoria: string; detalle?: string;
-  proyecto?: string | null;
+  proyecto?: string | null; origen_id?: string | null;
   error: string | null; resultados: Resultados; creado?: string | number;
 }
 
@@ -131,7 +131,7 @@ export async function getCategorias(): Promise<Categorias> {
 export async function crearTrabajo(data: {
   deviceId: string; categoria: string; detalle: string;
   tipo: "imagen" | "video"; foto: Blob;
-  mask?: Blob; referencia?: Blob; proyecto?: string;
+  mask?: Blob; referencia?: Blob; proyecto?: string; origenId?: string;
 }): Promise<{ id: string; status: string; tipo: string }> {
   if (MOCK) {
     const id = "mock-" + crypto.randomUUID().slice(0, 8);
@@ -147,6 +147,7 @@ export async function crearTrabajo(data: {
   if (data.mask) fd.append("mask", data.mask, "mask.png");
   if (data.referencia) fd.append("referencia", data.referencia, "referencia.jpg");
   if (data.proyecto) fd.append("proyecto", data.proyecto);
+  if (data.origenId) fd.append("origen_id", data.origenId);
   fd.append("lang", idioma());
   const r = await fetchApi(`${API_BASE}/trabajos`, { method: "POST", body: fd });
   if (r.status === 429) {

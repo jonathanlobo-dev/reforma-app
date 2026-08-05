@@ -153,7 +153,7 @@ export async function pantallaProcessing(args: Args) {
 
   try {
     const deviceId = await getDeviceId();
-    const { id } = await crearTrabajo({ deviceId, ...args });
+    const { id } = await crearTrabajo({ deviceId, ...args, origenId: state.origenId });
     pantallaEsperarTrabajo(id, args.tipo, { reintentar: () => pantallaProcessing(args) });
   } catch (e) {
     render(

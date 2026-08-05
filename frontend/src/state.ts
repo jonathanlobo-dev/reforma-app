@@ -10,6 +10,7 @@ export interface AppState {
   prefillExtra?: string;                    // idea que viene del chat del Maestro
   premium?: boolean;                        // suscripción activa
   cadena: string[];                         // ids de la cadena de ediciones (misma foto)
+  origenId?: string;                         // id del primer trabajo de la cadena (persistido en DB)
   config: ConfigRemota;                     // flags remotos (GET /config al arrancar)
 }
 

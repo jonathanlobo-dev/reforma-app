@@ -224,6 +224,8 @@ export async function pantallaResult(t: Trabajo) {
       const blob = await r.blob();
       setFoto({ blob, url: URL.createObjectURL(blob) });
       state.mask = undefined;
+      state.origenId = t.origen_id || t.id;
+      if (!state.cadena.includes(t.id)) state.cadena = [t.id];
       // Tras "Vaciar", seguir editando debe llevar a Diseñar/Remodelar (amueblar
       // el cuarto ya vacío), no reabrir Vaciar, que no tendría sentido.
       const destino = t.categoria === "vaciar" ? "interior" : t.categoria;
@@ -284,7 +286,8 @@ export async function pantallaResult(t: Trabajo) {
   // primer eslabón es un plano 2D, y animar 2D→interior sería un salto
   // incoherente — ahí el animado usa el propio paso (ej. recorte → interior).
   const origenAnimado = (cadenaValida && (engine === "editar" || engine === "inpaint"))
-    ? state.cadena[0] : undefined;
+    ? state.cadena[0]
+    : (t.origen_id && (engine === "editar" || engine === "inpaint") ? t.origen_id : undefined);
 
   const videoProceso = async () => {
     try {
